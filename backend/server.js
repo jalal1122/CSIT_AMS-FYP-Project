@@ -17,10 +17,8 @@ import attendanceRoutes from "./src/routes/attendance.routes.js";
 import analyticsRoutes from "./src/routes/analytics.routes.js";
 import cronRoutes from "./src/routes/cron.routes.js";
 
-/*
 import { initSocket } from "./src/services/socket.js";
 import { initCronJobs } from "./src/utils/cronJobs.js";
-*/
 
 const app = express();
 
@@ -59,8 +57,8 @@ connectDB()
   .then(() => {
     const server = app.listen(PORT, () => {
       console.log(`🚀 AttendX v2 Server running on port ${PORT}`);
-      // initSocket(server);
-      // initCronJobs();
+      initSocket(server);
+      initCronJobs();
     });
   })
   .catch((err) => {
