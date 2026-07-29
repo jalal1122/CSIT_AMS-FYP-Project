@@ -36,6 +36,9 @@ const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard.jsx
 const ScanAttendance = lazy(() => import("./pages/student/ScanAttendance.jsx"));
 const StudentProfile = lazy(() => import("./pages/student/StudentProfile.jsx"));
 
+// Shared Components
+const ToastContainer = lazy(() => import("./components/shared/ToastContainer.jsx"));
+
 function App() {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const user = useSelector(selectCurrentUser);
@@ -48,7 +51,8 @@ function App() {
 
   return (
     <Router>
-      <Suspense fallback={<div className="min-h-screen bg-surface" />}>
+      <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div></div>}>
+        <ToastContainer />
         <Routes>
           {/* Auth */}
           <Route path="/login" element={<Login />} />
