@@ -8,7 +8,6 @@ import connectDB from "./config/db.js";
 
 // v2 Routes
 // We will uncomment these as we build the controllers in Phase 3
-/*
 import systemRoutes from "./src/routes/system.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import academicRoutes from "./src/routes/academic.routes.js";
@@ -18,6 +17,7 @@ import attendanceRoutes from "./src/routes/attendance.routes.js";
 import analyticsRoutes from "./src/routes/analytics.routes.js";
 import cronRoutes from "./src/routes/cron.routes.js";
 
+/*
 import { initSocket } from "./src/services/socket.js";
 import { initCronJobs } from "./src/utils/cronJobs.js";
 */
@@ -43,7 +43,6 @@ app.get("/api/v2/health", (req, res) => {
 });
 
 // v2 API Routes 
-/*
 app.use("/api/v2/system", systemRoutes);
 app.use("/api/v2/auth", authRoutes);
 app.use("/api/v2/academic", academicRoutes);
@@ -52,7 +51,6 @@ app.use("/api/v2/session", sessionRoutes);
 app.use("/api/v2/attendance", attendanceRoutes);
 app.use("/api/v2/analytics", analyticsRoutes);
 app.use("/api/v2/cron", cronRoutes);
-*/
 
 // Connect to Database and start server
 const PORT = process.env.PORT || 5001;
