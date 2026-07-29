@@ -1,39 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary: #4F46E5;       /* Indigo 600 */
-  --primary-dark: #3730A3;  /* Indigo 800 */
-  --secondary: #10B981;     /* Emerald 500 */
-  --accent: #F59E0B;        /* Amber 500 */
-  --danger: #EF4444;        /* Red 500 */
-  --surface: #1E1B4B;       /* Deep Indigo */
-  --surface-light: #2D2A6E;
-  --text-primary: #F9FAFB;
-  --text-muted: #94A3B8;
+  /* Color Tokens */
+  --color-bg: #F0F9FF;
+  --color-bg-gradient: linear-gradient(135deg, #F0F9FF 0%, #EFF6FF 50%, #F8FAFC 100%);
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F8FAFC;
+  --color-primary: #0EA5E9;
+  --color-primary-dark: #0284C7;
+  --color-success: #10B981;
+  --color-success-dark: #059669;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-danger-dark: #DC2626;
+  --color-text-primary: #1E293B;
+  --color-text-body: #475569;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-border-light: #F1F5F9;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --header-height: 64px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.07), 0 4px 6px rgba(0,0,0,0.04);
 }
 
-/* Glassmorphism utility */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-body);
+  min-height: 100vh;
 }
 
-/* Gradient backgrounds */
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Shimmer loading animation */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
 }
-.skeleton {
-  background: linear-gradient(90deg, #2D2A6E 25%, #3730A3 50%, #2D2A6E 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+@layer components {
+  /* Utility classes for Tailwind-like usage or to replace old ones */
+  .btn-primary {
+    @apply bg-sky-500 hover:bg-sky-600 text-white rounded-lg px-4 py-2 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg px-4 py-2 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2;
+  }
+  
+  .btn-success {
+    @apply bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-4 py-2 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2;
+  }
+  
+  .btn-danger {
+    @apply bg-rose-500 hover:bg-rose-600 text-white rounded-lg px-4 py-2 font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-sky-500 text-sky-500 rounded-lg px-4 py-2 font-medium transition-colors duration-200 hover:bg-sky-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm p-6;
+  }
+  
+  .card-hover {
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm p-6 transition-all duration-200 hover:shadow-md hover:border-sky-200;
+  }
+  
+  .input {
+    @apply w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-slate-900 placeholder-slate-400;
+  }
+  
+  /* Map old glass/dark classes to light theme to prevent breaking pages we haven't updated yet */
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border border-white/50 shadow-sm rounded-2xl;
+  }
+  
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-xl border border-white/50 shadow-sm rounded-2xl p-6;
+  }
+  
+  .bg-surface {
+    @apply bg-white;
+  }
+  
+  .bg-surface-light {
+    @apply bg-slate-50;
+  }
+  
+  .text-primary {
+    @apply text-sky-500;
+  }
 }

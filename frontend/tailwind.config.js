@@ -8,16 +8,26 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#4F46E5', // Indigo 600
-          dark: '#3730A3', // Indigo 800
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9', // Sky Blue
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
         },
-        secondary: '#10B981', // Emerald 500
-        accent: '#F59E0B', // Amber 500
-        danger: '#EF4444', // Red 500
-        surface: {
-          DEFAULT: '#1E1B4B', // Deep Indigo
-          light: '#2D2A6E',
-        }
+        success: {
+          DEFAULT: '#10B981', // Emerald 500
+        },
+        warning: {
+          DEFAULT: '#F59E0B', // Amber 500
+        },
+        danger: {
+          DEFAULT: '#EF4444', // Red 500
+        },
       }
     },
   },
