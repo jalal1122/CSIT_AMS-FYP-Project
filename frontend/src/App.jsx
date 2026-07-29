@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { lazy, Suspense } from "react";
 import { selectIsAuthenticated, selectCurrentUser } from "./store/slices/authSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
+import AdminLayout from "./components/layout/AdminLayout.jsx";
 
 // Auth Pages
 const Login = lazy(() => import("./pages/auth/Login.jsx"));
@@ -55,15 +56,15 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Admin */}
-          <Route path="/admin/dashboard" element={<PrivateRoute allowedRoles={["admin"]}><AdminDashboard /></PrivateRoute>} />
-          <Route path="/admin/foundation" element={<PrivateRoute allowedRoles={["admin"]}><Foundation /></PrivateRoute>} />
-          <Route path="/admin/curriculum" element={<PrivateRoute allowedRoles={["admin"]}><Curriculum /></PrivateRoute>} />
-          <Route path="/admin/faculty" element={<PrivateRoute allowedRoles={["admin"]}><Faculty /></PrivateRoute>} />
-          <Route path="/admin/batch/create" element={<PrivateRoute allowedRoles={["admin"]}><BatchCreate /></PrivateRoute>} />
-          <Route path="/admin/allocation" element={<PrivateRoute allowedRoles={["admin"]}><Allocation /></PrivateRoute>} />
-          <Route path="/admin/promotion" element={<PrivateRoute allowedRoles={["admin"]}><Promotion /></PrivateRoute>} />
-          <Route path="/admin/students" element={<PrivateRoute allowedRoles={["admin"]}><Students /></PrivateRoute>} />
-          <Route path="/admin/reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminReports /></PrivateRoute>} />
+          <Route path="/admin/dashboard" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminDashboard /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/foundation" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Foundation /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/curriculum" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Curriculum /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/faculty" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Faculty /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/batch/create" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><BatchCreate /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/allocation" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Allocation /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/promotion" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Promotion /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/students" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Students /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminReports /></AdminLayout></PrivateRoute>} />
 
           {/* Teacher */}
           <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherDashboard /></PrivateRoute>} />
