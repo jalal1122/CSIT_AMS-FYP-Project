@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Check, ClipboardList, AlertTriangle } from "lucide-react";
+import { Check, ClipboardList, AlertTriangle, AlertCircle } from "lucide-react";
+import EmptyState from "../../components/shared/EmptyState";
+import Badge from "../../components/shared/Badge";
 
 export default function Allocation() {
   const [selectedBatch, setSelectedBatch] = useState("");
@@ -22,25 +24,25 @@ export default function Allocation() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-text-primary">Course Allocations</h2>
-          <p className="text-text-muted">Assign teachers to specific sections for the active semester</p>
+          <h2 className="text-2xl font-bold text-slate-800">Course Allocations</h2>
+          <p className="text-slate-500 text-sm mt-1">Assign teachers to specific sections for the active semester</p>
         </div>
-        <button className="bg-gradient-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90">
+        <button className="btn-primary flex items-center gap-2 whitespace-nowrap">
           <Check className="w-4 h-4" /> Save Allocations
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
         
         {/* Panel 1: Batch Selector */}
-        <div className="lg:col-span-1 glass p-6 h-fit">
-          <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-primary" /> Target Batch
+        <div className="xl:col-span-1 card p-6 sticky top-6">
+          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-sky-500" /> Target Batch
           </h3>
           <select 
-            className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary mb-4"
+            className="input w-full cursor-pointer shadow-sm"
             value={selectedBatch}
             onChange={e => setSelectedBatch(e.target.value)}
           >
@@ -49,42 +51,55 @@ export default function Allocation() {
           </select>
           
           {selectedBatch && (
-            <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg text-primary">
-              <p className="font-medium text-sm">Semester 3</p>
-              <p className="text-xs opacity-80 mt-1">Found 5 subjects in curriculum. 120 total students across 3 sections.</p>
+            <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-xl">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sky-800 font-semibold text-sm">Semester 3</span>
+                <Badge variant="info">Active</Badge>
+              </div>
+              <p className="text-xs text-sky-700 leading-relaxed">
+                Found <strong>5 subjects</strong> in curriculum. <strong>120 total students</strong> across 3 sections.
+              </p>
             </div>
           )}
         </div>
 
         {/* Panel 2 & 3: Subjects & Sections */}
-        <div className="lg:col-span-3 glass p-6 min-h-[500px]">
+        <div className="xl:col-span-3 card p-0 overflow-hidden min-h-[500px]">
           {!selectedBatch ? (
-            <div className="h-full flex flex-col items-center justify-center text-text-muted">
-              <AlertTriangle className="w-12 h-12 mb-4 opacity-50" />
-              <p>Please select a batch from the sidebar to load its curriculum.</p>
+            <div className="h-[500px] flex items-center justify-center">
+              <EmptyState 
+                icon={ClipboardList} 
+                title="No Batch Selected" 
+                subtitle="Please select a batch from the sidebar to load its curriculum and begin allocation." 
+              />
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="p-6 space-y-8 bg-slate-50/50">
               {subjects.map(subject => (
-                <div key={subject.id} className="border border-white/10 rounded-xl overflow-hidden bg-surface-light/30">
-                  <div className="p-4 bg-surface-light border-b border-white/10 flex justify-between items-center">
+                <div key={subject.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                      <h4 className="font-bold text-white text-lg">{subject.name}</h4>
-                      <p className="text-xs text-text-muted font-mono mt-1">{subject.code} • {subject.credits} Credit Hours</p>
+                      <h4 className="font-bold text-slate-800 text-lg">{subject.name}</h4>
+                      <p className="text-sm text-slate-500 font-mono mt-0.5"><span className="text-sky-600 font-semibold">{subject.code}</span> • {subject.credits} Credit Hours</p>
                     </div>
                   </div>
                   
-                  <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                     {subject.sections.map(section => (
-                      <div key={`${subject.id}-${section}`} className="bg-surface p-4 rounded-lg border border-white/5 shadow-sm">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="font-bold text-white">Section {section}</span>
-                          <span className="text-xs text-text-muted bg-white/5 px-2 py-1 rounded">40 Students</span>
+                      <div key={`${subject.id}-${section}`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group">
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="font-bold text-slate-800 text-lg">Section {section}</span>
+                          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">40 Students</span>
                         </div>
-                        <select className="w-full bg-surface-light border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:ring-1 focus:ring-primary">
-                          <option value="">Unassigned</option>
-                          {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                        </select>
+                        <div className="relative">
+                          <select className="input w-full cursor-pointer appearance-none bg-slate-50 border-slate-200 focus:bg-white text-sm">
+                            <option value="">Unassigned</option>
+                            {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>

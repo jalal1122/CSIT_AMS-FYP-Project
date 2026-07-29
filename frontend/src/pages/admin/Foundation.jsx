@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDepartments, createDepartment, fetchSubjects, createSubject, clearError } from "../../../store/slices/systemSlice.js";
-import { Building2, Book, Plus, Trash2, Archive } from "lucide-react";
+import { Building2, Book, Plus, Trash2, Archive, Pencil } from "lucide-react";
+import Badge from "../../components/shared/Badge";
+import EmptyState from "../../components/shared/EmptyState";
 
 export default function Foundation() {
   const [activeTab, setActiveTab] = useState("departments");
@@ -17,131 +19,139 @@ export default function Foundation() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-text-primary">Foundation</h2>
-          <p className="text-text-muted">Manage Departments, Disciplines, and Subjects</p>
+          <h2 className="text-2xl font-bold text-slate-800">Foundation</h2>
+          <p className="text-slate-500 text-sm mt-1">Manage Departments, Disciplines, and Subjects</p>
         </div>
         {activeTab === "departments" && (
-          <button className="bg-gradient-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90">
+          <button className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Department
           </button>
         )}
         {activeTab === "subjects" && (
-          <button className="bg-gradient-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90">
+          <button className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Subject
           </button>
         )}
       </div>
 
       {error && (
-        <div className="p-4 bg-danger/10 border border-danger/20 rounded-lg text-danger text-sm">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 text-sm">
           {error}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex space-x-1 border-b border-white/10 mb-6">
+      <div className="flex space-x-2 border-b border-slate-200 mb-6">
         <button
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === "departments"
-              ? "border-primary text-primary"
-              : "border-transparent text-text-muted hover:text-white"
+              ? "border-sky-500 text-sky-600"
+              : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
           }`}
           onClick={() => setActiveTab("departments")}
         >
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            Departments
-          </div>
+          <Building2 className="w-4 h-4" />
+          Departments
         </button>
         <button
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
             activeTab === "subjects"
-              ? "border-primary text-primary"
-              : "border-transparent text-text-muted hover:text-white"
+              ? "border-sky-500 text-sky-600"
+              : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
           }`}
           onClick={() => setActiveTab("subjects")}
         >
-          <div className="flex items-center gap-2">
-            <Book className="w-4 h-4" />
-            Subjects
-          </div>
+          <Book className="w-4 h-4" />
+          Subjects
         </button>
       </div>
 
       {/* Content */}
-      <div className="glass overflow-hidden">
-        {isLoading && <div className="p-8 text-center text-text-muted">Loading...</div>}
+      <div className="card p-0 overflow-hidden">
+        {isLoading && <div className="p-12 text-center text-slate-500">Loading...</div>}
         
         {!isLoading && activeTab === "departments" && (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-surface-light border-b border-white/10 text-text-muted text-sm uppercase tracking-wider">
-                <th className="p-4 font-semibold">Code</th>
-                <th className="p-4 font-semibold">Name</th>
-                <th className="p-4 font-semibold">Disciplines</th>
-                <th className="p-4 font-semibold">Batches</th>
-                <th className="p-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {departments.length === 0 ? (
-                <tr><td colSpan="5" className="p-8 text-center text-text-muted">No departments found.</td></tr>
-              ) : (
-                departments.map((dept) => (
-                  <tr key={dept._id} className="hover:bg-white/5 transition-colors group">
-                    <td className="p-4 font-mono text-primary font-medium">{dept.code}</td>
-                    <td className="p-4 text-white font-medium">{dept.name}</td>
-                    <td className="p-4 text-text-muted">0</td>
-                    <td className="p-4 text-text-muted">0</td>
-                    <td className="p-4 text-right">
-                      <button className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Delete Department">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+          <div className="overflow-x-auto">
+            {departments.length === 0 ? (
+              <EmptyState icon={Building2} title="No departments found" subtitle="Get started by creating a new department." actionLabel="New Department" />
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-sky-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4">Code</th>
+                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4">Disciplines</th>
+                    <th className="px-6 py-4">Batches</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {departments.map((dept) => (
+                    <tr key={dept._id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4 text-sm font-mono text-sky-600 font-medium bg-sky-50/30">{dept.code}</td>
+                      <td className="px-6 py-4 text-sm text-slate-800 font-medium">{dept.name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">0</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">0</td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Edit Department">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors" title="Delete Department">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         )}
 
         {!isLoading && activeTab === "subjects" && (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-surface-light border-b border-white/10 text-text-muted text-sm uppercase tracking-wider">
-                <th className="p-4 font-semibold">Code</th>
-                <th className="p-4 font-semibold">Name</th>
-                <th className="p-4 font-semibold">Credits</th>
-                <th className="p-4 font-semibold">Status</th>
-                <th className="p-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {subjects.length === 0 ? (
-                <tr><td colSpan="5" className="p-8 text-center text-text-muted">No subjects found.</td></tr>
-              ) : (
-                subjects.map((sub) => (
-                  <tr key={sub._id} className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 font-mono text-secondary font-medium">{sub.code}</td>
-                    <td className="p-4 text-white font-medium">{sub.name}</td>
-                    <td className="p-4 text-text-muted">{sub.creditHours}</td>
-                    <td className="p-4">
-                      {sub.isArchived ? (
-                        <span className="px-2 py-1 bg-surface-light text-text-muted rounded text-xs">Archived</span>
-                      ) : (
-                        <span className="px-2 py-1 bg-secondary/10 text-secondary rounded text-xs border border-secondary/20">Active</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button className="p-2 text-text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors" title="Archive Subject">
-                        <Archive className="w-4 h-4" />
-                      </button>
-                    </td>
+          <div className="overflow-x-auto">
+            {subjects.length === 0 ? (
+              <EmptyState icon={Book} title="No subjects found" subtitle="Get started by creating a new subject." actionLabel="New Subject" />
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-sky-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                    <th className="px-6 py-4">Code</th>
+                    <th className="px-6 py-4">Name</th>
+                    <th className="px-6 py-4">Credits</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {subjects.map((sub) => (
+                    <tr key={sub._id} className="hover:bg-slate-50 transition-colors group">
+                      <td className="px-6 py-4 text-sm font-mono text-emerald-600 font-medium bg-emerald-50/30">{sub.code}</td>
+                      <td className="px-6 py-4 text-sm text-slate-800 font-medium">{sub.name}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{sub.creditHours}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant={sub.isArchived ? 'neutral' : 'success'}>
+                          {sub.isArchived ? 'Archived' : 'Active'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Edit Subject">
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors" title="Archive Subject">
+                            <Archive className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         )}
       </div>
     </div>

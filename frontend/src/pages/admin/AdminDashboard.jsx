@@ -1,95 +1,111 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend
+  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
 } from "recharts";
-import { Users, BookOpen, GraduationCap, Radio } from "lucide-react";
-// import api from "../../../services/api"; // For real data fetching later
+import StatCard from "../../components/shared/StatCard";
+import Badge from "../../components/shared/Badge";
 
 export default function AdminDashboard() {
   const { user } = useSelector(state => state.auth);
-  const [stats, setStats] = useState({
-    totalStudents: 1240,
-    totalTeachers: 45,
-    activeBatches: 8,
-    liveSessions: 3
-  });
+  
+  const stats = [
+    { label: "Total Users",      value: "12,450", gradient: "from-slate-700 to-slate-900" },
+    { label: "Classes",          value: "342",    gradient: "from-sky-400 to-sky-600" },
+    { label: "Students",         value: "11,200", gradient: "from-emerald-400 to-emerald-600" },
+    { label: "Teachers",         value: "850",    gradient: "from-violet-400 to-violet-600" },
+    { label: "Admins",           value: "24",     gradient: "from-fuchsia-400 to-fuchsia-600" },
+    { label: "Active Sessions",  value: "156",    gradient: "from-amber-400 to-amber-600" },
+  ];
 
-  const [trendData, setTrendData] = useState([
-    { name: "Mon", attendance: 85 },
-    { name: "Tue", attendance: 88 },
-    { name: "Wed", attendance: 82 },
-    { name: "Thu", attendance: 90 },
-    { name: "Fri", attendance: 78 }
-  ]);
+  const pieData = [
+    { name: "Students", value: 11200 },
+    { name: "Teachers", value: 850 },
+    { name: "Admins", value: 24 }
+  ];
+  const PIE_COLORS = ['#10B981', '#0EA5E9', '#8B5CF6']; // emerald, sky, violet
 
-  const [defaulterData, setDefaulterData] = useState([
-    { name: "BSIT", defaulters: 12 },
-    { name: "BSCS", defaulters: 18 },
-    { name: "BSSE", defaulters: 8 }
-  ]);
+  const barData = [
+    { name: "B1", students: 4000 },
+    { name: "B2", students: 3000 },
+    { name: "B3", students: 2000 },
+    { name: "B4", students: 1500 },
+    { name: "B5", students: 700 }
+  ];
 
-  const [pieData, setPieData] = useState([
-    { name: "Present", value: 850 },
-    { name: "Absent", value: 390 }
-  ]);
-
-  const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#4F46E5'];
+  const recentClasses = [
+    { id: 1, name: "CS101 - Intro to Programming", batch: "Batch 2024-A", teacher: "Dr. Smith", status: "Active" },
+    { id: 2, name: "MAT202 - Linear Algebra", batch: "Batch 2023-B", teacher: "Prof. Johnson", status: "Active" },
+    { id: 3, name: "ENG105 - Academic Writing", batch: "Batch 2024-C", teacher: "Dr. Williams", status: "Inactive" },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-text-primary">Dashboard Overview</h2>
-          <p className="text-text-muted">Welcome back, {user?.name}</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
+        <p className="text-slate-500 text-sm mt-1">System overview and real-time management</p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Active Students" value={stats.totalStudents} icon={<Users className="w-6 h-6 text-primary" />} />
-        <StatCard title="Total Teachers" value={stats.totalTeachers} icon={<BookOpen className="w-6 h-6 text-secondary" />} />
-        <StatCard title="Active Batches" value={stats.activeBatches} icon={<GraduationCap className="w-6 h-6 text-accent" />} />
-        <StatCard title="Live Sessions" value={stats.liveSessions} icon={<Radio className="w-6 h-6 text-danger" />} />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {stats.map((stat, i) => (
+          <StatCard key={i} title={stat.label} value={stat.value} gradient={stat.gradient} />
+        ))}
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        {/* Trend Chart */}
-        <div className="glass p-6">
-          <h3 className="text-lg font-bold text-text-primary mb-4">Attendance Trend (Last 7 Days)</h3>
-          <div className="h-64">
+        {/* User Distribution */}
+        <div className="card">
+          <h3 className="text-lg font-bold text-slate-800 mb-6">User Distribution</h3>
+          <div className="h-64 relative flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff1a" vertical={false} />
-                <XAxis dataKey="name" stroke="#94A3B8" />
-                <YAxis stroke="#94A3B8" />
+              <PieChart>
+                <Pie 
+                  data={pieData} 
+                  cx="50%" cy="50%" 
+                  innerRadius={70} outerRadius={90} 
+                  paddingAngle={2} 
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: '#1E1B4B', borderColor: '#4F46E5', borderRadius: '8px' }} 
-                  itemStyle={{ color: '#F9FAFB' }} 
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  itemStyle={{ color: '#475569' }}
                 />
-                <Line type="monotone" dataKey="attendance" stroke="#4F46E5" strokeWidth={3} dot={{ fill: '#4F46E5', strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
+              </PieChart>
             </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total</span>
+              <span className="text-xl font-bold text-slate-800">12.4k</span>
+            </div>
+          </div>
+          <div className="flex justify-center gap-6 mt-4">
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-sm text-slate-600">Students</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-sky-500"></div><span className="text-sm text-slate-600">Teachers</span></div>
+            <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-violet-500"></div><span className="text-sm text-slate-600">Admins</span></div>
           </div>
         </div>
 
-        {/* Defaulter Chart */}
-        <div className="glass p-6">
-          <h3 className="text-lg font-bold text-text-primary mb-4">Defaulter Rate by Department</h3>
+        {/* Students per Batch */}
+        <div className="card">
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Students per Batch</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={defaulterData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff1a" vertical={false} />
-                <XAxis dataKey="name" stroke="#94A3B8" />
-                <YAxis stroke="#94A3B8" />
+              <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" axisLine={false} tickLine={false} />
+                <YAxis stroke="#94a3b8" axisLine={false} tickLine={false} />
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: '#1E1B4B', borderColor: '#4F46E5', borderRadius: '8px' }}
-                  cursor={{ fill: 'transparent' }}
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
-                <Bar dataKey="defaulters" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="students" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -97,63 +113,81 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pie Chart */}
-        <div className="glass p-6 lg:col-span-1">
-          <h3 className="text-lg font-bold text-text-primary mb-4">Overall Today</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip contentStyle={{ backgroundColor: '#1E1B4B', borderColor: '#4F46E5', borderRadius: '8px' }} />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
+        
+        {/* Recent Classes Table */}
+        <div className="card lg:col-span-2 p-0 overflow-hidden">
+          <div className="bg-sky-500 px-6 py-4">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Recent Classes</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-sky-50/50 border-b border-slate-100 text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                  <th className="px-6 py-3">Class Name</th>
+                  <th className="px-6 py-3">Batch</th>
+                  <th className="px-6 py-3">Teacher</th>
+                  <th className="px-6 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentClasses.map((cls) => (
+                  <tr key={cls.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-slate-700 font-medium">{cls.name}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{cls.batch}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{cls.teacher}</td>
+                    <td className="px-6 py-4">
+                      <Badge variant={cls.status === "Active" ? "info" : "neutral"}>
+                        {cls.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Recent Activity Feed */}
-        <div className="glass p-6 lg:col-span-2">
-          <h3 className="text-lg font-bold text-text-primary mb-4">Live Sessions Right Now</h3>
-          <div className="space-y-4">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="flex items-center gap-4 p-4 bg-surface-light rounded-lg border border-white/5">
-                <div className="w-10 h-10 rounded-full bg-danger/20 flex items-center justify-center flex-shrink-0 animate-pulse">
-                  <Radio className="w-5 h-5 text-danger" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-white font-medium">CS301 - Data Structures (Sec A)</h4>
-                  <p className="text-sm text-text-muted">Prof. Ali Khan • Started 10 mins ago</p>
-                </div>
-                <div className="text-right">
-                  <span className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold">
-                    18 / 45 Present
-                  </span>
-                </div>
+        {/* System Health */}
+        <div className="card">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-slate-800">System Health</h3>
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+          </div>
+          
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-600 font-medium">CPU Usage</span>
+                <span className="text-slate-800 font-bold">42%</span>
               </div>
-            ))}
-            {stats.liveSessions === 0 && (
-              <div className="text-center p-6 text-text-muted">No live sessions currently running.</div>
-            )}
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-sky-500 w-[42%] rounded-full"></div>
+              </div>
+            </div>
+            
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-600 font-medium">Memory Usage</span>
+                <span className="text-slate-800 font-bold">68%</span>
+              </div>
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-sky-500 w-[68%] rounded-full"></div>
+              </div>
+            </div>
+            
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-600 font-medium">Server Uptime</span>
+                <span className="text-slate-800 font-bold">99.9%</span>
+              </div>
+              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-sky-500 w-[99.9%] rounded-full"></div>
+              </div>
+              <p className="text-xs text-right text-slate-400 mt-2">94 days, 12 hours</p>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function StatCard({ title, value, icon }) {
-  return (
-    <div className="glass p-6 flex items-center justify-between">
-      <div>
-        <p className="text-text-muted text-sm font-medium mb-1">{title}</p>
-        <h3 className="text-3xl font-bold text-white">{value}</h3>
-      </div>
-      <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
-        {icon}
       </div>
     </div>
   );

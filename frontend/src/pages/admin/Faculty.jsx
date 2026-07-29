@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Users, Plus, Edit2, UserX } from "lucide-react";
+import { Users, Plus, Key, Eye, UserX, Search } from "lucide-react";
+import Badge from "../../components/shared/Badge";
 
 export default function Faculty() {
   const [teachers, setTeachers] = useState([
@@ -10,63 +11,74 @@ export default function Faculty() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-text-primary">Faculty Management</h2>
-          <p className="text-text-muted">Manage teacher accounts and access</p>
+          <h2 className="text-2xl font-bold text-slate-800">Faculty Management</h2>
+          <p className="text-slate-500 text-sm mt-1">Manage teacher accounts and access</p>
         </div>
-        <button className="bg-gradient-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:opacity-90">
-          <Plus className="w-4 h-4" /> Add Teacher
-        </button>
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input type="text" placeholder="Search faculty..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+          </div>
+          <button className="btn-primary flex items-center gap-2 whitespace-nowrap">
+            <Plus className="w-4 h-4" /> Add Teacher
+          </button>
+        </div>
       </div>
 
-      <div className="glass overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-surface-light border-b border-white/10 text-text-muted text-sm uppercase tracking-wider">
-              <th className="p-4 font-semibold">Name</th>
-              <th className="p-4 font-semibold">Employee ID</th>
-              <th className="p-4 font-semibold">Department</th>
-              <th className="p-4 font-semibold">Active Classes</th>
-              <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {teachers.map((teacher) => (
-              <tr key={teacher._id} className="hover:bg-white/5 transition-colors">
-                <td className="p-4 text-white font-medium flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                    {teacher.name.charAt(0)}
-                  </div>
-                  {teacher.name}
-                </td>
-                <td className="p-4 font-mono text-text-muted">{teacher.username}</td>
-                <td className="p-4 text-text-muted">{teacher.department}</td>
-                <td className="p-4">
-                  <span className="px-2 py-1 bg-surface-light rounded-md text-xs text-white">
-                    {teacher.activeAllocations} Allocations
-                  </span>
-                </td>
-                <td className="p-4">
-                  {teacher.accountStatus === "Active" ? (
-                    <span className="px-2 py-1 bg-secondary/10 text-secondary border border-secondary/20 rounded-full text-xs">Active</span>
-                  ) : (
-                    <span className="px-2 py-1 bg-danger/10 text-danger border border-danger/20 rounded-full text-xs">Inactive</span>
-                  )}
-                </td>
-                <td className="p-4 text-right space-x-2">
-                  <button className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit Teacher">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Offboard Teacher">
-                    <UserX className="w-4 h-4" />
-                  </button>
-                </td>
+      <div className="card p-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-sky-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">Employee ID</th>
+                <th className="px-6 py-4">Department</th>
+                <th className="px-6 py-4">Active Classes</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {teachers.map((teacher) => (
+                <tr key={teacher._id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="px-6 py-4 text-sm text-slate-800 font-medium flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200 shrink-0">
+                      {teacher.name.charAt(0)}
+                    </div>
+                    {teacher.name}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-mono text-slate-500">{teacher.username}</td>
+                  <td className="px-6 py-4 text-sm text-slate-600">{teacher.department}</td>
+                  <td className="px-6 py-4">
+                    <span className="px-2.5 py-1 bg-slate-100 rounded-md text-xs text-slate-600 font-medium border border-slate-200">
+                      {teacher.activeAllocations} Allocations
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant={teacher.accountStatus === "Active" ? "success" : "neutral"}>
+                      {teacher.accountStatus}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors" title="Reset Password">
+                        <Key className="w-4 h-4" />
+                      </button>
+                      <button className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="View Details">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors" title="Offboard Teacher">
+                        <UserX className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

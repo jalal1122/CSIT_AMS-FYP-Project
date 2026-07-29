@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Check, UploadCloud, FileSpreadsheet, ChevronRight, AlertCircle } from "lucide-react";
+import { Check, UploadCloud, FileSpreadsheet, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import * as xlsx from "xlsx";
 
 export default function BatchCreate() {
@@ -47,32 +47,41 @@ export default function BatchCreate() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-text-primary">Create New Batch</h2>
-        <p className="text-text-muted mt-2">Initialize a new batch, upload student roster, and auto-generate sections.</p>
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Create New Batch</h2>
+        <p className="text-slate-500 mt-2 text-lg">Initialize a new batch, upload student roster, and auto-generate sections.</p>
       </div>
 
       {/* Stepper Header */}
-      <div className="flex items-center justify-between mb-8 px-4 relative">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-white/10 -z-10"></div>
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-primary -z-10 transition-all duration-300" style={{ width: `${((step - 1) / 5) * 100}%` }}></div>
+      <div className="flex items-center justify-between mb-8 px-4 relative max-w-2xl mx-auto">
+        <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-1 bg-slate-100 -z-10 rounded-full"></div>
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 h-1 bg-sky-500 -z-10 transition-all duration-500 ease-out rounded-full" style={{ width: `calc(${((step - 1) / 5) * 100}% - 2rem)` }}></div>
         
-        {[1, 2, 3, 4, 5, 6].map((num) => (
-          <div key={num} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
-            step >= num ? "bg-primary text-white" : "bg-surface-light text-text-muted border border-white/20"
-          }`}>
-            {step > num ? <Check className="w-5 h-5" /> : num}
-          </div>
-        ))}
+        {[1, 2, 3, 4, 5, 6].map((num) => {
+          const isCompleted = step > num;
+          const isActive = step === num;
+          
+          return (
+            <div key={num} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+              isCompleted 
+                ? "bg-sky-500 text-white shadow-md shadow-sky-200" 
+                : isActive 
+                  ? "bg-white text-sky-600 border-2 border-sky-500 shadow-sm" 
+                  : "bg-white text-slate-400 border-2 border-slate-200"
+            }`}>
+              {isCompleted ? <Check className="w-5 h-5" /> : num}
+            </div>
+          )
+        })}
       </div>
 
-      <div className="glass p-8 min-h-[400px] flex flex-col">
-        <div className="flex-1">
+      <div className="card p-8 md:p-12 min-h-[400px] flex flex-col shadow-lg border-slate-200/60 max-w-2xl mx-auto w-full">
+        <div className="flex-1 flex flex-col justify-center">
           {step === 1 && (
-            <div className="space-y-4 animate-in fade-in">
-              <h3 className="text-xl font-medium text-white mb-4">Select Department</h3>
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">Select Department</h3>
               <select 
-                className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary"
+                className="input text-lg py-3 shadow-sm cursor-pointer"
                 value={formData.department}
                 onChange={e => setFormData({...formData, department: e.target.value})}
               >
@@ -83,10 +92,10 @@ export default function BatchCreate() {
           )}
 
           {step === 2 && (
-            <div className="space-y-4 animate-in fade-in">
-              <h3 className="text-xl font-medium text-white mb-4">Select Discipline</h3>
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">Select Discipline</h3>
               <select 
-                className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary"
+                className="input text-lg py-3 shadow-sm cursor-pointer"
                 value={formData.discipline}
                 onChange={e => setFormData({...formData, discipline: e.target.value})}
               >
@@ -97,80 +106,96 @@ export default function BatchCreate() {
           )}
 
           {step === 3 && (
-            <div className="space-y-4 animate-in fade-in">
-              <h3 className="text-xl font-medium text-white mb-4">Section Capacity</h3>
-              <p className="text-text-muted mb-4">How many students maximum per section? Sections (A, B, C...) will be auto-generated based on total roster size.</p>
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">Section Capacity</h3>
+              <p className="text-slate-500 mb-6 text-center text-sm">How many students maximum per section? Sections (A, B, C...) will be auto-generated based on total roster size.</p>
+              
               <input 
                 type="number"
                 min="10"
                 max="200"
-                className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-primary"
+                className="input text-lg py-3 text-center font-semibold shadow-sm"
                 value={formData.capacity}
                 onChange={e => setFormData({...formData, capacity: parseInt(e.target.value) || 50})}
               />
-              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg mt-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <p className="text-sm text-primary-light">Example: If you upload 120 students with a capacity of 50, the system will create Section A (50), Section B (50), and Section C (20).</p>
+              
+              <div className="p-4 bg-sky-50 border border-sky-100 rounded-xl mt-6 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-sky-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-sky-800"><strong>Example:</strong> If you upload 120 students with a capacity of 50, the system will create Section A (50), Section B (50), and Section C (20).</p>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="space-y-6 animate-in fade-in">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-medium text-white">Upload Student Roster</h3>
-                <button onClick={downloadTemplate} className="text-sm text-secondary hover:text-white flex items-center gap-1 transition-colors">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-bold text-slate-800">Upload Student Roster</h3>
+                <button onClick={downloadTemplate} className="text-sm text-sky-600 hover:text-sky-700 hover:underline flex items-center gap-1 transition-colors font-medium">
                   <FileSpreadsheet className="w-4 h-4" /> Download Template
                 </button>
               </div>
               
               <div 
                 {...getRootProps()} 
-                className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${
-                  isDragActive ? "border-primary bg-primary/5" : "border-white/20 hover:border-white/40 bg-surface-light"
+                className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200 ${
+                  isDragActive 
+                    ? "border-sky-500 bg-sky-50 scale-[1.02]" 
+                    : "border-slate-300 hover:border-sky-400 bg-slate-50 hover:bg-slate-50/50"
                 }`}
               >
                 <input {...getInputProps()} />
-                <UploadCloud className={`w-12 h-12 mx-auto mb-4 ${isDragActive ? "text-primary" : "text-text-muted"}`} />
-                <p className="text-lg font-medium text-white mb-1">Drag & drop your Excel file here</p>
-                <p className="text-sm text-text-muted">or click to browse from computer (.xlsx or .csv)</p>
+                <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 transition-colors ${isDragActive ? "bg-sky-100 text-sky-600" : "bg-white text-slate-400 shadow-sm"}`}>
+                  <UploadCloud className="w-8 h-8" />
+                </div>
+                <p className="text-lg font-bold text-slate-700 mb-1">Drag & drop your Excel file here</p>
+                <p className="text-sm text-slate-500">or click to browse from computer (.xlsx or .csv)</p>
               </div>
 
               {formData.file && (
-                <div className="p-4 bg-white/5 border border-white/10 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileSpreadsheet className="w-6 h-6 text-secondary" />
+                <div className="p-4 bg-white border border-emerald-200 rounded-xl flex items-center justify-between shadow-sm animate-in zoom-in-95">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                    </div>
                     <div>
-                      <p className="font-medium text-white">{formData.file.name}</p>
-                      <p className="text-xs text-text-muted">{(formData.file.size / 1024).toFixed(1)} KB</p>
+                      <p className="font-bold text-slate-700">{formData.file.name}</p>
+                      <p className="text-xs text-slate-500 font-medium">{(formData.file.size / 1024).toFixed(1)} KB</p>
                     </div>
                   </div>
-                  <Check className="w-5 h-5 text-secondary" />
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check className="w-5 h-5 text-emerald-600" />
+                  </div>
                 </div>
               )}
             </div>
           )}
 
           {step === 5 && (
-            <div className="space-y-8 animate-in fade-in flex flex-col items-center justify-center py-12">
-              <div className="w-16 h-16 border-4 border-white/10 border-t-primary rounded-full animate-spin"></div>
+            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center py-12">
+              <div className="relative">
+                <div className="w-20 h-20 border-4 border-slate-100 rounded-full"></div>
+                <div className="w-20 h-20 border-4 border-sky-500 rounded-full border-t-transparent animate-spin absolute inset-0"></div>
+                <Loader2 className="w-8 h-8 text-sky-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+              </div>
               <div className="text-center">
-                <h3 className="text-xl font-medium text-white mb-2">Processing Roster...</h3>
-                <p className="text-text-muted">Parsing 120 rows and generating 3 sections.</p>
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">Processing Roster...</h3>
+                <p className="text-slate-500">Parsing rows and generating sections.</p>
               </div>
               {/* In a real scenario, this step auto-advances when API is done */}
-              <button onClick={nextStep} className="text-xs text-text-muted hover:text-white mt-8">(Simulate Completion)</button>
+              <button onClick={nextStep} className="text-xs text-slate-400 hover:text-sky-500 mt-8 underline underline-offset-4">(Simulate Completion)</button>
             </div>
           )}
 
           {step === 6 && (
-            <div className="space-y-6 animate-in fade-in text-center py-8">
-              <div className="w-20 h-20 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="w-10 h-10 text-secondary" />
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 text-center py-12">
+              <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
+                  <Check className="w-8 h-8 text-white" strokeWidth={3} />
+                </div>
               </div>
-              <h3 className="text-3xl font-bold text-white mb-2">Batch Created Successfully!</h3>
-              <p className="text-text-muted max-w-md mx-auto mb-8">
-                BS Information Technology 2026 has been initialized with 120 students across 3 sections (A, B, C).
+              <h3 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Batch Created Successfully!</h3>
+              <p className="text-slate-500 max-w-md mx-auto mb-8 text-lg">
+                BS Information Technology has been initialized with 120 students across 3 sections (A, B, C).
               </p>
             </div>
           )}
@@ -178,18 +203,18 @@ export default function BatchCreate() {
 
         {/* Footer Navigation */}
         {step < 5 && (
-          <div className="flex justify-between items-center mt-8 pt-6 border-t border-white/10">
+          <div className="flex justify-between items-center mt-12 pt-6 border-t border-slate-100">
             <button 
               onClick={prevStep} 
               disabled={step === 1}
-              className="px-6 py-2.5 rounded-lg font-medium text-text-muted hover:text-white hover:bg-white/5 transition-colors disabled:opacity-0"
+              className="btn-secondary disabled:opacity-0 disabled:pointer-events-none"
             >
               Back
             </button>
             <button 
               onClick={nextStep}
               disabled={(step === 1 && !formData.department) || (step === 2 && !formData.discipline) || (step === 4 && !formData.file)}
-              className="bg-gradient-primary text-white px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="btn-primary flex items-center gap-2"
             >
               Continue <ChevronRight className="w-4 h-4" />
             </button>
@@ -197,8 +222,8 @@ export default function BatchCreate() {
         )}
         
         {step === 6 && (
-          <div className="flex justify-center mt-8 pt-6 border-t border-white/10">
-            <button className="bg-gradient-primary text-white px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+          <div className="flex justify-center mt-8 pt-6 border-t border-slate-100">
+            <button className="btn-primary px-8 py-3 text-lg">
               Go to Allocations
             </button>
           </div>
