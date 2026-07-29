@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #4F46E5;       /* Indigo 600 */
+  --primary-dark: #3730A3;  /* Indigo 800 */
+  --secondary: #10B981;     /* Emerald 500 */
+  --accent: #F59E0B;        /* Amber 500 */
+  --danger: #EF4444;        /* Red 500 */
+  --surface: #1E1B4B;       /* Deep Indigo */
+  --surface-light: #2D2A6E;
+  --text-primary: #F9FAFB;
+  --text-muted: #94A3B8;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--text-primary);
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+}
+
+/* Shimmer loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #2D2A6E 25%, #3730A3 50%, #2D2A6E 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
