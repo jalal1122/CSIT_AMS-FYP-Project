@@ -1,0 +1,93 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../../services/api.js";
+
+const initialState = {
+  departments: [],
+  subjects: [],
+  disciplines: [],
+  isLoading: false,
+  error: null,
+};
+
+export const fetchDepartments = createAsyncThunk("system/fetchDepartments", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/v2/system/departments");
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch departments");
+  }
+});
+
+export const createDepartment = createAsyncThunk("system/createDepartment", async (data, { rejectWithValue }) => {
+  try {
+    const res = await api.post("/api/v2/system/department", data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to create department");
+  }
+});
+
+export const fetchSubjects = createAsyncThunk("system/fetchSubjects", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/v2/system/subjects");
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch subjects");
+  }
+});
+
+export const createSubject = createAsyncThunk("system/createSubject", async (data, { rejectWithValue }) => {
+  try {
+    const res = await api.post("/api/v2/system/subject", data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to create subject");
+  }
+});
+
+export const fetchDisciplines = createAsyncThunk("system/fetchDisciplines", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/v2/system/disciplines");
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch disciplines");
+  }
+});
+
+export const updateSyllabus = createAsyncThunk("system/updateSyllabus", async ({ id, syllabusData }, { rejectWithValue }) => {
+  try {
+    const res = await api.put(`/api/v2/system/discipline/${id}/syllabus`, syllabusData);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to update syllabus");
+  }
+});
+
+const systemSlice = createSlice({
+  name: "system",
+  initialState,
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    }
+  },
+  extraReducers: (builder) => {
+    // Departments
+    builder.addCase(fetchDepartments.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchDepartments.fulfilled, (state, { payload }) => { state.isLoading = false; state.departments = payload; });
+    builder.addCase(fetchDepartments.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+    
+    // Subjects
+    builder.addCase(fetchSubjects.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchSubjects.fulfilled, (state, { payload }) => { state.isLoading = false; state.subjects = payload; });
+    builder.addCase(fetchSubjects.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+    
+    // Disciplines
+    builder.addCase(fetchDisciplines.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchDisciplines.fulfilled, (state, { payload }) => { state.isLoading = false; state.disciplines = payload; });
+    builder.addCase(fetchDisciplines.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+  },
+});
+
+export const { clearError } = systemSlice.actions;
+export default systemSlice.reducer;
