@@ -4,6 +4,7 @@ import systemReducer from "./slices/systemSlice.js";
 import academicReducer from "./slices/academicSlice.js";
 import sessionReducer from "./slices/sessionSlice.js";
 import analyticsReducer from "./slices/analyticsSlice.js";
+import toastReducer from "./slices/toastSlice.js";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     academic: academicReducer,
     session: sessionReducer,
     analytics: analyticsReducer,
+    toast: toastReducer,
   },
 });
 
