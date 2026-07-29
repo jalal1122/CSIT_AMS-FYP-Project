@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import api from "../../services/api.js";
 
 export default function ForgotPassword() {
@@ -25,53 +26,58 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
-      <div className="glass w-full max-w-md p-8 relative overflow-hidden">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-text-primary">Reset Password</h2>
-          <p className="text-text-muted mt-2">Enter your email to receive reset instructions</p>
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-sky-200/40 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
+
+      <div className="card w-full max-w-md p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
+        
+        <Link to="/login" className="inline-flex items-center gap-2 text-sky-600 hover:text-sky-700 font-semibold mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back to Login
+        </Link>
+
+        <div className="mb-8">
+          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Reset Password</h2>
+          <p className="text-slate-500 font-medium">Enter your email to receive reset instructions</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-danger/10 border border-danger/20 rounded text-danger text-sm text-center">
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-semibold text-center shadow-sm">
             {error}
           </div>
         )}
         
-        {message && (
-          <div className="mb-6 p-3 bg-secondary/10 border border-secondary/20 rounded text-secondary text-sm text-center">
-            {message}
+        {message ? (
+          <div className="mb-6 p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-center flex flex-col items-center gap-3 shadow-sm">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            <p className="font-semibold text-sm">{message}</p>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                className="input py-3"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full btn-primary py-3.5 text-base shadow-lg shadow-sky-500/30 font-bold"
+            >
+              {isLoading ? "Sending..." : "Send Reset Link"}
+            </button>
+          </form>
         )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-text-muted mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gradient-primary text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? "Sending..." : "Send Reset Link"}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <Link to="/login" className="text-primary hover:text-primary-dark text-sm">
-            Back to Login
-          </Link>
-        </div>
       </div>
     </div>
   );

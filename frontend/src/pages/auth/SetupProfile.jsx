@@ -21,7 +21,7 @@ export default function SetupProfile() {
   };
 
   const strength = passwordStrength(password);
-  const strengthColors = ["bg-gray-500", "bg-danger", "bg-accent", "bg-secondary", "bg-secondary"];
+  const strengthColors = ["bg-slate-300", "bg-rose-500", "bg-amber-500", "bg-emerald-500", "bg-emerald-600"];
   const strengthLabels = ["Very Weak", "Weak", "Fair", "Good", "Strong"];
 
   const handleSetup = async (e) => {
@@ -45,42 +45,47 @@ export default function SetupProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
-      <div className="glass w-full max-w-md p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-sky-200/40 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
+
+      <div className="card w-full max-w-md p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
+        
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-text-primary">Set Up Profile</h2>
-          <p className="text-text-muted mt-2">Welcome {user?.name}, please create a new password to secure your account.</p>
+          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Set Up Profile</h2>
+          <p className="text-slate-500 font-medium">Welcome {user?.name}, please create a new password to secure your account.</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-danger/10 border border-danger/20 rounded text-danger text-sm text-center">
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-semibold text-center shadow-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSetup} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-text-muted mb-2">
+            <label className="block text-sm font-bold text-slate-700 mb-2">
               New Password
             </label>
             <input
               type="password"
               required
-              className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              className="input py-3"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             {password && (
-              <div className="mt-2 flex items-center gap-2">
-                <div className="flex gap-1 flex-1">
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex gap-1.5 flex-1">
                   {[1, 2, 3, 4].map((level) => (
                     <div
                       key={level}
-                      className={`h-1.5 flex-1 rounded-full ${strength >= level ? strengthColors[strength] : 'bg-surface-light'}`}
+                      className={`h-2 flex-1 rounded-full ${strength >= level ? strengthColors[strength] : 'bg-slate-200'}`}
                     />
                   ))}
                 </div>
-                <span className={`text-xs ${strength >= 3 ? 'text-secondary' : 'text-text-muted'}`}>
+                <span className={`text-xs font-bold w-16 text-right ${strength >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}>
                   {strengthLabels[strength]}
                 </span>
               </div>
@@ -88,13 +93,13 @@ export default function SetupProfile() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-muted mb-2">
+            <label className="block text-sm font-bold text-slate-700 mb-2">
               Confirm Password
             </label>
             <input
               type="password"
               required
-              className="w-full bg-surface-light border border-white/10 rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+              className="input py-3"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />
@@ -103,7 +108,7 @@ export default function SetupProfile() {
           <button
             type="submit"
             disabled={isLoading || strength < 2 || password !== confirm}
-            className="w-full bg-gradient-primary text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full btn-success py-3.5 text-base shadow-lg shadow-emerald-500/30 font-bold disabled:opacity-50 disabled:shadow-none"
           >
             {isLoading ? "Saving..." : "Complete Setup"}
           </button>
