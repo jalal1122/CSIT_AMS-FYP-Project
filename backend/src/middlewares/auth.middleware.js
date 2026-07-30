@@ -22,7 +22,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
     // 2. mustChangePassword gate
     const SETUP_ROUTES = ["/api/v2/auth/setup-profile", "/api/v2/auth/logout"];
-    const isSetupRoute = SETUP_ROUTES.some(r => req.path.includes(r));
+    const isSetupRoute = SETUP_ROUTES.some(r => req.originalUrl.includes(r));
 
     if (decoded.mustChangePassword && !isSetupRoute) {
       throw new ApiError(403, "You must complete your profile setup before proceeding.");
@@ -44,6 +44,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    if (error instanceof ApiError) throw error;
     throw new ApiError(401, error?.message || "Invalid access token");
   }
 });

@@ -254,19 +254,11 @@ export const loginUser = asyncHandler(async (req, res) => {
  * POST /api/v2/auth/setup-profile
  */
 export const setupProfile = asyncHandler(async (req, res) => {
-  const { email, newPassword } = req.body;
+  const { newPassword } = req.body;
   const user = req.user; // from verifyJWT
 
-  if (!email || !newPassword) {
-    throw ApiError.badRequest("Email and new password are required");
-  }
-
-  // Check email uniqueness if it's changing
-  if (email.toLowerCase() !== user.email) {
-    const existing = await User.findOne({ email: email.toLowerCase() });
-    if (existing) {
-      throw ApiError.conflict("Email is already in use by another account");
-    }
+  if (!newPassword) {
+    throw ApiError.badRequest("New password is required");
   }
 
   if (newPassword.length < 6) {
@@ -278,7 +270,6 @@ export const setupProfile = asyncHandler(async (req, res) => {
   }
 
   // Update user
-  user.email = email.toLowerCase();
   user.password = newPassword;
   user.mustChangePassword = false;
   
