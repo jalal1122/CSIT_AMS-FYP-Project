@@ -64,6 +64,60 @@ export const fetchDisciplines = createAsyncThunk("system/fetchDisciplines", asyn
   }
 });
 
+export const createDiscipline = createAsyncThunk("system/createDiscipline", async (data, { rejectWithValue }) => {
+  try {
+    const res = await api.post("/api/v2/system/discipline", data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to create discipline");
+  }
+});
+
+export const updateDepartment = createAsyncThunk("system/updateDepartment", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const res = await api.put(`/api/v2/system/department/${id}`, data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to update department");
+  }
+});
+
+export const deleteDepartment = createAsyncThunk("system/deleteDepartment", async (id, { rejectWithValue }) => {
+  try {
+    await api.delete(`/api/v2/system/department/${id}`);
+    return id;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to delete department");
+  }
+});
+
+export const updateSubject = createAsyncThunk("system/updateSubject", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const res = await api.put(`/api/v2/system/subject/${id}`, data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to update subject");
+  }
+});
+
+export const updateDiscipline = createAsyncThunk("system/updateDiscipline", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const res = await api.put(`/api/v2/system/discipline/${id}`, data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to update discipline");
+  }
+});
+
+export const deleteDiscipline = createAsyncThunk("system/deleteDiscipline", async (id, { rejectWithValue }) => {
+  try {
+    await api.delete(`/api/v2/system/discipline/${id}`);
+    return id;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to delete discipline");
+  }
+});
+
 export const updateSyllabus = createAsyncThunk("system/updateSyllabus", async ({ id, syllabusData }, { rejectWithValue }) => {
   try {
     const res = await api.put(`/api/v2/system/discipline/${id}/syllabus`, syllabusData);
