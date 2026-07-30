@@ -12,10 +12,12 @@ export default function LiveSessionSecurityModal({ isOpen, onClose, sessionId, c
   const [deviceLockEnabled, setDeviceLockEnabled] = useState(true);
   const [qrRefreshRate, setQrRefreshRate] = useState(15);
   const [isSaving, setIsSaving] = useState(false);
+  const [geoEnabled, setGeoEnabled] = useState(true);
 
   useEffect(() => {
     if (currentConfig) {
       setRadius(currentConfig.radius || 50);
+      setGeoEnabled(currentConfig.radius > 0);
       setManualApproval(currentConfig.manualApproval || false);
       setIpMatchEnabled(currentConfig.ipMatchEnabled ?? true);
       setDeviceLockEnabled(currentConfig.deviceLockEnabled ?? true);
@@ -28,9 +30,10 @@ export default function LiveSessionSecurityModal({ isOpen, onClose, sessionId, c
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const finalRadius = geoEnabled ? radius : 0;
       await dispatch(updateSecuritySettings({
         sessionId,
-        settings: { radius, manualApproval, ipMatchEnabled, deviceLockEnabled, qrRefreshRate }
+        settings: { radius: finalRadius, manualApproval, ipMatchEnabled, deviceLockEnabled, qrRefreshRate }
       })).unwrap();
       onClose();
     } catch (err) {
@@ -61,31 +64,45 @@ export default function LiveSessionSecurityModal({ isOpen, onClose, sessionId, c
 
         <div className="p-6 space-y-6">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin className="w-4 h-4 text-sky-500" />
-              <label className="text-sm font-semibold text-slate-700">Geofencing Radius</label>
-            </div>
-            
-            <div className="flex items-center gap-4 mb-2">
-              <input 
-                type="range" 
-                min="10" 
-                max="200" 
-                step="10"
-                value={radius}
-                onChange={(e) => setRadius(parseInt(e.target.value))}
-                className="flex-1 accent-sky-500 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-              />
-              <span className="text-sm font-semibold text-sky-600 w-12 text-right">{radius}m</span>
-            </div>
-            
-            <div className="p-3 bg-sky-50 border border-sky-100 rounded-lg flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
-                <Crosshair className="w-4 h-4 text-sky-600" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-sky-500" />
+                <label className="text-sm font-semibold text-slate-700">Geofencing Radius</label>
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-700">Location tracking active</p>
-                <p className="text-xs text-slate-500 mt-0.5">Students must be within {radius}m of your current device coordinates.</p>
+              <div className="relative inline-flex items-center h-5 rounded-full w-9 shrink-0">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer"
+                  checked={geoEnabled}
+                  onChange={(e) => setGeoEnabled(e.target.checked)}
+                />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+              </div>
+            </div>
+            
+            <div className={`transition-opacity duration-200 ${geoEnabled ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
+              <div className="flex items-center gap-4 mb-2">
+                <input 
+                  type="range" 
+                  min="10" 
+                  max="200" 
+                  step="10"
+                  value={radius}
+                  onChange={(e) => setRadius(parseInt(e.target.value))}
+                  className="flex-1 accent-sky-500 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                  disabled={!geoEnabled}
+                />
+                <span className="text-sm font-semibold text-sky-600 w-12 text-right">{radius}m</span>
+              </div>
+              
+              <div className="p-3 bg-sky-50 border border-sky-100 rounded-lg flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
+                  <Crosshair className="w-4 h-4 text-sky-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Location tracking active</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Students must be within {radius}m of your current device coordinates.</p>
+                </div>
               </div>
             </div>
           </div>
