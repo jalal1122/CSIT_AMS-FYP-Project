@@ -163,7 +163,14 @@ export default function LiveSession() {
                       {student.name.charAt(0)}
                     </div>
                     <div>
-                      <h4 className="text-slate-800 font-bold text-sm">{student.name}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-slate-800 font-bold text-sm">{student.name}</h4>
+                        {student.isSuspicious && (
+                          <span className="flex items-center gap-1 bg-rose-100 text-rose-700 text-[10px] font-bold px-1.5 py-0.5 rounded" title={student.flagReason}>
+                            <AlertCircle className="w-3 h-3" /> Flagged
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 font-mono mt-0.5"><span className="text-slate-600 font-semibold">{student.rollNo}</span> • {student.time}</p>
                     </div>
                   </div>

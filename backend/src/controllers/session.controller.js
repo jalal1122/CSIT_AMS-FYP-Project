@@ -234,6 +234,8 @@ export const getLiveAttendance = asyncHandler(async (req, res) => {
     rollNo: att.studentId.info?.rollNo,
     status: att.status,
     time: new Date(att.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+    isSuspicious: att.isSuspicious,
+    flagReason: att.metadata?.flagReason || "",
   }));
 
   res.status(200).json(new ApiResponse(200, { liveFeed }, "Live attendance retrieved"));

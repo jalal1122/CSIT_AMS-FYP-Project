@@ -37,39 +37,49 @@ export default function ScanAttendance() {
       scannerRef.current.clear();
     }
 
-    if (!navigator.geolocation) {
-      setErrorMessage("Geolocation is not supported by your browser.");
-      setStatus("error");
-      return;
+    // Generate or get persistent device fingerprint
+    let deviceId = localStorage.getItem("attendx_device_id");
+    if (!deviceId) {
+      deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+      localStorage.setItem("attendx_device_id", deviceId);
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const res = await api.post("/api/v2/attendance/mark", {
-            qrToken: decodedText,
-            location: {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            }
-          });
-          
-          setSuccessData({
-            subject: res.data.data.subjectName,
-            section: res.data.data.sectionName,
-            time: new Date().toLocaleTimeString()
-          });
-          setStatus("success");
-        } catch (error) {
-          setErrorMessage(error.response?.data?.message || "Failed to mark attendance.");
-          setStatus("error");
+    const markWithLocation = async (lat = null, lon = null) => {
+      try {
+        const payload = { qrToken: decodedText, deviceId };
+        if (lat !== null && lon !== null) {
+          payload.location = { latitude: lat, longitude: lon };
         }
+        
+        const res = await api.post("/api/v2/attendance/mark", payload);
+        
+        setSuccessData({
+          subject: res.data.data.subjectName || "Subject",
+          section: res.data.data.sectionName || res.data.data.section,
+          time: new Date().toLocaleTimeString()
+        });
+        setStatus("success");
+      } catch (error) {
+        setErrorMessage(error.response?.data?.message || "Failed to mark attendance.");
+        setStatus("error");
+      }
+    };
+
+    if (!navigator.geolocation) {
+      // Proceed without location if not supported
+      return markWithLocation();
+    }
+
+    // Try to get location, timeout after 5 seconds
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        markWithLocation(position.coords.latitude, position.coords.longitude);
       },
       (error) => {
-        setErrorMessage("Unable to retrieve your location for verification.");
-        setStatus("error");
+        // Proceed without location, let backend decide if it's fatal
+        markWithLocation();
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
   };
 

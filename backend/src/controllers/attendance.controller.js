@@ -5,7 +5,7 @@ import Attendance from "../models/attendance.model.js";
 import Session from "../models/session.model.js";
 import CourseAllocation from "../models/courseAllocation.model.js";
 import jwt from "jsonwebtoken";
-// import { calculateDistance } from "../utils/geolocation.js";
+import { calculateDistance } from "../utils/geolocation.js";
 
 const getClientIP = (req) => {
   return req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.connection?.remoteAddress || req.ip;
@@ -15,7 +15,9 @@ const getClientIP = (req) => {
 // @route   POST /api/v2/attendance/mark
 // @access  Student
 export const markAttendance = asyncHandler(async (req, res) => {
-  const { qrToken, latitude, longitude } = req.body;
+  const { qrToken, location, deviceId } = req.body;
+  const latitude = location?.latitude;
+  const longitude = location?.longitude;
   if (!qrToken) throw new ApiError(400, "QR token is required");
 
   let decodedToken;
@@ -64,10 +66,41 @@ export const markAttendance = asyncHandler(async (req, res) => {
     }
   }
 
-  // TODO: Add Geolocation checks
-  // if (latitude && longitude && session.location?.latitude) {
-  //   distanceFromTeacher = calculateDistance(...)
-  // }
+  // Geolocation checks
+  if (session.securityConfig.radius > 0) {
+    if (!latitude || !longitude) {
+      throw new ApiError(400, "Geolocation is required by the teacher for this session.");
+    }
+    
+    if (session.location?.latitude && session.location?.longitude) {
+      distanceFromTeacher = calculateDistance(
+        latitude, 
+        longitude, 
+        session.location.latitude, 
+        session.location.longitude
+      );
+      
+      if (distanceFromTeacher > session.securityConfig.radius) {
+        isSuspicious = true;
+        flagReason.push(`Outside geofence (${distanceFromTeacher}m)`);
+      }
+    }
+  }
+
+  // Anti-Buddy Punching (Device Lock)
+  const finalDeviceId = deviceId || req.user.deviceId || "unknown";
+  if (session.securityConfig.deviceLockEnabled && finalDeviceId !== "unknown") {
+    const deviceUsedByOther = await Attendance.findOne({
+      sessionId,
+      deviceId: finalDeviceId,
+      studentId: { $ne: req.user._id }
+    });
+    
+    if (deviceUsedByOther) {
+      isSuspicious = true;
+      flagReason.push("Buddy Punching Detected (Shared Device)");
+    }
+  }
 
   const status = session.securityConfig.manualApproval ? "Pending" : "Present";
 
@@ -78,7 +111,7 @@ export const markAttendance = asyncHandler(async (req, res) => {
     section: sectionName,
     status,
     verificationMethod: "QR",
-    deviceId: req.user.deviceId || "unknown",
+    deviceId: finalDeviceId,
     isSuspicious,
     metadata: {
       ipAddress: studentIP,
