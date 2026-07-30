@@ -7,6 +7,7 @@ import {
 import { lazy, Suspense, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { selectIsAuthenticated, selectCurrentUser, selectIsCheckingAuth, checkAuth } from "./store/slices/authSlice.js";
+import { fetchSettings } from "./store/slices/systemSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 
@@ -45,9 +46,22 @@ function App() {
   const user = useSelector(selectCurrentUser);
   const isCheckingAuth = useSelector(selectIsCheckingAuth);
 
+  const settings = useSelector((state) => state.system?.settings || {});
+
   useEffect(() => {
     dispatch(checkAuth());
+    dispatch(fetchSettings());
   }, [dispatch]);
+
+  // Apply dynamic UI settings
+  useEffect(() => {
+    if (settings.primaryColor) {
+      document.documentElement.style.setProperty("--color-primary", settings.primaryColor);
+    }
+    if (settings.secondaryColor) {
+      document.documentElement.style.setProperty("--color-secondary", settings.secondaryColor);
+    }
+  }, [settings]);
 
   const getDefaultRedirect = () => {
     if (!isAuthenticated) return "/login";

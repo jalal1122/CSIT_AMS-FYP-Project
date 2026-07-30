@@ -5,9 +5,19 @@ const initialState = {
   departments: [],
   subjects: [],
   disciplines: [],
+  settings: {}, // Store UI colors and dynamic settings
   isLoading: false,
   error: null,
 };
+
+export const fetchSettings = createAsyncThunk("system/fetchSettings", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/v2/settings");
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch settings");
+  }
+});
 
 export const fetchDepartments = createAsyncThunk("system/fetchDepartments", async (_, { rejectWithValue }) => {
   try {
@@ -86,6 +96,11 @@ const systemSlice = createSlice({
     builder.addCase(fetchDisciplines.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchDisciplines.fulfilled, (state, { payload }) => { state.isLoading = false; state.disciplines = payload; });
     builder.addCase(fetchDisciplines.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+    
+    // Settings
+    builder.addCase(fetchSettings.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchSettings.fulfilled, (state, { payload }) => { state.isLoading = false; state.settings = payload; });
+    builder.addCase(fetchSettings.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
   },
 });
 
