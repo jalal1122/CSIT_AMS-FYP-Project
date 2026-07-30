@@ -33,9 +33,11 @@ export default function TeacherDashboard() {
         sectionName: selectedAllocation.sectionName || selectedAllocation.section,
         type: settings.type,
         securityConfig: {
-          requireLocation: settings.radius > 0,
-          locationRadius: settings.radius,
-          manualApprovalRequired: settings.manualApproval
+          radius: settings.radius,
+          manualApproval: settings.manualApproval,
+          ipMatchEnabled: settings.ipMatchEnabled,
+          deviceLockEnabled: settings.deviceLockEnabled,
+          qrRefreshRate: settings.qrRefreshRate
         }
       })).unwrap();
       

@@ -82,6 +82,18 @@ export const updateAttendanceStatus = createAsyncThunk(
   }
 );
 
+export const updateSecuritySettings = createAsyncThunk(
+  "session/updateSecuritySettings",
+  async ({ sessionId, settings }, { rejectWithValue }) => {
+    try {
+      const res = await api.put(`/api/v2/session/${sessionId}/security`, settings);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update security settings");
+    }
+  }
+);
+
 const sessionSlice = createSlice({
   name: "session",
   initialState,
@@ -132,6 +144,12 @@ const sessionSlice = createSlice({
       .addCase(refreshQrToken.fulfilled, (state, { payload }) => {
         state.qrToken = payload.qrToken;
         state.qrRefreshRate = payload.refreshRate || 15;
+      })
+      // Update Security Settings
+      .addCase(updateSecuritySettings.fulfilled, (state, action) => {
+        if (state.currentSession) {
+          state.currentSession.securityConfig = action.payload.securityConfig;
+        }
       });
   },
 });

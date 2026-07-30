@@ -5,6 +5,9 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
   const [sessionType, setSessionType] = useState("Lecture");
   const [radius, setRadius] = useState(50);
   const [manualApproval, setManualApproval] = useState(false);
+  const [ipMatchEnabled, setIpMatchEnabled] = useState(true);
+  const [deviceLockEnabled, setDeviceLockEnabled] = useState(true);
+  const [qrRefreshRate, setQrRefreshRate] = useState(15);
 
   if (!isOpen) return null;
 
@@ -89,26 +92,77 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
 
           {/* Additional Settings */}
           <div className="pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Settings className="w-4 h-4 text-slate-400" />
-              <label className="text-sm font-semibold text-slate-700">Security Options</label>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-slate-400" />
+                <label className="text-sm font-semibold text-slate-700">Security Options</label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-500">QR Refresh:</span>
+                <select 
+                  className="text-xs border border-slate-200 rounded p-1 bg-slate-50 text-slate-700 focus:outline-none focus:border-sky-500"
+                  value={qrRefreshRate}
+                  onChange={(e) => setQrRefreshRate(parseInt(e.target.value))}
+                >
+                  <option value={5}>5s</option>
+                  <option value={10}>10s</option>
+                  <option value={15}>15s</option>
+                  <option value={30}>30s</option>
+                  <option value={60}>60s</option>
+                </select>
+              </div>
             </div>
             
-            <label className="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-              <div>
-                <p className="text-sm font-medium text-slate-700">Require Manual Approval</p>
-                <p className="text-xs text-slate-500">You must approve each student scan</p>
-              </div>
-              <div className="relative inline-flex items-center h-5 rounded-full w-9">
-                <input 
-                  type="checkbox" 
-                  className="sr-only peer"
-                  checked={manualApproval}
-                  onChange={(e) => setManualApproval(e.target.checked)}
-                />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
-              </div>
-            </label>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+              <label className="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Require Manual Approval</p>
+                  <p className="text-xs text-slate-500">You must approve each student scan</p>
+                </div>
+                <div className="relative inline-flex items-center h-5 rounded-full w-9 shrink-0">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={manualApproval}
+                    onChange={(e) => setManualApproval(e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                </div>
+              </label>
+
+              <label className="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">University Network Only</p>
+                  <p className="text-xs text-slate-500">Students must match your IP address</p>
+                </div>
+                <div className="relative inline-flex items-center h-5 rounded-full w-9 shrink-0">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={ipMatchEnabled}
+                    onChange={(e) => setIpMatchEnabled(e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                </div>
+              </label>
+
+              <label className="flex items-center justify-between p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">Prevent Buddy Punching</p>
+                  <p className="text-xs text-slate-500">Lock attendance to one physical device</p>
+                </div>
+                <div className="relative inline-flex items-center h-5 rounded-full w-9 shrink-0">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={deviceLockEnabled}
+                    onChange={(e) => setDeviceLockEnabled(e.target.checked)}
+                  />
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
+                </div>
+              </label>
+            </div>
           </div>
 
         </div>
@@ -122,7 +176,7 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
             Cancel
           </button>
           <button 
-            onClick={() => onStart({ type: sessionType, radius, manualApproval })}
+            onClick={() => onStart({ type: sessionType, radius, manualApproval, ipMatchEnabled, deviceLockEnabled, qrRefreshRate })}
             className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200"
           >
             Start Session <PlayCircle className="w-4 h-4" />
