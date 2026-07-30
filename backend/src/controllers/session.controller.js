@@ -74,9 +74,9 @@ export const startSession = asyncHandler(async (req, res) => {
   const finalSecurityConfig = {
     radius: clampedRadius,
     ipMatchEnabled: securityConfig?.ipMatchEnabled !== undefined ? securityConfig.ipMatchEnabled : true,
-    deviceLockEnabled: true,
+    deviceLockEnabled: securityConfig?.deviceLockEnabled !== undefined ? securityConfig.deviceLockEnabled : true,
     qrRefreshRate: clampedQrRefresh,
-    manualApproval: securityConfig?.manualApproval || false,
+    manualApproval: securityConfig?.manualApproval !== undefined ? securityConfig.manualApproval : false,
   };
 
   const session = await Session.create({
@@ -122,6 +122,34 @@ export const endSession = asyncHandler(async (req, res) => {
   // emitToSession(session._id.toString(), "session:ended", { sessionId: session._id });
 
   res.status(200).json(new ApiResponse(200, session, "Session ended successfully"));
+});
+
+// @desc    Update Security Settings of an active Session
+// @route   PUT /api/v2/session/:id/security
+// @access  Teacher
+export const updateSessionSecurity = asyncHandler(async (req, res) => {
+  const { radius, ipMatchEnabled, deviceLockEnabled, qrRefreshRate, manualApproval } = req.body;
+
+  const session = await Session.findOne({
+    _id: req.params.id,
+    teacherId: req.user._id,
+    active: true,
+  });
+
+  if (!session) {
+    throw new ApiError(404, "Active session not found or you are not authorized");
+  }
+
+  // Update only the provided fields
+  if (radius !== undefined) session.securityConfig.radius = Math.max(10, Math.min(500, radius));
+  if (ipMatchEnabled !== undefined) session.securityConfig.ipMatchEnabled = ipMatchEnabled;
+  if (deviceLockEnabled !== undefined) session.securityConfig.deviceLockEnabled = deviceLockEnabled;
+  if (qrRefreshRate !== undefined) session.securityConfig.qrRefreshRate = Math.max(5, Math.min(60, qrRefreshRate));
+  if (manualApproval !== undefined) session.securityConfig.manualApproval = manualApproval;
+
+  await session.save();
+
+  res.status(200).json(new ApiResponse(200, session, "Session security settings updated"));
 });
 
 // @desc    Generate a new QR code token for an active session
