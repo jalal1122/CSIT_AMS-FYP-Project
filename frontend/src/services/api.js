@@ -24,7 +24,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        await store.dispatch(refreshAccessToken());
+        await store.dispatch(refreshAccessToken()).unwrap();
         const newToken = store.getState().auth.accessToken;
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
