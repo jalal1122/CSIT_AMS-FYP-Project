@@ -101,7 +101,7 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
                 <MapPin className="w-4 h-4 text-sky-500" />
                 <label className="text-sm font-semibold text-slate-700">Geofencing Radius</label>
               </div>
-              <div className="relative inline-flex items-center h-5 rounded-full w-9 shrink-0">
+              <label className="relative inline-flex items-center h-5 rounded-full w-9 shrink-0 cursor-pointer">
                 <input 
                   type="checkbox" 
                   className="sr-only peer"
@@ -109,7 +109,7 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
                   onChange={(e) => setGeoEnabled(e.target.checked)}
                 />
                 <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-sky-500"></div>
-              </div>
+              </label>
             </div>
             
             <div className={`transition-opacity duration-200 ${geoEnabled ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
