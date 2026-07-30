@@ -102,7 +102,7 @@ export default function TeacherDashboard() {
         {activeTab === "active" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {activeAllocations.map(alloc => (
-              <div key={alloc._id} className="card p-6 group relative overflow-hidden flex flex-col h-full border-slate-200 hover:border-sky-300 hover:shadow-md transition-all">
+              <div key={`${alloc._id}-${alloc.section}`} className="card p-6 group relative overflow-hidden flex flex-col h-full border-slate-200 hover:border-sky-300 hover:shadow-md transition-all">
                 <div className="absolute -right-12 -top-12 w-32 h-32 bg-sky-100/50 blur-3xl rounded-full pointer-events-none group-hover:bg-sky-200/50 transition-colors"></div>
                 
                 <div className="flex justify-between items-start mb-6">
