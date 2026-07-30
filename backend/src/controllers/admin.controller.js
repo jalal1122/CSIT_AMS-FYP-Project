@@ -203,3 +203,28 @@ export const getUsers = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, users, "Users retrieved successfully"));
 });
+
+// @desc    Update user status
+// @route   PATCH /api/v2/admin/users/:id/status
+// @access  Admin
+export const updateUserStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { accountStatus } = req.body;
+
+  if (!["Active", "Inactive", "Suspended"].includes(accountStatus)) {
+    throw new ApiError(400, "Invalid account status");
+  }
+
+  const user = await User.findById(id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  user.accountStatus = accountStatus;
+  await user.save({ validateBeforeSave: false });
+
+  // If inactivating/suspending, invalidate sessions
+  if (accountStatus !== "Active") {
+    await User.findByIdAndUpdate(id, { $unset: { refreshToken: 1 } });
+  }
+
+  res.status(200).json(new ApiResponse(200, user, `User status updated to ${accountStatus}`));
+});

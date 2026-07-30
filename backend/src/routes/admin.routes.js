@@ -11,7 +11,7 @@ router.patch("/users/:id/reset-device", ...adminOnly, admin.resetDevice);
 router.patch("/users/:id/reset-password", ...adminOnly, admin.resetPassword);
 router.put("/users/:id/transfer", ...adminOnly, admin.transferStudent);
 router.get("/users", ...adminOnly, admin.getUsers);
-// router.patch("/users/:id/status", ...adminOnly, admin.updateUserStatus); // We didn't explicitly implement updateUserStatus yet, it can be added later
+router.patch("/users/:id/status", ...adminOnly, admin.updateUserStatus); 
 
 router.post("/teacher/:id/offboard", ...adminOnly, admin.offboardTeacher);
 router.patch("/allocation/:id/reassign-teacher", ...adminOnly, admin.reassignTeacher);
