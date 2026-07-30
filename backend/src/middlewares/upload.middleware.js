@@ -1,6 +1,6 @@
 import multer from "multer";
 import path from "path";
-import { ApiError } from "../../utils/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 
 // Memory storage for Excel files (no disk writes)
 const storage = multer.memoryStorage();

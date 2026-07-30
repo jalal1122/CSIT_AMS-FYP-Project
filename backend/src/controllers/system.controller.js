@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../../utils/ApiError.js";
-import { ApiResponse } from "../../utils/ApiResponse.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import Department from "../models/department.model.js";
 import Subject from "../models/subject.model.js";
 import Discipline from "../models/discipline.model.js";
@@ -241,3 +241,7 @@ export const createTeacher = asyncHandler(async (req, res) => {
 
   res.status(201).json(new ApiResponse(201, teacherResponse, "Teacher created successfully. Credentials generated."));
 });
+
+export const getSubjectById = asyncHandler(async (req, res) => { res.status(200).json(new ApiResponse(200, null, "Mock")); });
+export const getDisciplines = asyncHandler(async (req, res) => { res.status(200).json(new ApiResponse(200, [], "Mock")); });
+export const getSyllabus = asyncHandler(async (req, res) => { res.status(200).json(new ApiResponse(200, [], "Mock")); });

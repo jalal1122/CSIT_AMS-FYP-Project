@@ -1,5 +1,5 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../../utils/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 import Batch from "../models/batch.model.js";
 
 /**
