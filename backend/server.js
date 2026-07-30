@@ -52,6 +52,26 @@ app.use("/api/v2/analytics", analyticsRoutes);
 app.use("/api/v2/cron", cronRoutes);
 app.use("/api/v2/settings", systemSettingsRoutes);
 
+// Global Error Handler — MUST be after all routes
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  const errors = err.errors || [];
+  const errorCode = err.errorCode || null;
+
+  if (process.env.NODE_ENV !== "production") {
+    console.error(`[ERROR] ${statusCode} ${req.method} ${req.originalUrl} — ${message}`);
+  }
+
+  res.status(statusCode).json({
+    success: false,
+    statusCode,
+    message,
+    errors,
+    ...(errorCode && { errorCode }),
+  });
+});
+
 // Connect to Database and start server
 const PORT = process.env.PORT || 5001;
 

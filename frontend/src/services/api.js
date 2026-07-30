@@ -15,22 +15,42 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Singleton refresh promise to prevent concurrent refresh calls
+// (React StrictMode fires effects twice in dev, causing race conditions)
+let refreshPromise = null;
+
 // Response interceptor: handle 401 -> refresh token
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
 
-    if (error.response?.status === 401 && !original._retry) {
+    // URLs that should NEVER trigger a refresh attempt
+    const noRetryUrls = ["/auth/refresh", "/auth/login", "/auth/me"];
+    const isNoRetryUrl = noRetryUrls.some((u) => original.url?.includes(u));
+
+    if (error.response?.status === 401 && !original._retry && !isNoRetryUrl) {
       original._retry = true;
+
+      // Reuse in-flight refresh if one is already in progress
+      if (!refreshPromise) {
+        refreshPromise = store
+          .dispatch(refreshAccessToken())
+          .unwrap()
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
+
       try {
-        await store.dispatch(refreshAccessToken()).unwrap();
+        await refreshPromise;
         const newToken = store.getState().auth.accessToken;
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch {
         store.dispatch(logout());
         window.location.href = "/login";
+        return Promise.reject(error);
       }
     }
 
@@ -45,3 +65,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+
