@@ -44,10 +44,11 @@ export const isTeacherOrAdmin = (req, res, next) => {
  * Check if user has any of the specified roles
  */
 export const hasRole = (...roles) => {
+  const allowedRoles = roles.flat();
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
+    if (!allowedRoles.includes(req.user.role)) {
       throw ApiError.forbidden(
-        `Access denied. Required roles: ${roles.join(", ")}`
+        `Access denied. Required roles: ${allowedRoles.join(", ")}`
       );
     }
     next();

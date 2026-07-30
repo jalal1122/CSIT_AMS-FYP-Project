@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDepartments, createDepartment, fetchSubjects, createSubject, clearError } from "../../store/slices/systemSlice.js";
+import { addToast } from "../../store/slices/toastSlice.js";
 import { Building2, Book, Plus, Trash2, Archive, Pencil } from "lucide-react";
 import Badge from "../../components/shared/Badge";
 import EmptyState from "../../components/shared/EmptyState";
+import NewDepartmentModal from "../../components/admin/NewDepartmentModal.jsx";
+import NewSubjectModal from "../../components/admin/NewSubjectModal.jsx";
 
 export default function Foundation() {
   const [activeTab, setActiveTab] = useState("departments");
+  const [isDeptModalOpen, setIsDeptModalOpen] = useState(false);
+  const [isSubjModalOpen, setIsSubjModalOpen] = useState(false);
   const dispatch = useDispatch();
   const { departments, subjects, isLoading, error } = useSelector((state) => state.system);
 
@@ -14,6 +19,28 @@ export default function Foundation() {
     dispatch(fetchDepartments());
     dispatch(fetchSubjects());
   }, [dispatch]);
+
+  const handleCreateDepartment = async (data) => {
+    try {
+      await dispatch(createDepartment(data)).unwrap();
+      setIsDeptModalOpen(false);
+      dispatch(fetchDepartments());
+      dispatch(addToast({ title: "Success", message: "Department created successfully", type: "success" }));
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+    }
+  };
+
+  const handleCreateSubject = async (data) => {
+    try {
+      await dispatch(createSubject(data)).unwrap();
+      setIsSubjModalOpen(false);
+      dispatch(fetchSubjects());
+      dispatch(addToast({ title: "Success", message: "Subject created successfully", type: "success" }));
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -23,12 +50,12 @@ export default function Foundation() {
           <p className="text-slate-500 text-sm mt-1">Manage Departments, Disciplines, and Subjects</p>
         </div>
         {activeTab === "departments" && (
-          <button className="btn-primary flex items-center gap-2">
+          <button onClick={() => setIsDeptModalOpen(true)} className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Department
           </button>
         )}
         {activeTab === "subjects" && (
-          <button className="btn-primary flex items-center gap-2">
+          <button onClick={() => setIsSubjModalOpen(true)} className="btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Subject
           </button>
         )}
@@ -73,7 +100,7 @@ export default function Foundation() {
         {!isLoading && activeTab === "departments" && (
           <div className="overflow-x-auto">
             {departments.length === 0 ? (
-              <EmptyState icon={Building2} title="No departments found" subtitle="Get started by creating a new department." actionLabel="New Department" />
+              <EmptyState icon={Building2} title="No departments found" subtitle="Get started by creating a new department." actionLabel="New Department" onAction={() => setIsDeptModalOpen(true)} />
             ) : (
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -113,7 +140,7 @@ export default function Foundation() {
         {!isLoading && activeTab === "subjects" && (
           <div className="overflow-x-auto">
             {subjects.length === 0 ? (
-              <EmptyState icon={Book} title="No subjects found" subtitle="Get started by creating a new subject." actionLabel="New Subject" />
+              <EmptyState icon={Book} title="No subjects found" subtitle="Get started by creating a new subject." actionLabel="New Subject" onAction={() => setIsSubjModalOpen(true)} />
             ) : (
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -154,6 +181,19 @@ export default function Foundation() {
           </div>
         )}
       </div>
+
+      <NewDepartmentModal 
+        isOpen={isDeptModalOpen} 
+        onClose={() => setIsDeptModalOpen(false)} 
+        onSubmit={handleCreateDepartment} 
+      />
+
+      <NewSubjectModal 
+        isOpen={isSubjModalOpen} 
+        onClose={() => setIsSubjModalOpen(false)} 
+        onSubmit={handleCreateSubject}
+        departments={departments}
+      />
     </div>
   );
 }

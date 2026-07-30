@@ -54,8 +54,13 @@ let checkAuthRefreshPromise = null;
 
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
-  async (_, { dispatch, rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue, getState }) => {
     try {
+      const { accessToken } = getState().auth;
+      if (!accessToken) {
+        throw { response: { status: 401 } };
+      }
+      
       // Happy path: access token is still in memory (in-session navigation)
       const res = await api.get("/api/v2/auth/me");
       return res.data.data;
