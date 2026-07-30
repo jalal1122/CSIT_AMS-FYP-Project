@@ -423,13 +423,13 @@ export const getStudentHistory = asyncHandler(async (req, res) => {
 
     const percentage = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
     
-    // simple grade logic based on attendance for mockup
-    let grade = percentage >= 85 ? "A" : percentage >= 75 ? "B" : percentage >= 65 ? "C" : percentage >= 50 ? "D" : "F";
+    // Status based on 75% attendance rule
+    let status = percentage >= 75 ? "Cleared" : "Barred";
 
     pastSemestersMap[alloc.semester].subjects.push({
       id: alloc._id,
       name: alloc.subjectId.name,
-      grade,
+      status,
       attendance: `${percentage}%`
     });
   }
@@ -546,6 +546,27 @@ export const getClassDetails = asyncHandler(async (req, res) => {
     sectionName
   });
 
+  // Fetch past sessions for the session history panel
+  const rawSessions = await Session.find({
+    allocationId,
+    sectionName,
+    active: false
+  }).sort({ endTime: -1 }).limit(10).lean();
+
+  const sessions = await Promise.all(rawSessions.map(async (sess) => {
+    const presentCount = await Attendance.countDocuments({
+      sessionId: sess._id,
+      status: "Present"
+    });
+    return {
+      _id: sess._id,
+      date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      type: sess.type || "Lecture",
+      present: presentCount,
+      total: section.students.length
+    };
+  }));
+
   const students = await Promise.all(section.students.map(async (student) => {
     const presentCount = await Attendance.countDocuments({
       studentId: student._id,
@@ -568,6 +589,7 @@ export const getClassDetails = asyncHandler(async (req, res) => {
     batch: allocation.batchId,
     section: sectionName,
     semester: allocation.semester,
-    students
+    students,
+    sessions
   }, "Class details retrieved"));
 });

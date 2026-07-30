@@ -9,6 +9,7 @@ import {
   refreshQrToken,
   resetSession 
 } from "../../store/slices/sessionSlice";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function LiveSession() {
   const { sessionId } = useParams();
@@ -92,9 +93,13 @@ export default function LiveSession() {
             <h2 className="text-2xl font-bold text-slate-800 mb-10 text-center relative z-10">Scan to mark attendance</h2>
             
             <div className="bg-white p-5 rounded-3xl shadow-xl shadow-sky-100/50 mb-10 relative z-10 border border-sky-100 group">
-              {/* This would be an actual QR code component in production */}
+              {/* Actual QR code component */}
               <div className="w-64 h-64 bg-slate-50 border-2 border-dashed border-sky-200 flex items-center justify-center text-slate-400 rounded-2xl font-mono text-sm break-all text-center p-4 group-hover:border-sky-400 transition-colors">
-                [QR Data: {qrToken}]
+                {qrToken ? (
+                  <QRCodeSVG value={qrToken} size={224} />
+                ) : (
+                  "Generating QR..."
+                )}
               </div>
               
               {/* Scan overlay effect */}

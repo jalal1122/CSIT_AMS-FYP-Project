@@ -19,7 +19,24 @@ export default function ClassDetails() {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading class details...</div>;
   }
 
-  const { subject, batch, section, semester, students } = classDetails;
+  const { subject, batch, section, semester, students, sessions = [] } = classDetails;
+
+  const handleExportCSV = () => {
+    const headers = ["Roll No,Name,Present,Total,Percentage\n"];
+    const rows = students.map(s => {
+      const percentage = s.total > 0 ? Math.round((s.present / s.total) * 100) : 0;
+      return `${s.rollNo},${s.name},${s.present},${s.total},${percentage}%`;
+    });
+    
+    const csvContent = "data:text/csv;charset=utf-8," + headers.concat(rows).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${subject?.code}_${batch?.name}_Sec${section}_Roster.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -39,8 +56,14 @@ export default function ClassDetails() {
         
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
           <div className="card p-0 overflow-hidden xl:col-span-2">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <h3 className="text-lg font-bold text-slate-800">Student Roster</h3>
+              <button 
+                onClick={handleExportCSV}
+                className="text-xs font-semibold text-sky-600 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg hover:bg-sky-100 transition-colors shadow-sm"
+              >
+                Export CSV
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -99,17 +122,18 @@ export default function ClassDetails() {
               <h3 className="text-lg font-bold text-sky-900">Session History</h3>
             </div>
             <div className="p-6 space-y-4 bg-white">
-              {[1, 2, 3, 4, 5].map((_, idx) => (
-                <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center shadow-sm">
+              {sessions.length === 0 ? (
+                <div className="text-center p-4 text-slate-400 text-sm font-medium border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                  No sessions recorded yet.
+                </div>
+              ) : sessions.map((sess) => (
+                <div key={sess._id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center shadow-sm">
                   <div>
-                    <p className="text-sm font-bold text-slate-700">Oct {12 - idx}, 2023</p>
-                    <p className="text-xs font-semibold text-slate-500 mt-0.5">Lecture</p>
+                    <p className="text-sm font-bold text-slate-700">{sess.date}</p>
+                    <p className="text-xs font-semibold text-slate-500 mt-0.5">{sess.type}</p>
                   </div>
                   <div className="text-right flex items-center gap-3">
-                    <span className="text-sm text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">42/45</span>
-                    <button className="text-slate-400 hover:text-sky-500 transition-colors p-1" title="Edit Session">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    <span className="text-sm text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">{sess.present}/{sess.total}</span>
                   </div>
                 </div>
               ))}

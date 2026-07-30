@@ -169,7 +169,7 @@ export default function StudentDashboard() {
                         <tr>
                           <th className="px-4 py-3 rounded-l-lg font-semibold">Subject</th>
                           <th className="px-4 py-3 font-semibold text-center">Attendance</th>
-                          <th className="px-4 py-3 rounded-r-lg font-semibold text-center">Mock Grade</th>
+                          <th className="px-4 py-3 rounded-r-lg font-semibold text-center">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -178,8 +178,10 @@ export default function StudentDashboard() {
                             <td className="px-4 py-3 font-medium text-slate-800">{sub.name}</td>
                             <td className="px-4 py-3 text-center text-slate-600 font-mono">{sub.attendance}</td>
                             <td className="px-4 py-3 text-center">
-                              <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-sky-50 text-sky-700 font-bold font-mono text-xs border border-sky-100">
-                                {sub.grade}
+                              <span className={`inline-flex items-center justify-center px-2 py-1 rounded font-bold font-mono text-xs border ${
+                                sub.status === "Cleared" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-700 border-rose-100"
+                              }`}>
+                                {sub.status}
                               </span>
                             </td>
                           </tr>

@@ -158,7 +158,8 @@ export const loginUser = asyncHandler(async (req, res) => {
       { username: identifier },
       { email: identifier.toLowerCase() }
     ]
-  });
+  }).populate("info.departmentId", "name code")
+    .populate("info.batchId", "name startingYear");
 
   if (!user) {
     throw ApiError.unauthorized("Invalid credentials");
@@ -315,6 +316,8 @@ export const setupProfile = asyncHandler(async (req, res) => {
 export const getCurrentUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id)
     .select("-password -refreshToken -twoFactorSecret")
+    .populate("info.departmentId", "name code")
+    .populate("info.batchId", "name startingYear")
     .lean();
 
   if (!user) {

@@ -62,11 +62,11 @@ export default function StudentProfile() {
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Department</p>
-              <p className="font-bold text-slate-700">{user?.info?.department || "N/A"}</p>
+              <p className="font-bold text-slate-700">{user?.info?.departmentId?.name || "N/A"}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-400 mb-1">Semester</p>
-              <p className="font-bold text-slate-700">Semester {user?.info?.semester || "N/A"}</p>
+              <p className="text-sm font-semibold text-slate-400 mb-1">Batch / Semester</p>
+              <p className="font-bold text-slate-700">{user?.info?.batchId?.name || "N/A"}</p>
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Section</p>
