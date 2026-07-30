@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDepartments, createDepartment, fetchSubjects, createSubject, clearError } from "../../../store/slices/systemSlice.js";
+import { fetchDepartments, createDepartment, fetchSubjects, createSubject, clearError } from "../../store/slices/systemSlice.js";
 import { Building2, Book, Plus, Trash2, Archive, Pencil } from "lucide-react";
 import Badge from "../../components/shared/Badge";
 import EmptyState from "../../components/shared/EmptyState";
