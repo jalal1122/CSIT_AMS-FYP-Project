@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { StopCircle, Users, AlertCircle, Check, X } from "lucide-react";
+import { StopCircle, Users, AlertCircle, Check, X, Settings } from "lucide-react";
 import { 
   fetchLiveAttendance, 
   endLiveSession, 
@@ -10,6 +10,7 @@ import {
   resetSession 
 } from "../../store/slices/sessionSlice";
 import { QRCodeSVG } from "qrcode.react";
+import LiveSessionSecurityModal from "../../components/teacher/LiveSessionSecurityModal";
 
 export default function LiveSession() {
   const { sessionId } = useParams();
@@ -18,6 +19,7 @@ export default function LiveSession() {
   
   const { currentSession, liveFeed, qrToken, qrRefreshRate } = useSelector(state => state.session);
   const [countdown, setCountdown] = useState(qrRefreshRate || 15);
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
 
   // QR token refresh timer
   useEffect(() => {
@@ -71,15 +73,25 @@ export default function LiveSession() {
             </span>
             <div>
               <h1 className="text-lg font-bold text-rose-700 tracking-tight">LIVE SESSION</h1>
-              <p className="text-xs font-semibold text-rose-600/80 mt-0.5">Data Structures • Sec A • Lecture</p>
+              <p className="text-xs font-semibold text-rose-600/80 mt-0.5">
+                {currentSession?.subjectName || "Class"} • {currentSession?.sectionName || "Sec"} • {currentSession?.type || "Lecture"}
+              </p>
             </div>
           </div>
-          <button 
-            onClick={handleEndSession}
-            className="bg-rose-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 hover:bg-rose-600 transition-colors shadow-sm shadow-rose-200"
-          >
-            <StopCircle className="w-5 h-5" /> End Session
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSecurityModalOpen(true)}
+              className="bg-white text-slate-600 px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 border border-rose-200 hover:bg-rose-100 hover:text-rose-700 transition-colors shadow-sm"
+            >
+              <Settings className="w-5 h-5" /> <span className="hidden sm:inline">Security</span>
+            </button>
+            <button 
+              onClick={handleEndSession}
+              className="bg-rose-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 hover:bg-rose-600 transition-colors shadow-sm shadow-rose-200"
+            >
+              <StopCircle className="w-5 h-5" /> <span className="hidden sm:inline">End Session</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -188,6 +200,13 @@ export default function LiveSession() {
         </div>
 
       </main>
+
+      <LiveSessionSecurityModal
+        isOpen={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+        sessionId={sessionId}
+        currentConfig={currentSession?.securityConfig}
+      />
     </div>
   );
 }
