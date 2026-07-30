@@ -8,8 +8,41 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
   const [ipMatchEnabled, setIpMatchEnabled] = useState(true);
   const [deviceLockEnabled, setDeviceLockEnabled] = useState(true);
   const [qrRefreshRate, setQrRefreshRate] = useState(15);
+  const [isLocating, setIsLocating] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleStart = () => {
+    const settings = { type: sessionType, radius, manualApproval, ipMatchEnabled, deviceLockEnabled, qrRefreshRate };
+    
+    // Only fetch location if Geofencing is used (radius > 0)
+    if (radius > 0) {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+      
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setIsLocating(false);
+          onStart({ 
+            ...settings, 
+            latitude: position.coords.latitude, 
+            longitude: position.coords.longitude 
+          });
+        },
+        (error) => {
+          setIsLocating(false);
+          alert("Unable to retrieve your location for geofencing. Please check permissions.");
+          console.error("Geolocation error:", error);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    } else {
+      onStart(settings);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -176,10 +209,13 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
             Cancel
           </button>
           <button 
-            onClick={() => onStart({ type: sessionType, radius, manualApproval, ipMatchEnabled, deviceLockEnabled, qrRefreshRate })}
-            className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200"
+            onClick={handleStart}
+            disabled={isLocating}
+            className="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 disabled:opacity-50"
           >
-            Start Session <PlayCircle className="w-4 h-4" />
+            {isLocating ? "Getting Location..." : (
+              <>Start Session <PlayCircle className="w-4 h-4" /></>
+            )}
           </button>
         </div>
         

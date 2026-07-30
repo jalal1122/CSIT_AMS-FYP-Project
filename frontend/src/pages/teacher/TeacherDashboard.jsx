@@ -32,6 +32,8 @@ export default function TeacherDashboard() {
         allocationId: selectedAllocation._id,
         sectionName: selectedAllocation.sectionName || selectedAllocation.section,
         type: settings.type,
+        latitude: settings.latitude,
+        longitude: settings.longitude,
         securityConfig: {
           radius: settings.radius,
           manualApproval: settings.manualApproval,
