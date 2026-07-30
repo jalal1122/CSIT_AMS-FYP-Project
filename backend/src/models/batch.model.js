@@ -14,6 +14,12 @@ const batchSchema = new mongoose.Schema({
     required: [true, "Discipline is required"],
     index: true,
   },
+  departmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Department",
+    required: [true, "Department is required"],
+    index: true,
+  },
   startingYear: {
     type: Number,
     required: true,
