@@ -4,9 +4,9 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { lazy, Suspense } from "react";
-import { selectIsAuthenticated, selectCurrentUser } from "./store/slices/authSlice.js";
+import { lazy, Suspense, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { selectIsAuthenticated, selectCurrentUser, selectIsCheckingAuth, checkAuth } from "./store/slices/authSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 
@@ -40,14 +40,28 @@ const StudentProfile = lazy(() => import("./pages/student/StudentProfile.jsx"));
 const ToastContainer = lazy(() => import("./components/shared/ToastContainer.jsx"));
 
 function App() {
+  const dispatch = useDispatch();
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const user = useSelector(selectCurrentUser);
+  const isCheckingAuth = useSelector(selectIsCheckingAuth);
+
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch]);
 
   const getDefaultRedirect = () => {
     if (!isAuthenticated) return "/login";
     const routes = { admin: "/admin/dashboard", teacher: "/teacher/dashboard", student: "/student/dashboard" };
     return routes[user?.role] || "/login";
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <Router>

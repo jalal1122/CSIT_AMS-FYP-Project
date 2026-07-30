@@ -8,6 +8,7 @@ const initialState = {
   mustChangePassword: false,
   accountStatus: null, // "Active" | "Inactive" | "Suspended"
   isLoading: false,
+  isCheckingAuth: true, // Start true so App.jsx shows a loader initially
   error: null,
 };
 
@@ -43,6 +44,18 @@ export const refreshAccessToken = createAsyncThunk(
       return res.data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Session expired");
+    }
+  }
+);
+
+export const checkAuth = createAsyncThunk(
+  "auth/checkAuth",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/v2/auth/me");
+      return res.data.data; // Should contain user object
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Not authenticated");
     }
   }
 );
@@ -115,6 +128,23 @@ const authSlice = createSlice({
     // Logout
     builder.addCase(logoutUser.fulfilled, (state) => {
       Object.assign(state, initialState);
+      state.isCheckingAuth = false; // Need to make sure this doesn't trap us in loading
+    });
+
+    // Check Auth
+    builder.addCase(checkAuth.pending, (state) => {
+      state.isCheckingAuth = true;
+    });
+    builder.addCase(checkAuth.fulfilled, (state, { payload }) => {
+      state.isCheckingAuth = false;
+      state.isAuthenticated = true;
+      state.user = payload.user;
+      state.accountStatus = payload.user.accountStatus;
+    });
+    builder.addCase(checkAuth.rejected, (state) => {
+      state.isCheckingAuth = false;
+      state.isAuthenticated = false;
+      state.user = null;
     });
   },
 });
@@ -122,4 +152,5 @@ const authSlice = createSlice({
 export const { logout, clearError } = authSlice.actions;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectCurrentUser = (state) => state.auth.user;
+export const selectIsCheckingAuth = (state) => state.auth.isCheckingAuth;
 export default authSlice.reducer;
