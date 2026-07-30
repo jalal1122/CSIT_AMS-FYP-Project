@@ -54,7 +54,7 @@ export const startSession = asyncHandler(async (req, res) => {
   }).select("_id").lean();
 
   if (existingActiveSession) {
-    throw new ApiError(409, "There is already an active session for this section. Please end it before starting a new one.");
+    return res.status(200).json(new ApiResponse(200, existingActiveSession, "Active session resumed"));
   }
 
   const teacherIP = getClientIP(req);
