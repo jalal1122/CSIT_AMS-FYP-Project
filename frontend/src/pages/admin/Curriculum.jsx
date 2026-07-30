@@ -1,32 +1,92 @@
-import { useState } from "react";
-import { DndContext, DragOverlay, closestCenter } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { BookOpen, Save, RefreshCw, X, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchDisciplines, fetchSubjects, updateDiscipline } from "../../store/slices/systemSlice.js";
+import { addToast } from "../../store/slices/toastSlice.js";
+import { BookOpen, Save, X, Search, Plus } from "lucide-react";
 import EmptyState from "../../components/shared/EmptyState";
 
 export default function Curriculum() {
   const [selectedDiscipline, setSelectedDiscipline] = useState("");
-  // Mock data for UI
-  const disciplines = [{ _id: "1", name: "BS Information Technology", code: "BSIT" }];
-  const [subjectPool, setSubjectPool] = useState([
-    { _id: "s1", name: "Intro to Computing", code: "CS101", creditHours: 3 },
-    { _id: "s2", name: "Programming Fundamentals", code: "CS102", creditHours: 4 },
-    { _id: "s3", name: "Calculus", code: "MTH101", creditHours: 3 },
-  ]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [subjectPool, setSubjectPool] = useState([]);
   
-  const [semesters, setSemesters] = useState({
-    "1": [],
-    "2": [],
-    "3": [],
-    "4": [],
-    "5": [],
-    "6": [],
-    "7": [],
-    "8": []
-  });
+  const dispatch = useDispatch();
+  const { disciplines, subjects } = useSelector((state) => state.system);
+  
+  const [semesters, setSemesters] = useState({});
 
-  const [activeId, setActiveId] = useState(null);
+  useEffect(() => {
+    dispatch(fetchDisciplines());
+    dispatch(fetchSubjects());
+  }, [dispatch]);
+
+  // When discipline or subjects change, rebuild state
+  useEffect(() => {
+    if (selectedDiscipline && disciplines.length > 0 && subjects.length > 0) {
+      const disc = disciplines.find(d => d._id === selectedDiscipline);
+      if (disc) {
+        // Initialize semesters
+        const sems = {};
+        for (let i = 1; i <= disc.totalSemesters; i++) {
+          sems[i] = [];
+        }
+
+        const usedSubjectIds = new Set();
+        
+        // Populate existing syllabus
+        if (disc.syllabus && disc.syllabus.length > 0) {
+          disc.syllabus.forEach(sem => {
+            if (sems[sem.semester] !== undefined) {
+              const semSubjects = sem.subjects.map(sId => {
+                const subjId = sId._id || sId;
+                usedSubjectIds.add(subjId);
+                return subjects.find(s => s._id === subjId) || { _id: subjId, name: "Unknown", creditHours: 0, code: "" };
+              });
+              sems[sem.semester] = semSubjects;
+            }
+          });
+        }
+        setSemesters(sems);
+
+        // Populate pool
+        setSubjectPool(subjects.filter(s => !usedSubjectIds.has(s._id) && !s.isArchived));
+      }
+    } else {
+      setSemesters({});
+      setSubjectPool([]);
+    }
+  }, [selectedDiscipline, disciplines, subjects]);
+
+  const handleAddSubjectToSemester = (subject, targetSemester) => {
+    setSemesters(prev => ({
+      ...prev,
+      [targetSemester]: [...prev[targetSemester], subject]
+    }));
+    setSubjectPool(prev => prev.filter(s => s._id !== subject._id));
+  };
+
+  const handleRemoveSubjectFromSemester = (subject, fromSemester) => {
+    setSemesters(prev => ({
+      ...prev,
+      [fromSemester]: prev[fromSemester].filter(s => s._id !== subject._id)
+    }));
+    setSubjectPool(prev => [...prev, subject]);
+  };
+
+  const handleSaveCurriculum = async () => {
+    const syllabus = Object.entries(semesters).map(([semester, subjs]) => ({
+      semester: Number(semester),
+      subjects: subjs.map(s => s._id)
+    }));
+
+    try {
+      await dispatch(updateDiscipline({ id: selectedDiscipline, data: { syllabus } })).unwrap();
+      dispatch(addToast({ title: "Success", message: "Curriculum saved successfully", type: "success" }));
+      dispatch(fetchDisciplines());
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+    }
+  };
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -46,7 +106,7 @@ export default function Curriculum() {
               <option key={d._id} value={d._id}>{d.name} ({d.code})</option>
             ))}
           </select>
-          <button className="btn-primary flex items-center gap-2 whitespace-nowrap" disabled={!selectedDiscipline}>
+          <button onClick={handleSaveCurriculum} className="btn-primary flex items-center gap-2 whitespace-nowrap" disabled={!selectedDiscipline}>
             <Save className="w-4 h-4" /> Save Curriculum
           </button>
         </div>
@@ -70,18 +130,32 @@ export default function Curriculum() {
               
               <div className="mt-3 relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input type="text" placeholder="Search subjects..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+                <input type="text" placeholder="Search subjects..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
               </div>
             </div>
             
             <div className="p-4 flex-1 overflow-y-auto space-y-3 bg-slate-50/30">
-              {subjectPool.map(sub => (
-                <div key={sub._id} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm cursor-grab hover:border-sky-300 hover:shadow-md transition-all">
+              {subjectPool.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.code?.toLowerCase().includes(searchTerm.toLowerCase())).map(sub => (
+                <div key={sub._id} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-sky-300 hover:shadow-md transition-all">
                   <div className="flex justify-between items-start mb-1.5">
                     <span className="inline-block px-2 py-0.5 bg-sky-100 text-sky-700 rounded text-xs font-bold font-mono">{sub.code}</span>
                     <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">{sub.creditHours} Cr</span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 leading-tight">{sub.name}</p>
+                  <p className="text-sm font-semibold text-slate-700 leading-tight mb-3">{sub.name}</p>
+                  
+                  {/* Click to add UI */}
+                  <div className="flex gap-1 overflow-x-auto pb-1 custom-scrollbar">
+                    {Object.keys(semesters).map(sem => (
+                      <button 
+                        key={sem} 
+                        onClick={() => handleAddSubjectToSemester(sub, sem)}
+                        className="px-2 py-1 bg-slate-50 hover:bg-sky-50 text-slate-500 hover:text-sky-600 border border-slate-200 rounded text-[10px] font-bold shrink-0 transition-colors"
+                        title={`Add to Semester ${sem}`}
+                      >
+                        + S{sem}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ))}
               {subjectPool.length === 0 && (
@@ -109,7 +183,7 @@ export default function Curriculum() {
                     ) : (
                       semesters[semNum].map(sub => (
                          <div key={sub._id} className="bg-sky-50 p-3 rounded-xl border border-sky-200 shadow-sm relative group">
-                           <button className="absolute -top-2 -right-2 bg-white border border-slate-200 rounded-full p-1 text-slate-400 hover:text-rose-500 hover:border-rose-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button onClick={() => handleRemoveSubjectFromSemester(sub, semNum)} className="absolute -top-2 -right-2 bg-white border border-slate-200 rounded-full p-1 text-slate-400 hover:text-rose-500 hover:border-rose-200 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
                              <X className="w-3 h-3" />
                            </button>
                            <div className="flex justify-between items-start mb-1.5">

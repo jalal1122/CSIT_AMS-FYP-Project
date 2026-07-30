@@ -1,26 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchBatches, fetchBatchDetails, fetchAllocations, assignAllocations } from "../../store/slices/academicSlice.js";
+import { fetchTeachers } from "../../store/slices/facultySlice.js";
+import { addToast } from "../../store/slices/toastSlice.js";
 import { Check, ClipboardList, AlertTriangle, AlertCircle } from "lucide-react";
 import EmptyState from "../../components/shared/EmptyState";
 import Badge from "../../components/shared/Badge";
 
 export default function Allocation() {
   const [selectedBatch, setSelectedBatch] = useState("");
+  const [assignments, setAssignments] = useState({}); // { subjectId: { "A": teacherId } }
   
-  const batches = [
-    { id: "1", name: "BS Information Technology 2026", semester: 3 },
-    { id: "2", name: "BS Computer Science 2027", semester: 1 },
-  ];
+  const dispatch = useDispatch();
+  const { batches, currentBatch, allocations, isLoading } = useSelector((state) => state.academic);
+  const { teachers } = useSelector((state) => state.faculty);
 
-  const subjects = [
-    { id: "s1", code: "CS301", name: "Data Structures", credits: 4, sections: ["A", "B", "C"] },
-    { id: "s2", code: "MTH202", name: "Linear Algebra", credits: 3, sections: ["A", "B", "C"] },
-  ];
+  useEffect(() => {
+    dispatch(fetchBatches({ isActive: true }));
+    dispatch(fetchTeachers());
+  }, [dispatch]);
 
-  const teachers = [
-    { id: "t1", name: "Dr. Ali Khan" },
-    { id: "t2", name: "Prof. Sarah" },
-    { id: "t3", name: "Engr. Usman" },
-  ];
+  useEffect(() => {
+    if (selectedBatch) {
+      dispatch(fetchBatchDetails(selectedBatch));
+      dispatch(fetchAllocations({ batchId: selectedBatch }));
+    }
+  }, [selectedBatch, dispatch]);
+
+  useEffect(() => {
+    if (allocations && allocations.length > 0) {
+      const initialAssignments = {};
+      allocations.forEach(alloc => {
+        initialAssignments[alloc.subjectId?._id] = {};
+        alloc.sections.forEach(sec => {
+          initialAssignments[alloc.subjectId?._id][sec.name] = sec.teacherId?._id || sec.teacherId;
+        });
+      });
+      setAssignments(initialAssignments);
+    } else {
+      setAssignments({});
+    }
+  }, [allocations]);
+
+  const handleTeacherChange = (subjectId, section, teacherId) => {
+    setAssignments(prev => ({
+      ...prev,
+      [subjectId]: {
+        ...(prev[subjectId] || {}),
+        [section]: teacherId
+      }
+    }));
+  };
+
+  const handleSaveAllocations = async () => {
+    if (!selectedBatch) return;
+
+    // Convert assignments map to array format expected by API
+    const teacherAssignments = [];
+    Object.entries(assignments).forEach(([subjectId, sectionMap]) => {
+      const sections = Object.entries(sectionMap)
+        .filter(([_, teacherId]) => !!teacherId)
+        .map(([name, teacherId]) => ({ name, teacherId }));
+      
+      if (sections.length > 0) {
+        teacherAssignments.push({ subjectId, sections });
+      }
+    });
+
+    if (teacherAssignments.length === 0) {
+      dispatch(addToast({ title: "Info", message: "No teachers assigned", type: "info" }));
+      return;
+    }
+
+    try {
+      await dispatch(assignAllocations({ batchId: selectedBatch, teacherAssignments })).unwrap();
+      dispatch(addToast({ title: "Success", message: "Allocations saved successfully", type: "success" }));
+      dispatch(fetchAllocations({ batchId: selectedBatch }));
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+    }
+  };
+
+  // Extract subjects for current semester from batch syllabus
+  let currentSubjects = [];
+  if (currentBatch && currentBatch.disciplineId && currentBatch.disciplineId.syllabus) {
+    const semMap = currentBatch.disciplineId.syllabus.find(s => s.semester === currentBatch.currentSemester);
+    if (semMap) {
+      currentSubjects = semMap.subjects || []; // these are usually populated if getBatch populates them, if not we need them populated. Let's assume they are populated or we just display ID.
+    }
+  }
+
+  // Generate sections list based on maxStudentsPerSection and studentCount
+  const capacity = currentBatch?.maxStudentsPerSection || 40;
+  const numSections = currentBatch ? Math.ceil(currentBatch.studentCount / capacity) : 0;
+  const sectionsList = Array.from({ length: Math.max(1, numSections) }, (_, i) => String.fromCharCode(65 + i));
 
   return (
     <div className="space-y-6">
@@ -29,7 +102,7 @@ export default function Allocation() {
           <h2 className="text-2xl font-bold text-slate-800">Course Allocations</h2>
           <p className="text-slate-500 text-sm mt-1">Assign teachers to specific sections for the active semester</p>
         </div>
-        <button className="btn-primary flex items-center gap-2 whitespace-nowrap">
+        <button onClick={handleSaveAllocations} className="btn-primary flex items-center gap-2 whitespace-nowrap">
           <Check className="w-4 h-4" /> Save Allocations
         </button>
       </div>
@@ -47,17 +120,17 @@ export default function Allocation() {
             onChange={e => setSelectedBatch(e.target.value)}
           >
             <option value="">Select a batch...</option>
-            {batches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
           </select>
           
-          {selectedBatch && (
+          {selectedBatch && currentBatch && (
             <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-xl">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sky-800 font-semibold text-sm">Semester 3</span>
+                <span className="text-sky-800 font-semibold text-sm">Semester {currentBatch.currentSemester}</span>
                 <Badge variant="info">Active</Badge>
               </div>
               <p className="text-xs text-sky-700 leading-relaxed">
-                Found <strong>5 subjects</strong> in curriculum. <strong>120 total students</strong> across 3 sections.
+                Found <strong>{currentSubjects.length} subjects</strong> in curriculum. <strong>{currentBatch.studentCount} total students</strong> across {sectionsList.length} sections.
               </p>
             </div>
           )}
@@ -75,26 +148,29 @@ export default function Allocation() {
             </div>
           ) : (
             <div className="p-6 space-y-8 bg-slate-50/50">
-              {subjects.map(subject => (
-                <div key={subject.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+              {currentSubjects.map(subject => (
+                <div key={subject._id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                   <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                      <h4 className="font-bold text-slate-800 text-lg">{subject.name}</h4>
-                      <p className="text-sm text-slate-500 font-mono mt-0.5"><span className="text-sky-600 font-semibold">{subject.code}</span> • {subject.credits} Credit Hours</p>
+                      <h4 className="font-bold text-slate-800 text-lg">{subject.name || `Subject ${subject._id}`}</h4>
+                      {subject.code && <p className="text-sm text-slate-500 font-mono mt-0.5"><span className="text-sky-600 font-semibold">{subject.code}</span> • {subject.creditHours} Credit Hours</p>}
                     </div>
                   </div>
                   
                   <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {subject.sections.map(section => (
-                      <div key={`${subject.id}-${section}`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group">
+                    {sectionsList.map(section => (
+                      <div key={`${subject._id}-${section}`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group">
                         <div className="flex justify-between items-center mb-4">
                           <span className="font-bold text-slate-800 text-lg">Section {section}</span>
-                          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">40 Students</span>
                         </div>
                         <div className="relative">
-                          <select className="input w-full cursor-pointer appearance-none bg-slate-50 border-slate-200 focus:bg-white text-sm">
+                          <select 
+                            className="input w-full cursor-pointer appearance-none bg-slate-50 border-slate-200 focus:bg-white text-sm"
+                            value={assignments[subject._id]?.[section] || ""}
+                            onChange={(e) => handleTeacherChange(subject._id, section, e.target.value)}
+                          >
                             <option value="">Unassigned</option>
-                            {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            {teachers.filter(t => t.accountStatus === 'Active').map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
                           </select>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

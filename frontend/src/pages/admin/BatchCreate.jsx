@@ -1,20 +1,32 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useDropzone } from "react-dropzone";
 import { Check, UploadCloud, FileSpreadsheet, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import * as xlsx from "xlsx";
+import { fetchDepartments, fetchDisciplines } from "../../store/slices/systemSlice.js";
+import { createBatch } from "../../store/slices/academicSlice.js";
+import { addToast } from "../../store/slices/toastSlice.js";
+import { useNavigate } from "react-router-dom";
 
 export default function BatchCreate() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    department: "",
-    discipline: "",
+    name: "",
+    departmentId: "",
+    disciplineId: "",
     capacity: 50,
     file: null,
   });
+  const [creationResult, setCreationResult] = useState(null);
 
-  // Mock data
-  const departments = [{ id: "1", name: "Computer Science" }];
-  const disciplines = [{ id: "1", name: "BS Information Technology" }];
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { departments, disciplines } = useSelector((state) => state.system);
+
+  useEffect(() => {
+    dispatch(fetchDepartments());
+    dispatch(fetchDisciplines());
+  }, [dispatch]);
 
   const onDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles?.length > 0) {
@@ -42,7 +54,33 @@ export default function BatchCreate() {
     xlsx.writeFile(wb, "student_template.xlsx");
   };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 6));
+  const handleCreateBatch = async () => {
+    setStep(5); // Loading step
+    try {
+      const data = new FormData();
+      data.append("name", formData.name || `${disciplines.find(d => d._id === formData.disciplineId)?.code || 'Batch'} ${new Date().getFullYear()}`);
+      data.append("departmentId", formData.departmentId);
+      data.append("disciplineId", formData.disciplineId);
+      data.append("maxStudentsPerSection", formData.capacity);
+      data.append("file", formData.file);
+
+      const result = await dispatch(createBatch(data)).unwrap();
+      setCreationResult(result);
+      dispatch(addToast({ title: "Success", message: "Batch created successfully", type: "success" }));
+      setStep(6);
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+      setStep(4); // Go back to file upload
+    }
+  };
+
+  const nextStep = () => {
+    if (step === 4) {
+      handleCreateBatch();
+    } else {
+      setStep(prev => Math.min(prev + 1, 6));
+    }
+  };
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
 
   return (
@@ -82,11 +120,11 @@ export default function BatchCreate() {
               <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">Select Department</h3>
               <select 
                 className="input text-lg py-3 shadow-sm cursor-pointer"
-                value={formData.department}
-                onChange={e => setFormData({...formData, department: e.target.value})}
+                value={formData.departmentId}
+                onChange={e => setFormData({...formData, departmentId: e.target.value, disciplineId: ""})}
               >
                 <option value="">Choose a department...</option>
-                {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {departments.map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
               </select>
             </div>
           )}
@@ -96,12 +134,19 @@ export default function BatchCreate() {
               <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">Select Discipline</h3>
               <select 
                 className="input text-lg py-3 shadow-sm cursor-pointer"
-                value={formData.discipline}
-                onChange={e => setFormData({...formData, discipline: e.target.value})}
+                value={formData.disciplineId}
+                onChange={e => setFormData({...formData, disciplineId: e.target.value})}
               >
                 <option value="">Choose a discipline...</option>
-                {disciplines.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {disciplines.filter(d => d.departmentId?._id === formData.departmentId || d.departmentId === formData.departmentId).map(d => <option key={d._id} value={d._id}>{d.name}</option>)}
               </select>
+              <input 
+                type="text" 
+                placeholder="Optional Batch Name (e.g. Fall 2026)" 
+                className="input text-lg py-3 mt-4 shadow-sm"
+                value={formData.name}
+                onChange={e => setFormData({...formData, name: e.target.value})}
+              />
             </div>
           )}
 
@@ -181,8 +226,6 @@ export default function BatchCreate() {
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Processing Roster...</h3>
                 <p className="text-slate-500">Parsing rows and generating sections.</p>
               </div>
-              {/* In a real scenario, this step auto-advances when API is done */}
-              <button onClick={nextStep} className="text-xs text-slate-400 hover:text-sky-500 mt-8 underline underline-offset-4">(Simulate Completion)</button>
             </div>
           )}
 
@@ -195,7 +238,7 @@ export default function BatchCreate() {
               </div>
               <h3 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Batch Created Successfully!</h3>
               <p className="text-slate-500 max-w-md mx-auto mb-8 text-lg">
-                BS Information Technology has been initialized with 120 students across 3 sections (A, B, C).
+                {creationResult?.batch?.name || "The batch"} has been initialized with {creationResult?.studentsCreated || 0} students across {creationResult?.sections?.length || 0} sections.
               </p>
             </div>
           )}
@@ -213,7 +256,7 @@ export default function BatchCreate() {
             </button>
             <button 
               onClick={nextStep}
-              disabled={(step === 1 && !formData.department) || (step === 2 && !formData.discipline) || (step === 4 && !formData.file)}
+              disabled={(step === 1 && !formData.departmentId) || (step === 2 && !formData.disciplineId) || (step === 4 && !formData.file)}
               className="btn-primary flex items-center gap-2"
             >
               Continue <ChevronRight className="w-4 h-4" />
@@ -223,7 +266,7 @@ export default function BatchCreate() {
         
         {step === 6 && (
           <div className="flex justify-center mt-8 pt-6 border-t border-slate-100">
-            <button className="btn-primary px-8 py-3 text-lg">
+            <button onClick={() => navigate('/admin/allocation')} className="btn-primary px-8 py-3 text-lg">
               Go to Allocations
             </button>
           </div>

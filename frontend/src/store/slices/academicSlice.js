@@ -4,6 +4,7 @@ import api from "../../services/api.js";
 const initialState = {
   batches: [],
   allocations: [],
+  currentBatch: null,
   isLoading: false,
   error: null,
 };
@@ -14,6 +15,15 @@ export const fetchBatches = createAsyncThunk("academic/fetchBatches", async (_, 
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch batches");
+  }
+});
+
+export const fetchBatchDetails = createAsyncThunk("academic/fetchBatchDetails", async (id, { rejectWithValue }) => {
+  try {
+    const res = await api.get(`/api/v2/academic/batch/${id}`);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch batch details");
   }
 });
 
@@ -46,9 +56,9 @@ export const rollbackBatch = createAsyncThunk("academic/rollbackBatch", async (i
   }
 });
 
-export const fetchAllocations = createAsyncThunk("academic/fetchAllocations", async (_, { rejectWithValue }) => {
+export const fetchAllocations = createAsyncThunk("academic/fetchAllocations", async (params = {}, { rejectWithValue }) => {
   try {
-    const res = await api.get("/api/v2/academic/allocations");
+    const res = await api.get("/api/v2/academic/allocations", { params });
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch allocations");
@@ -77,6 +87,11 @@ const academicSlice = createSlice({
     builder.addCase(fetchBatches.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchBatches.fulfilled, (state, { payload }) => { state.isLoading = false; state.batches = payload; });
     builder.addCase(fetchBatches.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+    
+    // Batch Details
+    builder.addCase(fetchBatchDetails.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchBatchDetails.fulfilled, (state, { payload }) => { state.isLoading = false; state.currentBatch = payload; });
+    builder.addCase(fetchBatchDetails.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
     
     // Allocations
     builder.addCase(fetchAllocations.pending, (state) => { state.isLoading = true; });
