@@ -48,17 +48,45 @@ export const refreshAccessToken = createAsyncThunk(
   }
 );
 
+// Singleton to prevent React StrictMode from firing two concurrent
+// refresh requests when checkAuth is double-invoked in development.
+let checkAuthRefreshPromise = null;
+
 export const checkAuth = createAsyncThunk(
   "auth/checkAuth",
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
     try {
+      // Happy path: access token is still in memory (in-session navigation)
       const res = await api.get("/api/v2/auth/me");
-      return res.data.data; // Should contain user object
+      return res.data.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || "Not authenticated");
+      if (err.response?.status !== 401) {
+        // Non-auth error (network, 500, etc.) — don't treat as logged out
+        return rejectWithValue(err.response?.data?.message || "Not authenticated");
+      }
+
+      // 401 on page refresh: access token was wiped from Redux memory.
+      // Try to silently recover using the httpOnly refreshToken cookie.
+      try {
+        if (!checkAuthRefreshPromise) {
+          checkAuthRefreshPromise = dispatch(refreshAccessToken())
+            .unwrap()
+            .finally(() => { checkAuthRefreshPromise = null; });
+        }
+        const refreshData = await checkAuthRefreshPromise;
+
+        // Token refreshed — now fetch the user profile
+        const res = await api.get("/api/v2/auth/me");
+        // Attach the refreshed access token so the fulfilled reducer stores it
+        return { ...res.data.data, _refreshedAccessToken: refreshData.accessToken };
+      } catch {
+        // Refresh also failed — no valid session at all
+        return rejectWithValue("Not authenticated");
+      }
     }
   }
 );
+
 
 export const logoutUser = createAsyncThunk(
   "auth/logoutUser",
@@ -140,6 +168,10 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = payload.user;
       state.accountStatus = payload.user.accountStatus;
+      // If session was recovered via token refresh, persist the new access token
+      if (payload._refreshedAccessToken) {
+        state.accessToken = payload._refreshedAccessToken;
+      }
     });
     builder.addCase(checkAuth.rejected, (state) => {
       state.isCheckingAuth = false;
