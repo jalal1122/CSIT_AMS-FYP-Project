@@ -48,56 +48,6 @@ export const deleteDepartment = asyncHandler(async (req, res) => {
   // Check if any Disciplines reference this dept
   const disciplineCount = await Discipline.countDocuments({ departmentId: id });
   if (disciplineCount > 0) {
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import Department from "../models/department.model.js";
-import Subject from "../models/subject.model.js";
-import Discipline from "../models/discipline.model.js";
-import User from "../models/user.model.js";
-import crypto from "crypto";
-// import { sendTeacherWelcome } from "../utils/sendEmail.js";
-
-// @desc    Create a new department
-// @route   POST /api/v2/system/department
-// @access  Admin
-export const createDepartment = asyncHandler(async (req, res) => {
-  const { name, code } = req.body;
-
-  if (!name || !code) {
-    throw new ApiError(400, "Department name and code are required");
-  }
-
-  const existingDept = await Department.findOne({ code: code.toUpperCase() });
-  if (existingDept) {
-    throw new ApiError(409, "Department with this code already exists");
-  }
-
-  const department = await Department.create({
-    name,
-    code: code.toUpperCase(),
-  });
-
-  res.status(201).json(new ApiResponse(201, department, "Department created successfully"));
-});
-
-// @desc    Get all departments
-// @route   GET /api/v2/system/departments
-// @access  Admin
-export const getDepartments = asyncHandler(async (req, res) => {
-  const departments = await Department.find().sort({ name: 1 }).lean();
-  res.status(200).json(new ApiResponse(200, departments, "Departments retrieved successfully"));
-});
-
-// @desc    Delete a department
-// @route   DELETE /api/v2/system/department/:id
-// @access  Admin
-export const deleteDepartment = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  // Check if any Disciplines reference this dept
-  const disciplineCount = await Discipline.countDocuments({ departmentId: id });
-  if (disciplineCount > 0) {
     throw new ApiError(
       409,
       `Cannot delete: ${disciplineCount} discipline(s) are linked to this department.`

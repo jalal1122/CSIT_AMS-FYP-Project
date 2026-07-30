@@ -297,7 +297,14 @@ export const getBatches = asyncHandler(async (req, res) => {
 export const getBatch = asyncHandler(async (req, res) => {
   const batch = await Batch.findById(req.params.id)
     .populate("departmentId", "name code")
-    .populate("disciplineId", "name code totalSemesters syllabus")
+    .populate({
+      path: "disciplineId",
+      select: "name code totalSemesters syllabus",
+      populate: {
+        path: "syllabus.subjects",
+        select: "name code creditHours"
+      }
+    })
     .lean();
 
   if (!batch) throw new ApiError(404, "Batch not found");

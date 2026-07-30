@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBatches, fetchBatchDetails, fetchAllocations, assignAllocations } from "../../store/slices/academicSlice.js";
 import { fetchTeachers } from "../../store/slices/facultySlice.js";
@@ -164,17 +165,30 @@ export default function Allocation() {
                           <span className="font-bold text-slate-800 text-lg">Section {section}</span>
                         </div>
                         <div className="relative">
-                          <select 
-                            className="input w-full cursor-pointer appearance-none bg-slate-50 border-slate-200 focus:bg-white text-sm"
-                            value={assignments[subject._id]?.[section] || ""}
-                            onChange={(e) => handleTeacherChange(subject._id, section, e.target.value)}
-                          >
-                            <option value="">Unassigned</option>
-                            {teachers.filter(t => t.accountStatus === 'Active').map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                          </div>
+                          <Select
+                            options={teachers.filter(t => t.accountStatus === 'Active').map(t => ({ value: t._id, label: t.name }))}
+                            value={
+                              teachers
+                                .filter(t => t.accountStatus === 'Active')
+                                .map(t => ({ value: t._id, label: t.name }))
+                                .find(opt => opt.value === assignments[subject._id]?.[section]) || null
+                            }
+                            onChange={(selected) => handleTeacherChange(subject._id, section, selected ? selected.value : "")}
+                            placeholder="Search & Select"
+                            isClearable
+                            className="react-select-container"
+                            classNamePrefix="react-select"
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                borderColor: '#e2e8f0',
+                                boxShadow: 'none',
+                                '&:hover': {
+                                  borderColor: '#cbd5e1'
+                                }
+                              })
+                            }}
+                          />
                         </div>
                       </div>
                     ))}
