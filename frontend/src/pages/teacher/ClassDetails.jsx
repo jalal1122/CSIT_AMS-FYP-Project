@@ -1,15 +1,25 @@
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { ArrowLeft, Edit2, Calendar, FileText } from "lucide-react";
 import Badge from "../../components/shared/Badge";
+import { fetchClassDetails, clearClassDetails } from "../../store/slices/teacherSlice";
 
 export default function ClassDetails() {
-  const { allocationId } = useParams();
+  const { allocationId, sectionName } = useParams();
+  const dispatch = useDispatch();
+  const { classDetails, isLoading } = useSelector(state => state.teacher);
 
-  const students = [
-    { id: "1", name: "Muhammad Ali", rollNo: "2022-001", present: 22, total: 24 },
-    { id: "2", name: "Fatima Khan", rollNo: "2022-002", present: 24, total: 24 },
-    { id: "3", name: "Omar Sheikh", rollNo: "2022-003", present: 16, total: 24 }, // Defaulter (<75%)
-  ];
+  useEffect(() => {
+    dispatch(fetchClassDetails({ allocationId, sectionName }));
+    return () => dispatch(clearClassDetails());
+  }, [dispatch, allocationId, sectionName]);
+
+  if (isLoading || !classDetails) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading class details...</div>;
+  }
+
+  const { subject, batch, section, semester, students } = classDetails;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -19,8 +29,8 @@ export default function ClassDetails() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Data Structures (CS301)</h1>
-            <p className="text-xs font-semibold text-slate-500 mt-0.5">BSIT 2026 • Section A • Sem 3</p>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight">{subject?.name} ({subject?.code})</h1>
+            <p className="text-xs font-semibold text-slate-500 mt-0.5">{batch?.name} • Section {section} • Sem {semester}</p>
           </div>
         </div>
       </header>
@@ -44,8 +54,8 @@ export default function ClassDetails() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {students.map((student) => {
-                    const percentage = Math.round((student.present / student.total) * 100);
-                    const isDefaulter = percentage < 75;
+                    const percentage = student.total > 0 ? Math.round((student.present / student.total) * 100) : 0;
+                    const isDefaulter = student.total > 0 && percentage < 75;
                     
                     return (
                       <tr key={student.id} className="hover:bg-slate-50 transition-colors bg-white">
@@ -60,7 +70,7 @@ export default function ClassDetails() {
                         <td className="px-6 py-4 w-48">
                           <div className="flex items-center gap-3">
                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
-                              <div 
+                               <div 
                                 className={`h-full rounded-full ${isDefaulter ? "bg-rose-500" : "bg-emerald-500"}`}
                                 style={{ width: `${percentage}%` }}
                               ></div>

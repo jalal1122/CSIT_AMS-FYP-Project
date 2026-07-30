@@ -4,9 +4,9 @@ import {
   loginUser,
   logoutUser,
   refreshAccessToken,
-  getCurrentUser,
   setupProfile,
-  // Other methods we can include if they were migrated
+  updatePassword,
+  getCurrentUser,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -23,5 +23,6 @@ router.post("/setup-profile", verifyJWT, setupProfile);
 // Protected routes
 router.get("/me", verifyJWT, getCurrentUser);
 router.post("/logout", verifyJWT, logoutUser);
+router.patch("/update-password", verifyJWT, updatePassword);
 
 export default router;

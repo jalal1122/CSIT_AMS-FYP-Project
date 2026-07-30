@@ -1,26 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Smartphone, ScanLine, AlertCircle, CheckCircle } from "lucide-react";
-// import { Html5QrcodeScanner } from "html5-qrcode"; // Will be used in real implementation
+import { Html5QrcodeScanner } from "html5-qrcode";
+import api from "../../services/api";
 
 export default function ScanAttendance() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("scanning"); // scanning | processing | success | error
   const [errorMessage, setErrorMessage] = useState("");
   const [successData, setSuccessData] = useState(null);
+  const scannerRef = useRef(null);
+  useEffect(() => {
+    if (status === "scanning") {
+      scannerRef.current = new Html5QrcodeScanner(
+        "qr-reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
 
-  // Mocking the scan flow for demonstration
-  const simulateScan = (type) => {
-    setStatus("processing");
-    setTimeout(() => {
-      if (type === "success") {
-        setSuccessData({ subject: "Data Structures", section: "A", time: new Date().toLocaleTimeString() });
-        setStatus("success");
-      } else {
-        setErrorMessage("You are too far from the classroom. GPS verification failed.");
-        setStatus("error");
+      scannerRef.current.render(onScanSuccess, onScanFailure);
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(error => {
+          console.error("Failed to clear html5QrcodeScanner. ", error);
+        });
       }
-    }, 1500);
+    };
+  }, [status]);
+
+  const onScanSuccess = async (decodedText) => {
+    if (status !== "scanning") return;
+    setStatus("processing");
+    if (scannerRef.current) {
+      scannerRef.current.clear();
+    }
+
+    if (!navigator.geolocation) {
+      setErrorMessage("Geolocation is not supported by your browser.");
+      setStatus("error");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const res = await api.post("/api/v2/attendance/mark", {
+            qrToken: decodedText,
+            location: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            }
+          });
+          
+          setSuccessData({
+            subject: res.data.data.subjectName,
+            section: res.data.data.sectionName,
+            time: new Date().toLocaleTimeString()
+          });
+          setStatus("success");
+        } catch (error) {
+          setErrorMessage(error.response?.data?.message || "Failed to mark attendance.");
+          setStatus("error");
+        }
+      },
+      (error) => {
+        setErrorMessage("Unable to retrieve your location for verification.");
+        setStatus("error");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const onScanFailure = (error) => {
+    // Ignore routine scan failures
   };
 
   return (
@@ -38,32 +92,17 @@ export default function ScanAttendance() {
         <div className="w-full max-w-md">
           
           {status === "scanning" && (
-            <div className="card p-8 flex flex-col items-center text-center relative overflow-hidden bg-white shadow-xl shadow-sky-100/50">
+            <div className="card p-4 sm:p-8 flex flex-col items-center text-center relative overflow-hidden bg-white shadow-xl shadow-sky-100/50">
               
-              <div className="mb-10 relative w-64 h-64 mx-auto border-[3px] border-sky-400 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center shadow-inner">
-                {/* Simulated Camera View */}
-                <ScanLine className="w-16 h-16 text-sky-300 animate-pulse" />
-                
-                {/* Scanning overlay animation */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-sky-500 shadow-[0_0_15px_#0EA5E9] animate-[scan_2s_ease-in-out_infinite]"></div>
-              </div>
+              <div id="qr-reader" className="w-full max-w-sm mb-6 rounded-lg overflow-hidden border-2 border-sky-100"></div>
               
               <h2 className="text-2xl font-bold text-slate-800 mb-2">Align QR Code</h2>
               <p className="text-sm font-medium text-slate-500 mb-8">Point your camera at the teacher's screen to mark attendance.</p>
               
               <div className="flex gap-4 text-xs font-semibold text-slate-600 w-full justify-center">
                 <div className="flex items-center gap-1.5 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 text-emerald-700">
-                  <MapPin className="w-3.5 h-3.5" /> GPS Active
+                  <MapPin className="w-3.5 h-3.5" /> GPS Required
                 </div>
-                <div className="flex items-center gap-1.5 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 text-emerald-700">
-                  <Smartphone className="w-3.5 h-3.5" /> Device Bound
-                </div>
-              </div>
-
-              {/* Dev Simulation Buttons */}
-              <div className="mt-8 pt-4 border-t border-slate-100 w-full flex justify-center gap-4">
-                <button onClick={() => simulateScan("success")} className="text-xs font-semibold text-slate-400 hover:text-emerald-500 transition-colors">Simulate Success</button>
-                <button onClick={() => simulateScan("error")} className="text-xs font-semibold text-slate-400 hover:text-rose-500 transition-colors">Simulate Error</button>
               </div>
             </div>
           )}

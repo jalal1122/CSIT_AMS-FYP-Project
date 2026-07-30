@@ -7,6 +7,8 @@ import Discipline from "../models/discipline.model.js";
 import User from "../models/user.model.js";
 import Subject from "../models/subject.model.js";
 import CourseAllocation from "../models/courseAllocation.model.js";
+import Attendance from "../models/attendance.model.js";
+import Session from "../models/session.model.js";
 import xlsx from "xlsx";
 import bcrypt from "bcryptjs";
 
@@ -58,8 +60,9 @@ export const createBatch = asyncHandler(async (req, res) => {
   );
 
   // 6. Create Batch document first
+  const batchName = `${disc.code} - ${name}`;
   const batch = await Batch.create({
-    name,
+    name: batchName,
     departmentId,
     disciplineId,
     startingYear: new Date().getFullYear(),
@@ -280,7 +283,7 @@ export const getBatches = asyncHandler(async (req, res) => {
   const { departmentId, isActive } = req.query;
   const query = {};
   if (departmentId) query.departmentId = departmentId;
-  if (isActive) query.isActive = isActive === "true";
+  if (isActive !== undefined) query.isActive = isActive === "true" || isActive === true;
 
   const batches = await Batch.find(query)
     .populate("departmentId", "name code")
@@ -330,4 +333,241 @@ export const getAllocations = asyncHandler(async (req, res) => {
     .lean();
 
   res.status(200).json(new ApiResponse(200, allocations, "Allocations retrieved successfully"));
+});
+
+// @desc    Get student dashboard stats
+// @route   GET /api/v2/academic/student/dashboard
+// @access  Student
+export const getStudentDashboard = asyncHandler(async (req, res) => {
+  const { batchId, section } = req.user.info;
+  if (!batchId || !section) throw new ApiError(400, "Student missing batch or section info");
+
+  const batch = await Batch.findById(batchId).populate("disciplineId");
+  if (!batch || !batch.isActive) throw new ApiError(400, "No active batch found");
+
+  const allocations = await CourseAllocation.find({
+    batchId,
+    semester: batch.currentSemester,
+    isActive: true,
+    "sections.name": section
+  }).populate("subjectId", "name code creditHours")
+    .populate("sections.teacherId", "name");
+
+  // Calculate attendance for each subject
+  const currentSubjects = await Promise.all(allocations.map(async (alloc) => {
+    const sec = alloc.sections.find(s => s.name === section);
+    
+    // total sessions for this allocation + section
+    const totalSessions = await Session.countDocuments({
+      allocationId: alloc._id,
+      sectionName: section
+    });
+
+    const presentCount = await Attendance.countDocuments({
+      studentId: req.user._id,
+      allocationId: alloc._id,
+      section: section,
+      status: "Present"
+    });
+
+    return {
+      id: alloc._id, // allocation ID serves as unique subject identifier for student
+      subjectId: alloc.subjectId._id,
+      name: alloc.subjectId.name,
+      code: alloc.subjectId.code,
+      teacher: sec?.teacherId?.name || "Unknown",
+      present: presentCount,
+      total: totalSessions
+    };
+  }));
+
+  res.status(200).json(new ApiResponse(200, { currentSubjects }, "Student dashboard retrieved"));
+});
+
+// @desc    Get student history
+// @route   GET /api/v2/academic/student/history
+// @access  Student
+export const getStudentHistory = asyncHandler(async (req, res) => {
+  const { batchId, section } = req.user.info;
+  if (!batchId || !section) throw new ApiError(400, "Student missing batch or section info");
+
+  const batch = await Batch.findById(batchId);
+  if (!batch) throw new ApiError(400, "Batch not found");
+
+  // Get past allocations
+  const pastAllocations = await CourseAllocation.find({
+    batchId,
+    semester: { $lt: batch.currentSemester },
+    "sections.name": section
+  }).populate("subjectId", "name code creditHours")
+    .sort({ semester: -1 });
+
+  const pastSemestersMap = {};
+
+  for (const alloc of pastAllocations) {
+    if (!pastSemestersMap[alloc.semester]) {
+      pastSemestersMap[alloc.semester] = { sem: alloc.semester, subjects: [] };
+    }
+
+    const totalSessions = await Session.countDocuments({
+      allocationId: alloc._id,
+      sectionName: section
+    });
+
+    const presentCount = await Attendance.countDocuments({
+      studentId: req.user._id,
+      allocationId: alloc._id,
+      section: section,
+      status: "Present"
+    });
+
+    const percentage = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
+    
+    // simple grade logic based on attendance for mockup
+    let grade = percentage >= 85 ? "A" : percentage >= 75 ? "B" : percentage >= 65 ? "C" : percentage >= 50 ? "D" : "F";
+
+    pastSemestersMap[alloc.semester].subjects.push({
+      id: alloc._id,
+      name: alloc.subjectId.name,
+      grade,
+      attendance: `${percentage}%`
+    });
+  }
+
+  const pastSemesters = Object.values(pastSemestersMap).sort((a, b) => b.sem - a.sem);
+
+  res.status(200).json(new ApiResponse(200, { pastSemesters }, "Student history retrieved"));
+});
+
+// @desc    Get teacher dashboard
+// @route   GET /api/v2/academic/teacher/dashboard
+// @access  Teacher
+export const getTeacherDashboard = asyncHandler(async (req, res) => {
+  const allocations = await CourseAllocation.find({
+    "sections.teacherId": req.user._id,
+    isActive: true
+  })
+    .populate("subjectId", "name code")
+    .populate("batchId", "name startingYear")
+    .lean();
+
+  const activeAllocations = allocations.map(alloc => {
+    // Find the section this teacher is assigned to
+    // Note: a teacher might be assigned to multiple sections in the same allocation.
+    // For simplicity, we create an entry per section.
+    return alloc.sections
+      .filter(sec => sec.teacherId?.toString() === req.user._id.toString())
+      .map(sec => ({
+        _id: alloc._id,
+        sectionName: sec.name, // To distinguish in UI
+        subjectName: alloc.subjectId.name,
+        subjectCode: alloc.subjectId.code,
+        batch: alloc.batchId.name,
+        section: sec.name,
+        semester: alloc.semester,
+        students: sec.students.length
+      }));
+  }).flat();
+
+  res.status(200).json(new ApiResponse(200, { activeAllocations }, "Teacher dashboard retrieved"));
+});
+
+// @desc    Get teacher history (past classes)
+// @route   GET /api/v2/academic/teacher/history
+// @access  Teacher
+export const getTeacherHistory = asyncHandler(async (req, res) => {
+  const sessions = await Session.find({
+    teacherId: req.user._id,
+    active: false
+  })
+    .populate({
+      path: "allocationId",
+      select: "subjectId semester batchId sections",
+      populate: [
+        { path: "subjectId", select: "name code" },
+        { path: "batchId", select: "name" }
+      ]
+    })
+    .sort({ endTime: -1 })
+    .lean();
+
+  const pastClasses = await Promise.all(sessions.map(async (sess) => {
+    const presentCount = await Attendance.countDocuments({
+      sessionId: sess._id,
+      status: "Present"
+    });
+    
+    // Find total students in that section from allocation
+    let total = 0;
+    if (sess.allocationId) {
+       const sec = sess.allocationId.sections.find(s => s.name === sess.sectionName);
+       if (sec) total = sec.students.length;
+    }
+
+    return {
+      _id: sess._id,
+      subject: sess.allocationId?.subjectId?.name || "Unknown",
+      section: sess.sectionName,
+      date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      type: sess.type,
+      present: presentCount,
+      total
+    };
+  }));
+
+  res.status(200).json(new ApiResponse(200, { pastClasses }, "Teacher history retrieved"));
+});
+
+// @desc    Get class details (roster & stats)
+// @route   GET /api/v2/academic/teacher/class/:allocationId/:sectionName
+// @access  Teacher
+export const getClassDetails = asyncHandler(async (req, res) => {
+  const { allocationId, sectionName } = req.params;
+
+  const allocation = await CourseAllocation.findById(allocationId)
+    .populate("subjectId", "name code")
+    .populate("batchId", "name")
+    .populate({
+      path: "sections.students",
+      select: "name info.rollNo"
+    });
+
+  if (!allocation) throw new ApiError(404, "Allocation not found");
+
+  const section = allocation.sections.find(s => s.name === sectionName);
+  if (!section) throw new ApiError(404, "Section not found");
+
+  if (section.teacherId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to view this class");
+  }
+
+  const totalSessions = await Session.countDocuments({
+    allocationId,
+    sectionName
+  });
+
+  const students = await Promise.all(section.students.map(async (student) => {
+    const presentCount = await Attendance.countDocuments({
+      studentId: student._id,
+      allocationId,
+      section: sectionName,
+      status: "Present"
+    });
+
+    return {
+      id: student._id,
+      name: student.name,
+      rollNo: student.info?.rollNo,
+      present: presentCount,
+      total: totalSessions
+    };
+  }));
+
+  res.status(200).json(new ApiResponse(200, {
+    subject: allocation.subjectId,
+    batch: allocation.batchId,
+    section: sectionName,
+    semester: allocation.semester,
+    students
+  }, "Class details retrieved"));
 });

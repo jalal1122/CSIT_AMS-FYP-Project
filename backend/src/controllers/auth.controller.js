@@ -781,8 +781,31 @@ export const createAdmin = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         201,
-        { user: createdAdmin },
         "Admin account created successfully. Please login to continue.",
       ),
     );
+});
+
+/**
+ * Update Password
+ * PATCH /api/v1/auth/update-password
+ */
+export const updatePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    throw ApiError.badRequest("Current password and new password are required");
+  }
+
+  const user = await User.findById(req.user._id);
+
+  const isPasswordValid = await user.isPasswordCorrect(currentPassword);
+  if (!isPasswordValid) {
+    throw ApiError.unauthorized("Invalid current password");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json(new ApiResponse(200, {}, "Password updated successfully"));
 });

@@ -83,6 +83,8 @@ export const updateDepartment = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, department, "Department updated successfully"));
 });
 
+
+
 // @desc    Create a new subject
 // @route   POST /api/v2/system/subject
 // @access  Admin
@@ -156,6 +158,17 @@ export const updateSubject = asyncHandler(async (req, res) => {
 
   await subject.save();
   res.status(200).json(new ApiResponse(200, subject, "Subject updated successfully"));
+});
+
+// @desc    Delete a subject
+// @route   DELETE /api/v2/system/subject/:id
+// @access  Admin
+export const deleteSubject = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const subject = await Subject.findByIdAndDelete(id);
+  if (!subject) throw new ApiError(404, "Subject not found");
+
+  res.status(200).json(new ApiResponse(200, null, "Subject deleted successfully"));
 });
 
 // @desc    Create a new discipline

@@ -16,6 +16,7 @@ router.post("/subject", ...adminOnly, system.createSubject);
 router.get("/subjects", ...adminOnly, system.getSubjects);
 router.get("/subjects/:id", ...adminOnly, system.getSubjectById);
 router.put("/subject/:id", ...adminOnly, system.updateSubject);
+router.delete("/subject/:id", ...adminOnly, preventOrphans("subjectId"), system.deleteSubject);
 
 router.post("/discipline", ...adminOnly, system.createDiscipline);
 router.get("/disciplines", ...adminOnly, system.getDisciplines);

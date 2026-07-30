@@ -1,27 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { QrCode, AlertTriangle, Book, History, LayoutDashboard, Settings } from "lucide-react";
+import { fetchStudentDashboard, fetchStudentHistory } from "../../store/slices/studentSlice";
 
 export default function StudentDashboard() {
+  const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
+  const { dashboardData, historyData, isLoading } = useSelector(state => state.student);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("current");
 
-  const currentSubjects = [
-    { id: "1", name: "Data Structures", code: "CS301", teacher: "Dr. Ali Khan", present: 22, total: 24 },
-    { id: "2", name: "Linear Algebra", code: "MTH202", teacher: "Prof. Sarah", present: 18, total: 24 }, // 75%
-    { id: "3", name: "Digital Logic", code: "EE201", teacher: "Engr. Usman", present: 16, total: 24 }, // Defaulter < 75%
-  ];
+  useEffect(() => {
+    dispatch(fetchStudentDashboard());
+    dispatch(fetchStudentHistory());
+  }, [dispatch]);
 
-  const pastSemesters = [
-    { sem: 2, subjects: [
-      { id: "p1", name: "Programming Fundamentals", grade: "A", attendance: "92%" },
-      { id: "p2", name: "Calculus I", grade: "B+", attendance: "85%" },
-    ]}
-  ];
+  const currentSubjects = dashboardData || [];
+  const pastSemesters = historyData || [];
 
-  const hasDefaulter = currentSubjects.some(s => (s.present / s.total) < 0.75);
+  const hasDefaulter = currentSubjects.some(s => {
+    if (s.total === 0) return false;
+    return (s.present / s.total) < 0.75;
+  });
+
+  if (isLoading && !dashboardData) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading dashboard...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 relative pb-28 flex flex-col">
@@ -108,8 +113,13 @@ export default function StudentDashboard() {
 
         {activeTab === "current" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentSubjects.map(sub => {
-              const percentage = Math.round((sub.present / sub.total) * 100);
+            {currentSubjects.length === 0 ? (
+              <div className="col-span-full card p-12 text-center text-slate-400 border-dashed border-2 border-slate-200">
+                <Book className="w-12 h-12 mb-4 text-slate-300 mx-auto" />
+                <p className="text-lg font-bold text-slate-600">No active subjects found.</p>
+              </div>
+            ) : currentSubjects.map(sub => {
+              const percentage = sub.total > 0 ? Math.round((sub.present / sub.total) * 100) : 0;
               const isDefaulter = percentage < 75;
 
               return (
@@ -142,10 +152,44 @@ export default function StudentDashboard() {
         )}
 
         {activeTab === "past" && (
-          <div className="card p-12 text-center text-slate-400 border-dashed border-2 border-slate-200 flex flex-col items-center justify-center bg-slate-50/50 min-h-[300px]">
-            <History className="w-12 h-12 mb-4 text-slate-300" />
-            <p className="text-lg font-bold text-slate-600">No past semesters found.</p>
-            <p className="text-sm font-medium mt-2">This is your first semester in the system.</p>
+          <div className="space-y-8">
+            {pastSemesters.length === 0 ? (
+              <div className="card p-12 text-center text-slate-400 border-dashed border-2 border-slate-200 flex flex-col items-center justify-center bg-slate-50/50 min-h-[300px]">
+                <History className="w-12 h-12 mb-4 text-slate-300" />
+                <p className="text-lg font-bold text-slate-600">No past semesters found.</p>
+                <p className="text-sm font-medium mt-2">This is your first semester in the system.</p>
+              </div>
+            ) : (
+              pastSemesters.map((semData) => (
+                <div key={semData.sem} className="card p-6">
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Semester {semData.sem}</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-slate-500">
+                        <tr>
+                          <th className="px-4 py-3 rounded-l-lg font-semibold">Subject</th>
+                          <th className="px-4 py-3 font-semibold text-center">Attendance</th>
+                          <th className="px-4 py-3 rounded-r-lg font-semibold text-center">Mock Grade</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {semData.subjects.map(sub => (
+                          <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-3 font-medium text-slate-800">{sub.name}</td>
+                            <td className="px-4 py-3 text-center text-slate-600 font-mono">{sub.attendance}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className="inline-flex items-center justify-center px-2 py-1 rounded bg-sky-50 text-sky-700 font-bold font-mono text-xs border border-sky-100">
+                                {sub.grade}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 

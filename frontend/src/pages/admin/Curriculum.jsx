@@ -74,13 +74,15 @@ export default function Curriculum() {
   };
 
   const handleSaveCurriculum = async () => {
-    const syllabus = Object.entries(semesters).map(([semester, subjs]) => ({
-      semester: Number(semester),
-      subjects: subjs.map(s => s._id)
-    }));
+    // Only send semesters that have at least one subject
+    const syllabus = Object.entries(semesters)
+      .filter(([_, subjs]) => subjs.length > 0)
+      .map(([semester, subjs]) => ({
+        semester: Number(semester),
+        subjects: subjs.map(s => s._id)
+      }));
 
     try {
-      // Send syllabusData as an object with { syllabus: [...] }
       await dispatch(updateSyllabus({ id: selectedDiscipline, syllabusData: { syllabus } })).unwrap();
       dispatch(addToast({ title: "Success", message: "Curriculum saved successfully", type: "success" }));
       dispatch(fetchDisciplines());

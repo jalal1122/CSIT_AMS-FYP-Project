@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Session from "../models/session.model.js";
 import CourseAllocation from "../models/courseAllocation.model.js";
+import Attendance from "../models/attendance.model.js";
 import jwt from "jsonwebtoken";
 // import { emitToSession } from "../services/socket.js";
 // import EmailService from "../services/email.service.js";
@@ -154,4 +155,58 @@ export const generateQRToken = asyncHandler(async (req, res) => {
   // emitToSession(session._id.toString(), "qr:updated", { qrToken, expiresAt: Date.now() + session.securityConfig.qrRefreshRate * 1000 });
 
   res.status(200).json(new ApiResponse(200, { qrToken, refreshRate: session.securityConfig.qrRefreshRate }, "QR token generated"));
+});
+
+// @desc    Get the current active session for the logged in teacher
+// @route   GET /api/v2/session/active
+// @access  Teacher
+export const getActiveSession = asyncHandler(async (req, res) => {
+  const session = await Session.findOne({
+    teacherId: req.user._id,
+    active: true,
+  }).populate({
+    path: "allocationId",
+    select: "subjectId batchId semester",
+    populate: [
+      { path: "subjectId", select: "name code" },
+      { path: "batchId", select: "name" }
+    ]
+  }).lean();
+
+  if (!session) {
+    return res.status(200).json(new ApiResponse(200, null, "No active session found"));
+  }
+
+  res.status(200).json(new ApiResponse(200, session, "Active session retrieved"));
+});
+
+// @desc    Get live attendance for a specific session
+// @route   GET /api/v2/session/:id/live
+// @access  Teacher
+export const getLiveAttendance = asyncHandler(async (req, res) => {
+  const session = await Session.findOne({
+    _id: req.params.id,
+    teacherId: req.user._id,
+  });
+
+  if (!session) {
+    throw new ApiError(404, "Session not found or you are not authorized");
+  }
+
+  const attendance = await Attendance.find({ sessionId: session._id })
+    .populate("studentId", "name info.rollNo")
+    .sort({ date: -1 })
+    .lean();
+
+  // Format it for the UI
+  const liveFeed = attendance.map(att => ({
+    id: att._id,
+    studentId: att.studentId._id,
+    name: att.studentId.name,
+    rollNo: att.studentId.info?.rollNo,
+    status: att.status,
+    time: new Date(att.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+  }));
+
+  res.status(200).json(new ApiResponse(200, { liveFeed }, "Live attendance retrieved"));
 });

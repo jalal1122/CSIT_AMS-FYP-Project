@@ -1,41 +1,60 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { StopCircle, Users, AlertCircle, Check, X } from "lucide-react";
+import { 
+  fetchLiveAttendance, 
+  endLiveSession, 
+  updateAttendanceStatus,
+  refreshQrToken,
+  resetSession 
+} from "../../store/slices/sessionSlice";
 
 export default function LiveSession() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   
-  const [countdown, setCountdown] = useState(15);
-  const [qrToken, setQrToken] = useState("sample-qr-token-12345");
-  
-  const [attendance, setAttendance] = useState([
-    { id: "1", name: "Muhammad Ali", rollNo: "2022-001", status: "Present", time: "10:02 AM" },
-    { id: "2", name: "Fatima Khan", rollNo: "2022-002", status: "Present", time: "10:05 AM" },
-    { id: "3", name: "Omar Sheikh", rollNo: "2022-003", status: "Pending", time: "10:06 AM" },
-  ]);
+  const { currentSession, liveFeed, qrToken, qrRefreshRate } = useSelector(state => state.session);
+  const [countdown, setCountdown] = useState(qrRefreshRate || 15);
 
-  // Mock countdown timer
+  // QR token refresh timer
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          // In real app, fetch new QR token here
-          setQrToken(`new-token-${Math.random().toString(36).substring(7)}`);
-          return 15;
+          dispatch(refreshQrToken(sessionId));
+          return qrRefreshRate || 15;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [dispatch, sessionId, qrRefreshRate]);
 
-  const handleEndSession = () => {
+  // Live feed polling
+  useEffect(() => {
+    dispatch(fetchLiveAttendance(sessionId));
+    const pollTimer = setInterval(() => {
+      dispatch(fetchLiveAttendance(sessionId));
+    }, 5000);
+    return () => clearInterval(pollTimer);
+  }, [dispatch, sessionId]);
+
+  const handleEndSession = async () => {
     if(window.confirm("Are you sure you want to end this live session? All unscanned students will be marked Absent.")) {
+      await dispatch(endLiveSession(sessionId));
+      dispatch(resetSession());
       navigate("/teacher/dashboard");
     }
   };
 
+  const handleStatusUpdate = async (attendanceId, status) => {
+    await dispatch(updateAttendanceStatus({ attendanceId, status }));
+    dispatch(fetchLiveAttendance(sessionId)); // Refresh immediately
+  };
+
+  const attendance = liveFeed || [];
   const presentCount = attendance.filter(a => a.status === "Present").length;
   const pendingCount = attendance.filter(a => a.status === "Pending").length;
 
@@ -139,10 +158,14 @@ export default function LiveSession() {
                       </span>
                     ) : (
                       <div className="flex gap-2">
-                        <button className="p-2 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors shadow-sm" title="Approve">
+                        <button 
+                          onClick={() => handleStatusUpdate(student.id, "Present")}
+                          className="p-2 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-600 rounded-lg transition-colors shadow-sm" title="Approve">
                           <Check className="w-4 h-4" />
                         </button>
-                        <button className="p-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors shadow-sm" title="Reject">
+                        <button 
+                          onClick={() => handleStatusUpdate(student.id, "Absent")}
+                          className="p-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors shadow-sm" title="Reject">
                           <X className="w-4 h-4" />
                         </button>
                       </div>

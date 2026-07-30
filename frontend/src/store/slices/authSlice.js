@@ -36,6 +36,18 @@ export const setupProfile = createAsyncThunk(
   }
 );
 
+export const updatePassword = createAsyncThunk(
+  "auth/updatePassword",
+  async (passwordData, { rejectWithValue }) => {
+    try {
+      const res = await api.patch("/api/v2/auth/update-password", passwordData);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update password");
+    }
+  }
+);
+
 export const refreshAccessToken = createAsyncThunk(
   "auth/refresh",
   async (_, { rejectWithValue }) => {

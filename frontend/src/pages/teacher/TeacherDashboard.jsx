@@ -1,36 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { BookOpen, Users, Clock, PlayCircle, History, Filter } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
+import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
+import { startLiveSession } from "../../store/slices/sessionSlice";
 
 export default function TeacherDashboard() {
+  const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
+  const { activeAllocations, pastClasses, isLoading } = useSelector(state => state.teacher);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("active");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState(null);
 
-  const activeAllocations = [
-    { _id: "alloc1", subjectName: "Data Structures", subjectCode: "CS301", batch: "BSIT 2026", section: "A", semester: 3, students: 45 },
-    { _id: "alloc2", subjectName: "Web Development", subjectCode: "CS401", batch: "BSCS 2025", section: "C", semester: 5, students: 38 },
-  ];
-
-  const pastClasses = [
-    { _id: "sess1", subject: "Data Structures", section: "A", date: "Oct 12, 2023", type: "Lecture", present: 42, total: 45 },
-    { _id: "sess2", subject: "Web Development", section: "C", date: "Oct 10, 2023", type: "Lab", present: 35, total: 38 },
-  ];
+  useEffect(() => {
+    dispatch(fetchTeacherDashboard());
+    dispatch(fetchTeacherHistory());
+  }, [dispatch]);
 
   const handleOpenModal = (alloc) => {
     setSelectedAllocation(alloc);
     setIsModalOpen(true);
   };
 
-  const handleStartSession = (settings) => {
-    setIsModalOpen(false);
-    navigate(`/teacher/session/live/${selectedAllocation._id}`);
+  const handleStartSession = async (settings) => {
+    try {
+      const res = await dispatch(startLiveSession({
+        allocationId: selectedAllocation._id,
+        sectionName: selectedAllocation.sectionName || selectedAllocation.section,
+        type: settings.type,
+        securityConfig: {
+          requireLocation: settings.radius > 0,
+          locationRadius: settings.radius,
+          manualApprovalRequired: settings.manualApproval
+        }
+      })).unwrap();
+      
+      setIsModalOpen(false);
+      navigate(`/teacher/session/live/${res.session._id}`);
+    } catch (err) {
+      alert(err);
+    }
   };
+
+  if (isLoading && activeAllocations.length === 0) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading dashboard...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -113,7 +131,7 @@ export default function TeacherDashboard() {
                   >
                     Start Live Session <PlayCircle className="w-5 h-5" />
                   </button>
-                  <Link to={`/teacher/class/${alloc._id}`} className="block text-center mt-4 text-sm font-semibold text-sky-600 hover:text-sky-700 transition-colors">
+                  <Link to={`/teacher/class/${alloc._id}/${alloc.section}`} className="block text-center mt-4 text-sm font-semibold text-sky-600 hover:text-sky-700 transition-colors">
                     View Roster & Stats
                   </Link>
                 </div>
@@ -174,7 +192,7 @@ export default function TeacherDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link to={`/teacher/class/alloc1?session=${session._id}`} className="text-sm text-sky-600 hover:text-sky-700 hover:underline font-semibold transition-colors">
+                          <Link to={`/teacher/class/${session.allocationId || 'unknown'}/${session.section}?session=${session._id}`} className="text-sm text-sky-600 hover:text-sky-700 hover:underline font-semibold transition-colors">
                             View Details
                           </Link>
                         </td>

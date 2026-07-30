@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ArrowLeft, User, Smartphone, ShieldCheck, Key, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
-// import { updatePassword } from "../../store/slices/authSlice";
+import { updatePassword } from "../../store/slices/authSlice";
 
 export default function StudentProfile() {
   const { user } = useSelector(state => state.auth);
@@ -12,14 +12,22 @@ export default function StudentProfile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     if(newPassword !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-    // dispatch(updatePassword({currentPassword, newPassword}));
-    alert("Password change request submitted.");
+    
+    try {
+      await dispatch(updatePassword({currentPassword, newPassword})).unwrap();
+      alert("Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      alert(err || "Failed to change password.");
+    }
   };
 
   return (
@@ -50,19 +58,19 @@ export default function StudentProfile() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Username / ID</p>
-              <p className="font-bold text-slate-700">{user?.username || "CSIT-2022-001"}</p>
+              <p className="font-bold text-slate-700">{user?.username || "N/A"}</p>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-400 mb-1">Batch</p>
-              <p className="font-bold text-slate-700">BS Information Technology 2026</p>
+              <p className="text-sm font-semibold text-slate-400 mb-1">Department</p>
+              <p className="font-bold text-slate-700">{user?.info?.department || "N/A"}</p>
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Semester</p>
-              <p className="font-bold text-slate-700">Semester 3</p>
+              <p className="font-bold text-slate-700">Semester {user?.info?.semester || "N/A"}</p>
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Section</p>
-              <p className="font-bold text-slate-700">Section A</p>
+              <p className="font-bold text-slate-700">Section {user?.info?.section || "N/A"}</p>
             </div>
           </div>
         </div>

@@ -3,6 +3,8 @@ import api from "../../services/api.js";
 
 const initialState = {
   students: [],
+  dashboardData: null,
+  historyData: null,
   isLoading: false,
   error: null,
 };
@@ -52,6 +54,24 @@ export const updateStudentStatus = createAsyncThunk("student/updateStudentStatus
   }
 });
 
+export const fetchStudentDashboard = createAsyncThunk("student/fetchDashboard", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/v2/academic/student/dashboard");
+    return res.data.data.currentSubjects;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch student dashboard");
+  }
+});
+
+export const fetchStudentHistory = createAsyncThunk("student/fetchHistory", async (_, { rejectWithValue }) => {
+  try {
+    const res = await api.get("/api/v2/academic/student/history");
+    return res.data.data.pastSemesters;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch student history");
+  }
+});
+
 const studentSlice = createSlice({
   name: "student",
   initialState,
@@ -64,6 +84,16 @@ const studentSlice = createSlice({
     builder.addCase(fetchStudents.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchStudents.fulfilled, (state, { payload }) => { state.isLoading = false; state.students = payload; });
     builder.addCase(fetchStudents.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+    
+    // Dashboard
+    builder.addCase(fetchStudentDashboard.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchStudentDashboard.fulfilled, (state, { payload }) => { state.isLoading = false; state.dashboardData = payload; });
+    builder.addCase(fetchStudentDashboard.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+
+    // History
+    builder.addCase(fetchStudentHistory.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchStudentHistory.fulfilled, (state, { payload }) => { state.isLoading = false; state.historyData = payload; });
+    builder.addCase(fetchStudentHistory.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
   },
 });
 

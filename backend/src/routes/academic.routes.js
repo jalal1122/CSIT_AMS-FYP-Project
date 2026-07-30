@@ -6,6 +6,8 @@ import * as academic from "../controllers/academic.controller.js";
 
 const router = Router();
 const adminOnly = [verifyJWT, hasRole(["admin"])];
+const teacherOnly = [verifyJWT, hasRole(["teacher"])];
+const studentOnly = [verifyJWT, hasRole(["student"])];
 
 router.post("/batch/create", ...adminOnly, uploadExcel, academic.createBatch);
 router.get("/batches", ...adminOnly, academic.getBatches);
@@ -15,6 +17,14 @@ router.post("/batch/:id/rollback", ...adminOnly, academic.rollbackPromotion);
 
 router.post("/allocation/assign", ...adminOnly, academic.allocateCourse);
 router.get("/allocations", verifyJWT, hasRole(["admin", "teacher"]), academic.getAllocations);
-// router.get("/allocation/:id", verifyJWT, academic.getAllocationById); // Not implemented yet, leave commented out
+
+// Teacher Dashboard
+router.get("/teacher/dashboard", ...teacherOnly, academic.getTeacherDashboard);
+router.get("/teacher/history", ...teacherOnly, academic.getTeacherHistory);
+router.get("/teacher/class/:allocationId/:sectionName", ...teacherOnly, academic.getClassDetails);
+
+// Student Dashboard
+router.get("/student/dashboard", ...studentOnly, academic.getStudentDashboard);
+router.get("/student/history", ...studentOnly, academic.getStudentHistory);
 
 export default router;

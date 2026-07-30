@@ -101,7 +101,7 @@ function App() {
           {/* Teacher */}
           <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherDashboard /></PrivateRoute>} />
           <Route path="/teacher/session/live/:sessionId" element={<PrivateRoute allowedRoles={["teacher","admin"]}><LiveSession /></PrivateRoute>} />
-          <Route path="/teacher/class/:allocationId" element={<PrivateRoute allowedRoles={["teacher","admin"]}><ClassDetails /></PrivateRoute>} />
+          <Route path="/teacher/class/:allocationId/:sectionName" element={<PrivateRoute allowedRoles={["teacher","admin"]}><ClassDetails /></PrivateRoute>} />
 
           {/* Student */}
           <Route path="/student/dashboard" element={<PrivateRoute allowedRoles={["student"]}><StudentDashboard /></PrivateRoute>} />
