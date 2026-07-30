@@ -9,9 +9,9 @@ const initialState = {
   error: null,
 };
 
-export const fetchBatches = createAsyncThunk("academic/fetchBatches", async (_, { rejectWithValue }) => {
+export const fetchBatches = createAsyncThunk("academic/fetchBatches", async (params = {}, { rejectWithValue }) => {
   try {
-    const res = await api.get("/api/v2/academic/batches");
+    const res = await api.get("/api/v2/academic/batches", { params });
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch batches");
@@ -29,9 +29,7 @@ export const fetchBatchDetails = createAsyncThunk("academic/fetchBatchDetails", 
 
 export const createBatch = createAsyncThunk("academic/createBatch", async (formData, { rejectWithValue }) => {
   try {
-    const res = await api.post("/api/v2/academic/batch/create", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.post("/api/v2/academic/batch/create", formData);
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to create batch");
