@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchTeachers, createTeacher, resetTeacherPassword, offboardTeacher, updateTeacherStatus } from "../../store/slices/facultySlice.js";
 import { fetchDepartments } from "../../store/slices/systemSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
-import { Users, Plus, Key, Eye, UserX, Search, UserCheck } from "lucide-react";
+import { Users, Plus, Key, Eye, UserX, Search, UserCheck, Trash2 } from "lucide-react";
 import Badge from "../../components/shared/Badge";
 import AddTeacherModal from "../../components/admin/AddTeacherModal.jsx";
 import EmptyState from "../../components/shared/EmptyState";

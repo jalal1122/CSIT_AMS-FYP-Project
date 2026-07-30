@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDisciplines, fetchSubjects, updateDiscipline } from "../../store/slices/systemSlice.js";
+import { fetchDisciplines, fetchSubjects, updateSyllabus } from "../../store/slices/systemSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
 import { BookOpen, Save, X, Search, Plus } from "lucide-react";
 import EmptyState from "../../components/shared/EmptyState";
@@ -80,7 +80,8 @@ export default function Curriculum() {
     }));
 
     try {
-      await dispatch(updateDiscipline({ id: selectedDiscipline, data: { syllabus } })).unwrap();
+      // Send syllabusData as an object with { syllabus: [...] }
+      await dispatch(updateSyllabus({ id: selectedDiscipline, syllabusData: { syllabus } })).unwrap();
       dispatch(addToast({ title: "Success", message: "Curriculum saved successfully", type: "success" }));
       dispatch(fetchDisciplines());
     } catch (err) {
