@@ -16,6 +16,7 @@ import sessionRoutes from "./src/routes/session.routes.js";
 import attendanceRoutes from "./src/routes/attendance.routes.js";
 import analyticsRoutes from "./src/routes/analytics.routes.js";
 import cronRoutes from "./src/routes/cron.routes.js";
+import systemSettingsRoutes from "./src/routes/systemSettings.routes.js";
 
 import { initSocket } from "./src/services/socket.js";
 import { initCronJobs } from "./src/utils/cronJobs.js";
@@ -49,6 +50,7 @@ app.use("/api/v2/session", sessionRoutes);
 app.use("/api/v2/attendance", attendanceRoutes);
 app.use("/api/v2/analytics", analyticsRoutes);
 app.use("/api/v2/cron", cronRoutes);
+app.use("/api/v2/settings", systemSettingsRoutes);
 
 // Connect to Database and start server
 const PORT = process.env.PORT || 5001;
