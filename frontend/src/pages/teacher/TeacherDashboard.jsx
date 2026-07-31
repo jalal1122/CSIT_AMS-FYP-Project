@@ -44,7 +44,7 @@ export default function TeacherDashboard() {
       })).unwrap();
       
       setIsModalOpen(false);
-      navigate(`/teacher/session/live/${res.session._id}`);
+      navigate(`/teacher/session/live/${res._id}`);
     } catch (err) {
       alert(err);
     }
@@ -60,7 +60,7 @@ export default function TeacherDashboard() {
       <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">AttendX Teacher Portal</h1>
+            <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">CSIT AMS Teacher Portal</h1>
             <p className="text-xs font-medium text-slate-500 mt-0.5">Welcome, {user?.name || "Teacher"}</p>
           </div>
           <div className="flex items-center gap-4">

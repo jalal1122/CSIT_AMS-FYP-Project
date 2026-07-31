@@ -1,31 +1,48 @@
-import Pusher from "pusher";
+import { Server } from "socket.io";
 
-let pusherInstance;
+let io;
 
-export const initSocket = () => {
-  pusherInstance = new Pusher({
-    appId: process.env.PUSHER_APP_ID?.trim() || "",
-    key: process.env.PUSHER_KEY?.trim() || "",
-    secret: process.env.PUSHER_SECRET?.trim() || "",
-    cluster: process.env.PUSHER_CLUSTER?.trim() || "",
-    useTLS: true,
+export const initSocket = (httpServer) => {
+  io = new Server(httpServer, {
+    cors: {
+      origin: process.env.CLIENT_URL || "http://localhost:5173",
+      methods: ["GET", "POST"],
+      credentials: true,
+    },
   });
-  console.log("🔌 Pusher initialized");
-  return pusherInstance;
+
+  io.on("connection", (socket) => {
+    console.log(`🔌 Client connected: ${socket.id}`);
+
+    // Join a room for a specific session
+    socket.on("join-session", (sessionId) => {
+      if (sessionId) {
+        socket.join(`session-${sessionId}`);
+        console.log(`Client ${socket.id} joined session-${sessionId}`);
+      }
+    });
+
+    socket.on("leave-session", (sessionId) => {
+      if (sessionId) {
+        socket.leave(`session-${sessionId}`);
+        console.log(`Client ${socket.id} left session-${sessionId}`);
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`🔌 Client disconnected: ${socket.id}`);
+    });
+  });
+
+  console.log("🔌 Socket.io initialized");
+  return io;
 };
 
 export const getIO = () => {
-  if (!pusherInstance) {
-    throw new Error("Pusher has not been initialized.");
+  if (!io) {
+    throw new Error("Socket.io has not been initialized.");
   }
-  return pusherInstance;
-};
-
-export const authorizeChannel = (socketId, channelName) => {
-  if (!pusherInstance) {
-    throw new Error("Pusher not initialized");
-  }
-  return pusherInstance.authorizeChannel(socketId, channelName);
+  return io;
 };
 
 /**
@@ -36,10 +53,9 @@ export const authorizeChannel = (socketId, channelName) => {
  * @param {object} data
  */
 export const emitToSession = (sessionId, event, data) => {
-  if (!pusherInstance) {
-    console.warn("⚠️ Pusher not initialized, cannot emit event:", event);
+  if (!io) {
+    console.warn("⚠️ Socket.io not initialized, cannot emit event:", event);
     return;
   }
-  const channelName = `private-session-${sessionId}`;
-  pusherInstance.trigger(channelName, event, data);
+  io.to(`session-${sessionId}`).emit(event, data);
 };

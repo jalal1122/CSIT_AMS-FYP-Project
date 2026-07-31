@@ -18,7 +18,7 @@ cloudinary.config({
  */
 export const uploadToCloudinary = async (
   filePath,
-  folder = "attendx/avatars"
+  folder = "csit_ams/avatars"
 ) => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {

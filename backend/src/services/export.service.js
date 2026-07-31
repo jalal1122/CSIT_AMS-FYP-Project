@@ -1152,7 +1152,7 @@ class ExportService {
     worksheet.columns = columns;
 
     // Title Row
-    worksheet.insertRow(1, [`AttendX Admin Report: ${reportType.toUpperCase()}`]);
+    worksheet.insertRow(1, [`CSIT AMS Admin Report: ${reportType.toUpperCase()}`]);
     worksheet.mergeCells(1, 1, 1, columns.length);
     const titleCell = worksheet.getCell("A1");
     titleCell.font = { size: 16, bold: true, color: { argb: "FF" + this.COLORS.headerBg } };

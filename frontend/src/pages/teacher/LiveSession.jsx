@@ -11,6 +11,7 @@ import {
 } from "../../store/slices/sessionSlice";
 import { QRCodeSVG } from "qrcode.react";
 import LiveSessionSecurityModal from "../../components/teacher/LiveSessionSecurityModal";
+import socket from "../../services/socket";
 
 export default function LiveSession() {
   const { sessionId } = useParams();
@@ -35,13 +36,31 @@ export default function LiveSession() {
     return () => clearInterval(timer);
   }, [dispatch, sessionId, qrRefreshRate]);
 
-  // Live feed polling
+  // Live feed websocket
   useEffect(() => {
     dispatch(fetchLiveAttendance(sessionId));
-    const pollTimer = setInterval(() => {
+    
+    socket.connect();
+    socket.emit("join-session", sessionId);
+    
+    socket.on("attendance:updated", () => {
       dispatch(fetchLiveAttendance(sessionId));
-    }, 5000);
-    return () => clearInterval(pollTimer);
+    });
+
+    socket.on("qr:updated", (data) => {
+      // Optional: if backend ever pushes qr updates
+      if(data.qrToken) {
+        // Redux state will be out of sync if we manually update here without dispatching,
+        // but the polling already handles QR refresh.
+      }
+    });
+
+    return () => {
+      socket.emit("leave-session", sessionId);
+      socket.off("attendance:updated");
+      socket.off("qr:updated");
+      socket.disconnect();
+    };
   }, [dispatch, sessionId]);
 
   const handleEndSession = async () => {

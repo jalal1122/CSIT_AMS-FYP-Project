@@ -35,7 +35,7 @@ export default function StudentDashboard() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-6 w-full sm:w-auto justify-between">
             <div>
-              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight uppercase">AttendX Student Portal</h1>
+              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight uppercase">CSIT AMS Student Portal</h1>
             </div>
             {/* Mobile Avatar */}
             <div className="sm:hidden flex items-center gap-3">

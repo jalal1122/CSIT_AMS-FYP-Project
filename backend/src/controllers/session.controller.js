@@ -5,7 +5,7 @@ import Session from "../models/session.model.js";
 import CourseAllocation from "../models/courseAllocation.model.js";
 import Attendance from "../models/attendance.model.js";
 import jwt from "jsonwebtoken";
-// import { emitToSession } from "../services/socket.js";
+import { emitToSession } from "../services/socket.js";
 // import EmailService from "../services/email.service.js";
 
 const getClientIP = (req) => {
@@ -92,8 +92,8 @@ export const startSession = asyncHandler(async (req, res) => {
     securityConfig: finalSecurityConfig,
   });
 
-  // TODO: Emails and sockets
-  // emitToSession(session._id.toString(), "session:started", { ... });
+  // Emails and sockets
+  emitToSession(session._id.toString(), "session:started", { session });
 
   res.status(201).json(new ApiResponse(201, session, "Session started successfully"));
 });
@@ -119,7 +119,7 @@ export const endSession = asyncHandler(async (req, res) => {
   session.endTime = new Date();
   await session.save();
 
-  // emitToSession(session._id.toString(), "session:ended", { sessionId: session._id });
+  emitToSession(session._id.toString(), "session:ended", { sessionId: session._id });
 
   res.status(200).json(new ApiResponse(200, session, "Session ended successfully"));
 });
@@ -180,7 +180,7 @@ export const generateQRToken = asyncHandler(async (req, res) => {
   session.qrCodeHash = qrToken;
   await session.save({ validateBeforeSave: false });
 
-  // emitToSession(session._id.toString(), "qr:updated", { qrToken, expiresAt: Date.now() + session.securityConfig.qrRefreshRate * 1000 });
+  emitToSession(session._id.toString(), "qr:updated", { qrToken, expiresAt: Date.now() + session.securityConfig.qrRefreshRate * 1000 });
 
   res.status(200).json(new ApiResponse(200, { qrToken, refreshRate: session.securityConfig.qrRefreshRate }, "QR token generated"));
 });

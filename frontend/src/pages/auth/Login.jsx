@@ -42,7 +42,7 @@ export default function Login() {
       <div className="card w-full max-w-md p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
         
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-sky-600 tracking-tight mb-2">AttendX</h1>
+          <h1 className="text-4xl font-extrabold text-sky-600 tracking-tight mb-2">CSIT AMS</h1>
           <p className="text-slate-500 font-medium">Sign in to your account</p>
         </div>
 

@@ -38,7 +38,7 @@ app.use(cookieParser());
 
 // Base Route
 app.get("/api/v2/health", (req, res) => {
-  res.status(200).json({ status: "ok", message: "AttendX v2 API is running" });
+  res.status(200).json({ status: "ok", message: "CSIT AMS v2 API is running" });
 });
 
 // v2 API Routes 
@@ -78,7 +78,7 @@ const PORT = process.env.PORT || 5001;
 connectDB()
   .then(() => {
     const server = app.listen(PORT, () => {
-      console.log(`🚀 AttendX v2 Server running on port ${PORT}`);
+      console.log(`🚀 CSIT AMS v2 Server running on port ${PORT}`);
       initSocket(server);
       initCronJobs();
     });

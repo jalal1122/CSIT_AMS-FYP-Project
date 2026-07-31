@@ -512,7 +512,7 @@ class EmailService {
   }
   static async sendTeacherWelcome(teacher, tempPassword) {
     const content = `
-      <div class="greeting">Welcome to AttendX, ${teacher.name}!</div>
+      <div class="greeting">Welcome to CSIT AMS, ${teacher.name}!</div>
       <p class="message">Your teacher account has been created successfully.</p>
       <div class="info-box">
         <div class="info-row">
@@ -529,7 +529,7 @@ class EmailService {
     `;
     return this.sendEmail({
       to: teacher.email,
-      subject: "Welcome to AttendX - Your Faculty Account",
+      subject: "Welcome to CSIT AMS - Your Faculty Account",
       html: this.getBaseTemplate(content),
     });
   }

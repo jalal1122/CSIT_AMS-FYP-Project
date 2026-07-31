@@ -38,10 +38,10 @@ export default function ScanAttendance() {
     }
 
     // Generate or get persistent device fingerprint
-    let deviceId = localStorage.getItem("attendx_device_id");
+    let deviceId = localStorage.getItem("csit_ams_device_id");
     if (!deviceId) {
       deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
-      localStorage.setItem("attendx_device_id", deviceId);
+      localStorage.setItem("csit_ams_device_id", deviceId);
     }
 
     const markWithLocation = async (lat = null, lon = null) => {

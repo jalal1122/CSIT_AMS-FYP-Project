@@ -6,6 +6,7 @@ import Session from "../models/session.model.js";
 import CourseAllocation from "../models/courseAllocation.model.js";
 import jwt from "jsonwebtoken";
 import { calculateDistance } from "../utils/geolocation.js";
+import { emitToSession } from "../services/socket.js";
 
 const getClientIP = (req) => {
   return req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.connection?.remoteAddress || req.ip;
@@ -120,6 +121,8 @@ export const markAttendance = asyncHandler(async (req, res) => {
     },
     date: new Date(),
   });
+
+  emitToSession(sessionId.toString(), "attendance:updated", { studentId: req.user._id, status, isSuspicious });
 
   res.status(201).json(new ApiResponse(201, attendance, `Attendance marked as ${status}`));
 });
