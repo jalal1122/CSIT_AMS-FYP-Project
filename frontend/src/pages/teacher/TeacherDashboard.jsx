@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { BookOpen, Users, Clock, PlayCircle, History, Filter } from "lucide-react";
+import { BookOpen, Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
 import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
 import { startLiveSession } from "../../store/slices/sessionSlice";
+import { exportTeacherReport } from "../../store/slices/analyticsSlice";
+import toast from "react-hot-toast";
 
 export default function TeacherDashboard() {
   const dispatch = useDispatch();
@@ -15,6 +17,10 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("active");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState(null);
+
+  const [reportAllocationId, setReportAllocationId] = useState("");
+  const [reportStartDate, setReportStartDate] = useState("");
+  const [reportEndDate, setReportEndDate] = useState("");
 
   useEffect(() => {
     dispatch(fetchTeacherDashboard());
@@ -48,6 +54,23 @@ export default function TeacherDashboard() {
     } catch (err) {
       alert(err);
     }
+  };
+
+  const handleExport = (format) => {
+    if (!reportAllocationId) {
+      toast.error("Please select a class to export.");
+      return;
+    }
+    const alloc = activeAllocations.find(a => a._id === reportAllocationId);
+    if (!alloc) return;
+
+    dispatch(exportTeacherReport({
+      allocationId: alloc._id,
+      sectionName: alloc.sectionName || alloc.section,
+      startDate: reportStartDate,
+      endDate: reportEndDate,
+      format
+    }));
   };
 
   if (isLoading && activeAllocations.length === 0) {
@@ -146,28 +169,82 @@ export default function TeacherDashboard() {
 
         {activeTab === "past" && (
           <div className="space-y-6">
-            <div className="card p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
-              <div className="flex items-center gap-2 text-slate-500 w-full md:w-auto">
-                <Filter className="w-4 h-4" /> 
-                <span className="text-sm font-semibold text-slate-700">Filter History:</span>
+            {/* Export Section */}
+            <div className="card p-5 border-sky-200 bg-sky-50/30">
+              <div className="flex items-center gap-2 mb-4">
+                <FileSpreadsheet className="w-5 h-5 text-sky-600" />
+                <h3 className="font-bold text-sky-900">Export Class Reports</h3>
               </div>
-              <div className="flex gap-4 w-full md:w-auto">
-                <select className="input flex-1 py-2">
-                  <option>All Subjects</option>
-                  <option>Data Structures</option>
-                </select>
-                <select className="input flex-1 py-2">
-                  <option>All Sections</option>
-                  <option>Section A</option>
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Select Class</label>
+                  <select 
+                    className="input cursor-pointer py-2.5 w-full bg-white"
+                    value={reportAllocationId}
+                    onChange={(e) => setReportAllocationId(e.target.value)}
+                  >
+                    <option value="">Choose a class to export...</option>
+                    {activeAllocations.map(alloc => (
+                      <option key={alloc._id} value={alloc._id}>
+                        {alloc.subjectName} ({alloc.batch} - Sec {alloc.section})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Start Date</label>
+                  <div className="relative">
+                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input 
+                      type="date" 
+                      className="input pl-10 py-2.5 w-full bg-white"
+                      value={reportStartDate}
+                      onChange={(e) => setReportStartDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 mb-1 block">End Date</label>
+                  <div className="relative">
+                    <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                    <input 
+                      type="date" 
+                      className="input pl-10 py-2.5 w-full bg-white"
+                      value={reportEndDate}
+                      onChange={(e) => setReportEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleExport("pdf")}
+                    className="btn-secondary py-2.5 flex-1 flex justify-center items-center gap-2 border-slate-300"
+                    title="Export PDF"
+                  >
+                    <Download className="w-4 h-4" /> PDF
+                  </button>
+                  <button 
+                    onClick={() => handleExport("xlsx")}
+                    className="btn-primary py-2.5 flex-1 flex justify-center items-center gap-2"
+                    title="Export Excel"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" /> Excel
+                  </button>
+                </div>
               </div>
             </div>
 
             <div className="card p-0 overflow-hidden">
+              <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-200">
+                <div className="flex items-center gap-2 text-slate-500">
+                  <History className="w-4 h-4" /> 
+                  <span className="text-sm font-semibold text-slate-700">Past Sessions</span>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
-                    <tr className="bg-slate-50/80 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                    <tr className="bg-white border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
                       <th className="px-6 py-4">Date</th>
                       <th className="px-6 py-4">Subject & Section</th>
                       <th className="px-6 py-4">Type</th>
@@ -175,7 +252,7 @@ export default function TeacherDashboard() {
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 bg-white">
                     {pastClasses.map((session) => (
                       <tr key={session._id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4 text-slate-700 text-sm font-medium">{session.date}</td>
@@ -202,6 +279,13 @@ export default function TeacherDashboard() {
                         </td>
                       </tr>
                     ))}
+                    {pastClasses.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-8 text-center text-slate-500">
+                          No past sessions found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

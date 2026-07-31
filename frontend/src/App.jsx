@@ -36,6 +36,7 @@ const ClassDetails = lazy(() => import("./pages/teacher/ClassDetails.jsx"));
 const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard.jsx"));
 const ScanAttendance = lazy(() => import("./pages/student/ScanAttendance.jsx"));
 const StudentProfile = lazy(() => import("./pages/student/StudentProfile.jsx"));
+const StudentReports = lazy(() => import("./pages/student/StudentReports.jsx"));
 
 // Shared Components
 const ToastContainer = lazy(() => import("./components/shared/ToastContainer.jsx"));
@@ -106,6 +107,7 @@ function App() {
           {/* Student */}
           <Route path="/student/dashboard" element={<PrivateRoute allowedRoles={["student"]}><StudentDashboard /></PrivateRoute>} />
           <Route path="/student/scan" element={<PrivateRoute allowedRoles={["student"]}><ScanAttendance /></PrivateRoute>} />
+          <Route path="/student/reports" element={<PrivateRoute allowedRoles={["student"]}><StudentReports /></PrivateRoute>} />
           <Route path="/student/profile" element={<PrivateRoute allowedRoles={["student","teacher","admin"]}><StudentProfile /></PrivateRoute>} />
 
           {/* Fallback */}
