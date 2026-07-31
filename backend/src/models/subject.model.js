@@ -34,7 +34,7 @@ const subjectSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-subjectSchema.index({ code: 1 });
+
 subjectSchema.index({ departmentId: 1, isArchived: 1 });
 
 const Subject = mongoose.model("Subject", subjectSchema);

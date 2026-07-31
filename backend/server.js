@@ -36,7 +36,15 @@ app.use(express.json({ limit: process.env.BODY_SIZE_LIMIT || "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: process.env.BODY_SIZE_LIMIT || "10mb" }));
 app.use(cookieParser());
 
-// Base Route
+// Base Routes
+app.get("/", (req, res) => {
+  res.status(200).json({ status: "ok", message: "CSIT AMS API Root" });
+});
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "CSIT AMS API is healthy" });
+});
+
 app.get("/api/v2/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "CSIT AMS v2 API is running" });
 });

@@ -1,4 +1,3 @@
-async function loadApp() {
-    const { default: app } = await import('./server.js');
-}
-loadApp();
+(async () => {
+    await import('./server.js');
+})();

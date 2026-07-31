@@ -47,7 +47,7 @@ const disciplineSchema = new mongoose.Schema({
   syllabus: [semesterEntrySchema]
 }, { timestamps: true });
 
-disciplineSchema.index({ code: 1 });
+
 
 const Discipline = mongoose.model("Discipline", disciplineSchema);
 export default Discipline;
