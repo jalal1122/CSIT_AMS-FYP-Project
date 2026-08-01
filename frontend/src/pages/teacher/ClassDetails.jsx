@@ -1,9 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ArrowLeft, Edit2, Calendar, FileText } from "lucide-react";
 import Badge from "../../components/shared/Badge";
+import api from "../../services/api";
+import toast from "react-hot-toast";
 import { fetchClassDetails, clearClassDetails } from "../../store/slices/teacherSlice";
+import StudentReportModal from "../../components/teacher/StudentReportModal";
 
 export default function ClassDetails() {
   const { allocationId, sectionName } = useParams();
@@ -21,14 +24,47 @@ export default function ClassDetails() {
 
   const { subject, batch, section, semester, students, sessions = [] } = classDetails;
 
+  const [localSessions, setLocalSessions] = useState([]);
+  const [skip, setSkip] = useState(10);
+  const [hasMore, setHasMore] = useState(true);
+  const [reportStudentId, setReportStudentId] = useState(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  
+  useEffect(() => {
+    if (sessions.length > 0 && localSessions.length === 0) {
+      setLocalSessions(sessions);
+      setSkip(10);
+      setHasMore(sessions.length === 10);
+    }
+  }, [sessions, localSessions.length]);
+
+  const loadMoreSessions = async () => {
+    try {
+      const res = await api.get(`/api/v2/academic/teacher/class/${allocationId}/${sectionName}/sessions?skip=${skip}&limit=10`);
+      const newSessions = res.data.data.sessions;
+      setLocalSessions(prev => [...prev, ...newSessions]);
+      setSkip(prev => prev + newSessions.length);
+      setHasMore(res.data.data.hasMore);
+    } catch (error) {
+      toast.error("Failed to load more sessions");
+    }
+  };
+
   const handleExportCSV = () => {
-    const headers = ["Roll No,Name,Present,Total,Percentage\n"];
+    let csvData = `Class,${subject?.name} (${subject?.code})\n`;
+    csvData += `Batch,${batch?.name}\n`;
+    csvData += `Section,${section}\n`;
+    csvData += `Semester,${semester}\n`;
+    csvData += `Export Date,${new Date().toLocaleDateString()}\n\n`;
+    
+    csvData += "Roll No,Name,Present,Total,Percentage\n";
     const rows = students.map(s => {
       const percentage = s.total > 0 ? Math.round((s.present / s.total) * 100) : 0;
       return `${s.rollNo},${s.name},${s.present},${s.total},${percentage}%`;
     });
     
-    const csvContent = "data:text/csv;charset=utf-8," + headers.concat(rows).join("\n");
+    csvData += rows.join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + csvData;
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -104,9 +140,18 @@ export default function ClassDetails() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button className="p-2 text-slate-400 hover:text-sky-500 bg-slate-50 hover:bg-sky-50 border border-slate-100 hover:border-sky-200 rounded-lg transition-colors shadow-sm" title="View Report">
-                            <FileText className="w-4 h-4" />
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            <button 
+                              onClick={() => {
+                                setReportStudentId(student.id);
+                                setIsReportModalOpen(true);
+                              }}
+                              className="p-2 text-slate-400 hover:text-sky-500 bg-slate-50 hover:bg-sky-50 border border-slate-100 hover:border-sky-200 rounded-lg transition-colors shadow-sm" 
+                              title="View Report"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -122,12 +167,16 @@ export default function ClassDetails() {
               <h3 className="text-lg font-bold text-sky-900">Session History</h3>
             </div>
             <div className="p-6 space-y-4 bg-white">
-              {sessions.length === 0 ? (
+              {localSessions.length === 0 ? (
                 <div className="text-center p-4 text-slate-400 text-sm font-medium border border-dashed border-slate-200 rounded-xl bg-slate-50">
                   No sessions recorded yet.
                 </div>
-              ) : sessions.map((sess) => (
-                <div key={sess._id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center shadow-sm">
+              ) : localSessions.map((sess) => (
+                <Link 
+                  key={sess._id} 
+                  to={`/teacher/class/${allocationId}/${sectionName}?session=${sess._id}`}
+                  className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex justify-between items-center shadow-sm hover:border-sky-300 hover:bg-sky-50 transition-colors block"
+                >
                   <div>
                     <p className="text-sm font-bold text-slate-700">{sess.date}</p>
                     <p className="text-xs font-semibold text-slate-500 mt-0.5">{sess.type}</p>
@@ -135,16 +184,29 @@ export default function ClassDetails() {
                   <div className="text-right flex items-center gap-3">
                     <span className="text-sm text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">{sess.present}/{sess.total}</span>
                   </div>
-                </div>
+                </Link>
               ))}
-              <button className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:text-sky-600 hover:border-sky-300 hover:bg-sky-50 transition-all">
-                View All Sessions
-              </button>
+              {hasMore && (
+                <button 
+                  onClick={loadMoreSessions}
+                  className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:text-sky-600 hover:border-sky-300 hover:bg-sky-50 transition-all"
+                >
+                  Load More Sessions
+                </button>
+              )}
             </div>
           </div>
         </div>
 
       </main>
+
+      <StudentReportModal 
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        allocationId={allocationId}
+        sectionName={sectionName}
+        studentId={reportStudentId}
+      />
     </div>
   );
 }

@@ -21,6 +21,18 @@ export default function TeacherDashboard() {
   const [reportAllocationId, setReportAllocationId] = useState("");
   const [reportStartDate, setReportStartDate] = useState("");
   const [reportEndDate, setReportEndDate] = useState("");
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterSubject, setFilterSubject] = useState("");
+  const [filterSection, setFilterSection] = useState("");
+
+  const filteredPastClasses = pastClasses.filter(session => {
+    const matchesSearch = session.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          session.section.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSubject = filterSubject ? session.subject === filterSubject : true;
+    const matchesSection = filterSection ? session.section === filterSection : true;
+    return matchesSearch && matchesSubject && matchesSection;
+  });
 
   useEffect(() => {
     dispatch(fetchTeacherDashboard());
@@ -236,9 +248,40 @@ export default function TeacherDashboard() {
 
             <div className="card p-0 overflow-hidden">
               <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-200">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <History className="w-4 h-4" /> 
-                  <span className="text-sm font-semibold text-slate-700">Past Sessions</span>
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                  <div className="flex items-center gap-2 text-slate-500">
+                    <Filter className="w-4 h-4" /> 
+                    <span className="text-sm font-semibold text-slate-700">Filter History:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <input 
+                      type="text" 
+                      placeholder="Search sessions..." 
+                      className="input py-2 text-sm max-w-[200px]"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <select 
+                      className="input py-2 text-sm"
+                      value={filterSubject}
+                      onChange={(e) => setFilterSubject(e.target.value)}
+                    >
+                      <option value="">All Subjects</option>
+                      {[...new Set(pastClasses.map(s => s.subject))].map(sub => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                    <select 
+                      className="input py-2 text-sm"
+                      value={filterSection}
+                      onChange={(e) => setFilterSection(e.target.value)}
+                    >
+                      <option value="">All Sections</option>
+                      {[...new Set(pastClasses.map(s => s.section))].map(sec => (
+                        <option key={sec} value={sec}>Section {sec}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
               <div className="overflow-x-auto">
@@ -253,7 +296,7 @@ export default function TeacherDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {pastClasses.map((session) => (
+                    {filteredPastClasses.map((session) => (
                       <tr key={session._id} className="hover:bg-slate-50 transition-colors">
                         <td className="px-6 py-4 text-slate-700 text-sm font-medium">{session.date}</td>
                         <td className="px-6 py-4">
@@ -279,7 +322,7 @@ export default function TeacherDashboard() {
                         </td>
                       </tr>
                     ))}
-                    {pastClasses.length === 0 && (
+                    {filteredPastClasses.length === 0 && (
                       <tr>
                         <td colSpan="5" className="px-6 py-8 text-center text-slate-500">
                           No past sessions found.

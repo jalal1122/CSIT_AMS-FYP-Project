@@ -506,6 +506,7 @@ export const getTeacherHistory = asyncHandler(async (req, res) => {
 
     return {
       _id: sess._id,
+      allocationId: sess.allocationId?._id || sess.allocationId,
       subject: sess.allocationId?.subjectId?.name || "Unknown",
       section: sess.sectionName,
       date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -592,4 +593,89 @@ export const getClassDetails = asyncHandler(async (req, res) => {
     students,
     sessions
   }, "Class details retrieved"));
+});
+
+// @desc    Get class sessions paginated
+// @route   GET /api/v2/academic/teacher/class/:allocationId/:sectionName/sessions
+// @access  Teacher
+export const getClassSessions = asyncHandler(async (req, res) => {
+  const { allocationId, sectionName } = req.params;
+  const skip = parseInt(req.query.skip) || 0;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const allocation = await CourseAllocation.findById(allocationId).lean();
+  if (!allocation) throw new ApiError(404, "Allocation not found");
+  const section = allocation.sections.find(s => s.name === sectionName);
+  if (!section) throw new ApiError(404, "Section not found");
+
+  if (section.teacherId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to view this class");
+  }
+
+  const rawSessions = await Session.find({
+    allocationId,
+    sectionName,
+    active: false
+  }).sort({ endTime: -1 }).skip(skip).limit(limit).lean();
+
+  const sessions = await Promise.all(rawSessions.map(async (sess) => {
+    const presentCount = await Attendance.countDocuments({
+      sessionId: sess._id,
+      status: "Present"
+    });
+    return {
+      _id: sess._id,
+      date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      type: sess.type || "Lecture",
+      present: presentCount,
+      total: section.students.length
+    };
+  }));
+
+  const total = await Session.countDocuments({ allocationId, sectionName, active: false });
+
+  res.status(200).json(new ApiResponse(200, { sessions, total, hasMore: skip + sessions.length < total }, "Sessions retrieved"));
+});
+
+// @desc    Get specific student's attendance report for a class
+// @route   GET /api/v2/academic/teacher/class/:allocationId/:sectionName/student/:studentId/report
+// @access  Teacher
+export const getStudentClassReport = asyncHandler(async (req, res) => {
+  const { allocationId, sectionName, studentId } = req.params;
+
+  const allocation = await CourseAllocation.findById(allocationId).populate("subjectId", "name code").lean();
+  if (!allocation) throw new ApiError(404, "Allocation not found");
+  
+  const student = await User.findById(studentId).select("name info.rollNo").lean();
+  if (!student) throw new ApiError(404, "Student not found");
+
+  const sessions = await Session.find({ allocationId, sectionName, active: false }).sort({ startTime: 1 }).lean();
+  
+  const attendanceRecords = await Attendance.find({
+    studentId,
+    allocationId,
+    section: sectionName
+  }).lean();
+
+  const attendanceMap = {};
+  attendanceRecords.forEach(record => {
+    attendanceMap[record.sessionId.toString()] = record.status;
+  });
+
+  const report = sessions.map(sess => ({
+    sessionId: sess._id,
+    date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    type: sess.type || "Lecture",
+    status: attendanceMap[sess._id.toString()] || "Absent"
+  }));
+
+  const presentCount = report.filter(r => r.status === "Present").length;
+  const total = report.length;
+
+  res.status(200).json(new ApiResponse(200, {
+    student: { name: student.name, rollNo: student.info?.rollNo },
+    subject: { name: allocation.subjectId.name, code: allocation.subjectId.code },
+    summary: { present: presentCount, total },
+    history: report
+  }, "Student report retrieved"));
 });

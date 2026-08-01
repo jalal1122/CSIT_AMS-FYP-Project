@@ -22,6 +22,8 @@ router.get("/allocations", verifyJWT, hasRole(["admin", "teacher"]), academic.ge
 router.get("/teacher/dashboard", ...teacherOnly, academic.getTeacherDashboard);
 router.get("/teacher/history", ...teacherOnly, academic.getTeacherHistory);
 router.get("/teacher/class/:allocationId/:sectionName", ...teacherOnly, academic.getClassDetails);
+router.get("/teacher/class/:allocationId/:sectionName/sessions", ...teacherOnly, academic.getClassSessions);
+router.get("/teacher/class/:allocationId/:sectionName/student/:studentId/report", ...teacherOnly, academic.getStudentClassReport);
 
 // Student Dashboard
 router.get("/student/dashboard", ...studentOnly, academic.getStudentDashboard);

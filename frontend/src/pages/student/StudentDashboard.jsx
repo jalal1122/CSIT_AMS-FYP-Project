@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { QrCode, AlertTriangle, Book, History, LayoutDashboard, Settings } from "lucide-react";
+import { QrCode, AlertTriangle, Book, History, LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { fetchStudentDashboard, fetchStudentHistory } from "../../store/slices/studentSlice";
+import { logoutUser } from "../../store/slices/authSlice";
 
 export default function StudentDashboard() {
   const dispatch = useDispatch();
@@ -37,8 +38,15 @@ export default function StudentDashboard() {
             <div>
               <h1 className="text-xl font-extrabold text-sky-600 tracking-tight uppercase">CSIT AMS Student Portal</h1>
             </div>
-            {/* Mobile Avatar */}
+            {/* Mobile Avatar & Logout */}
             <div className="sm:hidden flex items-center gap-3">
+              <button 
+                onClick={() => dispatch(logoutUser())}
+                className="p-1.5 text-rose-500 bg-rose-50 rounded-full hover:bg-rose-100 transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
                <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold border border-sky-200">
                 {(user?.name || "S").charAt(0)}
               </div>
@@ -62,6 +70,13 @@ export default function StudentDashboard() {
             <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
               <button className="p-2 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-full transition-colors">
                 <Settings className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => dispatch(logoutUser())}
+                className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
               </button>
               <Link to="/student/profile" className="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-slate-200 group">
                 <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold border border-sky-200 group-hover:bg-sky-200 transition-colors">

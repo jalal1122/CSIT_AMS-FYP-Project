@@ -311,8 +311,8 @@ export const createTeacher = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Department not found");
   }
 
-  // Generate secure temporary password
-  const tempPassword = crypto.randomBytes(8).toString("hex");
+  // Use environment variable for default teacher password, fallback to 'password123'
+  const tempPassword = process.env.DEFAULT_TEACHER_PASSWORD || "password123";
 
   // Create a placeholder email based on username if email is missing (assuming required by schema)
   // The user will change it on first login setup
