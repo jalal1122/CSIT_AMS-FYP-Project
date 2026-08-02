@@ -6,6 +6,7 @@ import {
   getActiveSession,
   getLiveAttendance,
   updateSessionSecurity,
+  createRetroactiveSession,
 } from "../controllers/session.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { hasRole } from "../middlewares/role.middleware.js";
@@ -14,6 +15,7 @@ const router = Router();
 const teacherOnly = [verifyJWT, hasRole(["teacher"])];
 
 router.post("/start", ...teacherOnly, startSession);
+router.post("/retroactive", ...teacherOnly, createRetroactiveSession);
 router.post("/:id/end", ...teacherOnly, endSession);
 router.put("/:id/security", ...teacherOnly, updateSessionSecurity);
 router.get("/:id/qr", ...teacherOnly, generateQRToken);

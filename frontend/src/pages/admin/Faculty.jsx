@@ -3,13 +3,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchTeachers, createTeacher, resetTeacherPassword, offboardTeacher, updateTeacherStatus } from "../../store/slices/facultySlice.js";
 import { fetchDepartments } from "../../store/slices/systemSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
-import { Users, Plus, Key, Eye, UserX, Search, UserCheck, Trash2 } from "lucide-react";
+import { Users, Plus, Key, Eye, UserX, Search, UserCheck, Trash2, Edit } from "lucide-react";
 import Badge from "../../components/shared/Badge";
-import AddTeacherModal from "../../components/admin/AddTeacherModal.jsx";
+import CreateUserModal from "../../components/admin/CreateUserModal.jsx";
+import EditUserModal from "../../components/admin/EditUserModal.jsx";
 import EmptyState from "../../components/shared/EmptyState";
 
 export default function Faculty() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(null);
   const dispatch = useDispatch();
   const { teachers, isLoading, error } = useSelector((state) => state.faculty);
   const { departments } = useSelector((state) => state.system);
@@ -115,8 +117,11 @@ export default function Faculty() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleToggleStatus(teacher._id, teacher.accountStatus)} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors" title={teacher.accountStatus === "Active" ? "Deactivate" : "Activate"}>
+                        <button onClick={() => handleToggleStatus(teacher._id, teacher.accountStatus)} className={`p-1.5 rounded-md transition-colors ${teacher.accountStatus === "Active" ? "text-amber-500 hover:bg-amber-50" : "text-emerald-500 hover:bg-emerald-50"}`} title={teacher.accountStatus === "Active" ? "Deactivate" : "Activate"}>
                           {teacher.accountStatus === "Active" ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => setEditingTeacher(teacher)} className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Edit Teacher">
+                          <Edit className="w-4 h-4" />
                         </button>
                         <button onClick={() => handleResetPassword(teacher._id)} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors" title="Reset Password">
                           <Key className="w-4 h-4" />
@@ -134,12 +139,21 @@ export default function Faculty() {
         </div>
       </div>
 
-      <AddTeacherModal 
+      <CreateUserModal
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
-        onSubmit={handleAddTeacher}
-        departments={departments}
+        onSuccess={() => dispatch(fetchTeachers())}
+        defaultRole="teacher"
       />
+      
+      {editingTeacher && (
+        <EditUserModal
+          isOpen={!!editingTeacher}
+          onClose={() => setEditingTeacher(null)}
+          user={editingTeacher}
+          onSuccess={() => dispatch(fetchTeachers())}
+        />
+      )}
     </div>
   );
 }

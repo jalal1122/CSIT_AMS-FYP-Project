@@ -95,6 +95,19 @@ export const startSession = asyncHandler(async (req, res) => {
   // Emails and sockets
   emitToSession(session._id.toString(), "session:started", { session });
 
+  // Send persistent notifications to all students in the section
+  if (section.students && section.students.length > 0) {
+    import("../services/notification.service.js").then(({ sendBulkNotification }) => {
+      sendBulkNotification(section.students, {
+        type: "session_started",
+        title: "Live Session Started",
+        message: `${allocation.subjectId.name} (${sectionName}) session has been started by your teacher.`,
+        link: `/student/live-session/${session._id}`,
+        metadata: { sessionId: session._id }
+      });
+    });
+  }
+
   res.status(201).json(new ApiResponse(201, session, "Session started successfully"));
 });
 
@@ -239,4 +252,60 @@ export const getLiveAttendance = asyncHandler(async (req, res) => {
   }));
 
   res.status(200).json(new ApiResponse(200, { liveFeed }, "Live attendance retrieved"));
+});
+
+// @desc    Create a past (retroactive) session
+// @route   POST /api/v2/session/retroactive
+// @access  Teacher
+export const createRetroactiveSession = asyncHandler(async (req, res) => {
+  const { allocationId, sectionName, type, startTime, endTime, date } = req.body;
+
+  if (!allocationId || !sectionName || !startTime || !endTime || !date) {
+    throw new ApiError(400, "All fields (allocationId, sectionName, type, startTime, endTime, date) are required");
+  }
+
+  const allocation = await CourseAllocation.findById(allocationId);
+  if (!allocation) throw new ApiError(404, "Course allocation not found");
+
+  const section = allocation.sections.find(s => s.name === sectionName);
+  if (!section) throw new ApiError(400, "Section not found");
+
+  if (section.teacherId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You are not assigned to teach this section");
+  }
+
+  if (!section.allowRetroactiveSessions) {
+    throw new ApiError(403, "Retroactive session creation is currently disabled for this section. Please ask your administrator to grant permission.");
+  }
+
+  const sessionStart = new Date(`${date}T${startTime}`);
+  const sessionEnd = new Date(`${date}T${endTime}`);
+
+  if (sessionStart > new Date()) {
+    throw new ApiError(400, "Retroactive session must be in the past");
+  }
+  if (sessionStart >= sessionEnd) {
+    throw new ApiError(400, "Start time must be before end time");
+  }
+
+  const session = await Session.create({
+    allocationId,
+    sectionName,
+    teacherId: req.user._id,
+    startTime: sessionStart,
+    endTime: sessionEnd,
+    active: false,
+    isRetroactive: true,
+    teacherIP: getClientIP(req),
+    type: type || "Lecture",
+    securityConfig: {
+      radius: 50,
+      ipMatchEnabled: false,
+      deviceLockEnabled: false,
+      qrRefreshRate: 20,
+      manualApproval: false,
+    },
+  });
+
+  res.status(201).json(new ApiResponse(201, session, "Retroactive session created successfully"));
 });

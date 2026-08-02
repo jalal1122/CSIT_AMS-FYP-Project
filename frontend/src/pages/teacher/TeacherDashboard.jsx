@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { BookOpen, Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
+import NotificationCenter from "../../components/layout/NotificationCenter";
 import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
 import { startLiveSession } from "../../store/slices/sessionSlice";
 import { exportTeacherReport } from "../../store/slices/analyticsSlice";
@@ -93,22 +94,35 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">CSIT AMS Teacher Portal</h1>
-            <p className="text-xs font-medium text-slate-500 mt-0.5">Welcome, {user?.name || "Teacher"}</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200">
-              {user?.name?.charAt(0) || "T"}
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-6 w-full sm:w-auto justify-between">
+            <div>
+              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">CSIT AMS Teacher Portal</h1>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">Welcome, {user?.name || "Teacher"}</p>
             </div>
-            <button 
-              className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
-              onClick={() => {/* logout */}}
-            >
-              Logout
-            </button>
           </div>
+          
+          <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
+            <Link to="/teacher/dashboard" className="px-3 py-2 text-sm font-semibold text-sky-600 bg-sky-50 rounded-lg flex items-center gap-2 whitespace-nowrap">
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
+            </Link>
+            <Link to="/teacher/reports" className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap transition-colors flex items-center gap-2">
+               <FileSpreadsheet className="w-4 h-4" /> Reports
+            </Link>
+            
+            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
+              <NotificationCenter />
+              <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200">
+                {user?.name?.charAt(0) || "T"}
+              </div>
+              <button 
+                className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
+                onClick={() => dispatch(import("../../store/slices/authSlice").then(m => m.logoutUser()))}
+              >
+                Logout
+              </button>
+            </div>
+          </nav>
         </div>
       </header>
 

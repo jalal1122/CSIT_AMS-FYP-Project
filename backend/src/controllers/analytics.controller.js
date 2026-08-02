@@ -332,3 +332,120 @@ export const exportStudentTranscript = asyncHandler(async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename=Transcript.${format}`);
   res.send(buffer);
 });
+
+// @desc    Get Comprehensive Report
+// @route   GET /api/v2/analytics/comprehensive
+// @access  Admin, Teacher
+export const getComprehensiveReport = asyncHandler(async (req, res) => {
+  const { 
+    groupBy = "batch", 
+    departmentId, 
+    disciplineId, 
+    batchId, 
+    subjectId, 
+    teacherId,
+    startDate,
+    endDate
+  } = req.query;
+
+  // 1. Build Allocation Match Query
+  const allocMatch = { isActive: true };
+
+  // Role Limits
+  if (req.user.role === "teacher") {
+    allocMatch["sections.teacherId"] = req.user._id;
+  }
+
+  if (subjectId) allocMatch.subjectId = subjectId;
+  
+  // If we need to filter by batch/discipline/department, we need to populate batch first
+  // However, in aggregate, we can just fetch all matching allocations first
+  const allocationQuery = CourseAllocation.find(allocMatch);
+  
+  if (batchId || disciplineId || departmentId) {
+    allocationQuery.populate({
+      path: "batchId",
+      match: {
+        ...(batchId && { _id: batchId }),
+        ...(disciplineId && { disciplineId }),
+        ...(departmentId && { departmentId })
+      }
+    });
+  }
+
+  const allocationsRaw = await allocationQuery;
+  // Filter out null batches (if they didn't match the populate match)
+  const allocations = allocationsRaw.filter(a => a.batchId);
+  const allocationIds = allocations.map(a => a._id);
+
+  if (allocationIds.length === 0) {
+    return res.status(200).json(new ApiResponse(200, [], "No data found for the given criteria"));
+  }
+
+  // 2. Find Sessions for these allocations
+  const sessionMatch = { allocationId: { $in: allocationIds } };
+  if (startDate && endDate) {
+    sessionMatch.startTime = { 
+      $gte: new Date(startDate), 
+      $lte: new Date(endDate) 
+    };
+  }
+
+  if (teacherId) {
+    sessionMatch.teacherId = teacherId;
+  } else if (req.user.role === "teacher") {
+    sessionMatch.teacherId = req.user._id;
+  }
+
+  const sessions = await Session.find(sessionMatch).select("_id allocationId teacherId");
+  const sessionIds = sessions.map(s => s._id);
+
+  if (sessionIds.length === 0) {
+    return res.status(200).json(new ApiResponse(200, [], "No sessions found for the given criteria"));
+  }
+
+  // 3. Aggregate Attendance
+  // Depending on groupBy, we group differently
+  let groupId = "$sessionId"; // Default to session
+  let lookupStage = null;
+
+  if (groupBy === "student") {
+    groupId = "$studentId";
+    lookupStage = {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "studentInfo"
+      }
+    };
+  } else if (groupBy === "batch" || groupBy === "subject" || groupBy === "teacher") {
+    // For these, we need to join back to session -> allocation -> batch/subject
+    groupId = "$allocationId";
+  }
+
+  const pipeline = [
+    { $match: { sessionId: { $in: sessionIds } } },
+    {
+      $group: {
+        _id: groupId,
+        totalAttendance: { $sum: 1 },
+        presentCount: { $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] } },
+        absentCount: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } }
+      }
+    },
+    {
+      $addFields: {
+        percentage: {
+          $multiply: [{ $divide: ["$presentCount", { $max: ["$totalAttendance", 1] }] }, 100]
+        }
+      }
+    }
+  ];
+
+  if (lookupStage) pipeline.push(lookupStage);
+
+  const reportData = await Attendance.aggregate(pipeline);
+
+  res.status(200).json(new ApiResponse(200, reportData, "Comprehensive report generated"));
+});

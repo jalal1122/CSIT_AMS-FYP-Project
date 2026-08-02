@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../store/slices/authSlice.js";
 import { useState } from "react";
+import NotificationCenter from "./NotificationCenter";
 import {
   LayoutDashboard,
   Building2,
@@ -131,10 +132,7 @@ export default function AdminLayout({ children }) {
 
           {/* Right Header Items */}
           <div className="flex items-center gap-4">
-            <button className="text-slate-400 hover:text-slate-600 relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full"></span>
-            </button>
+            <NotificationCenter />
             <div className="h-6 w-px bg-slate-200 mx-2"></div>
             <div className="flex items-center gap-3">
               <div className="hidden md:block text-right">

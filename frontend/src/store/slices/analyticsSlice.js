@@ -5,10 +5,29 @@ export const fetchDashboardStats = createAsyncThunk(
   "analytics/fetchDashboardStats",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/analytics/dashboard");
+      const response = await api.get("/api/v2/analytics/dashboard");
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch stats");
+    }
+  }
+);
+
+export const fetchComprehensiveReport = createAsyncThunk(
+  "analytics/fetchComprehensiveReport",
+  async (filters, { rejectWithValue }) => {
+    try {
+      let url = "/api/v2/analytics/reports/comprehensive";
+      const params = new URLSearchParams();
+      if (filters.allocationId) params.append("allocationId", filters.allocationId);
+      if (filters.section) params.append("section", filters.section);
+      if (filters.startDate) params.append("startDate", filters.startDate);
+      if (filters.endDate) params.append("endDate", filters.endDate);
+      
+      const response = await api.get(`${url}?${params.toString()}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch comprehensive report");
     }
   }
 );
@@ -80,6 +99,7 @@ export const exportStudentTranscript = createAsyncThunk(
 
 const initialState = {
   dashboardStats: null,
+  comprehensiveReport: null,
   isLoading: false,
   error: null,
 };
@@ -99,6 +119,18 @@ const analyticsSlice = createSlice({
         state.dashboardStats = action.payload;
       })
       .addCase(fetchDashboardStats.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchComprehensiveReport.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchComprehensiveReport.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.comprehensiveReport = action.payload;
+      })
+      .addCase(fetchComprehensiveReport.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       });

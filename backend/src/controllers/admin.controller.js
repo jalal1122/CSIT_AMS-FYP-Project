@@ -229,3 +229,77 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, user, `User status updated to ${accountStatus}`));
 });
+
+// @desc    Create a new user manually
+// @route   POST /api/v2/admin/users
+// @access  Admin
+export const createUser = asyncHandler(async (req, res) => {
+  const { name, email, password, role, info } = req.body;
+
+  const userExists = await User.findOne({ email });
+  if (userExists) {
+    throw new ApiError(400, "User already exists with this email");
+  }
+
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role,
+    info: info || {}
+  });
+
+  const createdUser = await User.findById(user._id).select("-password -twoFactorSecret -refreshToken");
+
+  res.status(201).json(new ApiResponse(201, createdUser, "User created successfully"));
+});
+
+// @desc    Update a user details manually
+// @route   PUT /api/v2/admin/users/:id
+// @access  Admin
+export const updateUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, email, role, info } = req.body;
+
+  let user = await User.findById(id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  if (email && email !== user.email) {
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      throw new ApiError(400, "Email already in use by another user");
+    }
+    user.email = email;
+  }
+
+  if (name) user.name = name;
+  if (role) user.role = role;
+  if (info) user.info = { ...user.info, ...info };
+
+  await user.save({ validateBeforeSave: false });
+
+  const updatedUser = await User.findById(user._id).select("-password -twoFactorSecret -refreshToken");
+  res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
+});
+
+// @desc    Toggle retroactive permission for a specific class/allocation section
+// @route   PATCH /api/v2/admin/allocation/:id/retroactive
+// @access  Admin
+export const toggleRetroactivePermission = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { sectionName, allowRetroactiveSessions } = req.body;
+
+  const allocation = await CourseAllocation.findOneAndUpdate(
+    { _id: id, "sections.name": sectionName },
+    { $set: { "sections.$.allowRetroactiveSessions": allowRetroactiveSessions } },
+    { new: true }
+  );
+
+  if (!allocation) {
+    throw new ApiError(404, "Course allocation or section not found");
+  }
+
+  res.status(200).json(new ApiResponse(200, allocation, `Retroactive permission ${allowRetroactiveSessions ? 'granted' : 'revoked'}`));
+});

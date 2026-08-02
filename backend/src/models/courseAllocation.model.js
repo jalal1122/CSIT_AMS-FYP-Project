@@ -15,7 +15,11 @@ const sectionSchema = new mongoose.Schema({
   students: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "User", // Role: student
-  }]
+  }],
+  allowRetroactiveSessions: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const courseAllocationSchema = new mongoose.Schema({

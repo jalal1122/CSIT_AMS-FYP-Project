@@ -11,9 +11,11 @@ import { fetchSettings } from "./store/slices/systemSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 
-// Auth Pages
+// Auth & Public Pages
 const Login = lazy(() => import("./pages/auth/Login.jsx"));
 const SetupProfile = lazy(() => import("./pages/auth/SetupProfile.jsx"));
+const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
+const RegisterAdmin = lazy(() => import("./pages/RegisterAdmin.jsx"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword.jsx"));
 
 // Admin Pages
@@ -31,11 +33,14 @@ const AdminReports = lazy(() => import("./pages/admin/AdminReports.jsx"));
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard.jsx"));
 const LiveSession = lazy(() => import("./pages/teacher/LiveSession.jsx"));
 const ClassDetails = lazy(() => import("./pages/teacher/ClassDetails.jsx"));
+const SessionHistory = lazy(() => import("./pages/teacher/SessionHistory.jsx"));
+const TeacherReports = lazy(() => import("./pages/teacher/TeacherReports.jsx"));
 
 // Student Pages
 const StudentDashboard = lazy(() => import("./pages/student/StudentDashboard.jsx"));
 const ScanAttendance = lazy(() => import("./pages/student/ScanAttendance.jsx"));
 const StudentProfile = lazy(() => import("./pages/student/StudentProfile.jsx"));
+const MyAttendance = lazy(() => import("./pages/student/MyAttendance.jsx"));
 const StudentReports = lazy(() => import("./pages/student/StudentReports.jsx"));
 
 // Shared Components
@@ -83,9 +88,11 @@ function App() {
       <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div></div>}>
         <ToastContainer />
         <Routes>
-          {/* Auth */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/setup-profile" element={<SetupProfile />} />
+          {/* Public */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/setup-profile" element={<PrivateRoute><SetupProfile /></PrivateRoute>} />
+          <Route path="/admin/bootstrap" element={<RegisterAdmin />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Admin */}
@@ -103,10 +110,13 @@ function App() {
           <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherDashboard /></PrivateRoute>} />
           <Route path="/teacher/session/live/:sessionId" element={<PrivateRoute allowedRoles={["teacher","admin"]}><LiveSession /></PrivateRoute>} />
           <Route path="/teacher/class/:allocationId/:sectionName" element={<PrivateRoute allowedRoles={["teacher","admin"]}><ClassDetails /></PrivateRoute>} />
+          <Route path="/teacher/class/:allocationId/:sectionName/history" element={<PrivateRoute allowedRoles={["teacher","admin"]}><SessionHistory /></PrivateRoute>} />
+          <Route path="/teacher/reports" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherReports /></PrivateRoute>} />
 
           {/* Student */}
           <Route path="/student/dashboard" element={<PrivateRoute allowedRoles={["student"]}><StudentDashboard /></PrivateRoute>} />
           <Route path="/student/scan" element={<PrivateRoute allowedRoles={["student"]}><ScanAttendance /></PrivateRoute>} />
+          <Route path="/student/classes/:allocationId" element={<PrivateRoute allowedRoles={["student"]}><MyAttendance /></PrivateRoute>} />
           <Route path="/student/reports" element={<PrivateRoute allowedRoles={["student"]}><StudentReports /></PrivateRoute>} />
           <Route path="/student/profile" element={<PrivateRoute allowedRoles={["student","teacher","admin"]}><StudentProfile /></PrivateRoute>} />
 

@@ -17,6 +17,7 @@ import attendanceRoutes from "./src/routes/attendance.routes.js";
 import analyticsRoutes from "./src/routes/analytics.routes.js";
 import cronRoutes from "./src/routes/cron.routes.js";
 import systemSettingsRoutes from "./src/routes/systemSettings.routes.js";
+import notificationRoutes from "./src/routes/notification.routes.js";
 
 import { initSocket } from "./src/services/socket.js";
 import { initCronJobs } from "./src/utils/cronJobs.js";
@@ -59,6 +60,7 @@ app.use("/api/v2/attendance", attendanceRoutes);
 app.use("/api/v2/analytics", analyticsRoutes);
 app.use("/api/v2/cron", cronRoutes);
 app.use("/api/v2/settings", systemSettingsRoutes);
+app.use("/api/v2/notifications", notificationRoutes);
 
 // Global Error Handler — MUST be after all routes
 app.use((err, req, res, next) => {

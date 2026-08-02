@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { ArrowLeft, User, Smartphone, ShieldCheck, Key, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { updatePassword } from "../../store/slices/authSlice";
+import TwoFactorSettings from "../../components/shared/TwoFactorSettings";
 
 export default function StudentProfile() {
   const { user } = useSelector(state => state.auth);
@@ -106,6 +107,9 @@ export default function StudentProfile() {
             </div>
           </div>
         </div>
+
+        {/* Two-Factor Authentication */}
+        <TwoFactorSettings />
 
         {/* Change Password */}
         <div className="card p-8 shadow-sm">

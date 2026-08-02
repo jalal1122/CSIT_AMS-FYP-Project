@@ -186,14 +186,12 @@ export default function ClassDetails() {
                   </div>
                 </Link>
               ))}
-              {hasMore && (
-                <button 
-                  onClick={loadMoreSessions}
-                  className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:text-sky-600 hover:border-sky-300 hover:bg-sky-50 transition-all"
-                >
-                  Load More Sessions
-                </button>
-              )}
+              <Link 
+                to={`/teacher/class/${allocationId}/${sectionName}/history`}
+                className="block w-full text-center py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:text-sky-600 hover:border-sky-300 hover:bg-sky-50 transition-all"
+              >
+                View Full History
+              </Link>
             </div>
           </div>
         </div>

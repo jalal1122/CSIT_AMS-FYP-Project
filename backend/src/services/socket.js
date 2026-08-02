@@ -14,6 +14,21 @@ export const initSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log(`🔌 Client connected: ${socket.id}`);
 
+    // Join a personal room for the user to receive private notifications
+    socket.on("join-user", (userId) => {
+      if (userId) {
+        socket.join(`user-${userId}`);
+        console.log(`Client ${socket.id} joined user-${userId}`);
+      }
+    });
+
+    socket.on("leave-user", (userId) => {
+      if (userId) {
+        socket.leave(`user-${userId}`);
+        console.log(`Client ${socket.id} left user-${userId}`);
+      }
+    });
+
     // Join a room for a specific session
     socket.on("join-session", (sessionId) => {
       if (sessionId) {
@@ -58,4 +73,19 @@ export const emitToSession = (sessionId, event, data) => {
     return;
   }
   io.to(`session-${sessionId}`).emit(event, data);
+};
+
+/**
+ * Emit an event to a specific user room.
+ *
+ * @param {string} userId
+ * @param {string} event
+ * @param {object} data
+ */
+export const emitToUser = (userId, event, data) => {
+  if (!io) {
+    console.warn("⚠️ Socket.io not initialized, cannot emit event:", event);
+    return;
+  }
+  io.to(`user-${userId}`).emit(event, data);
 };

@@ -7,6 +7,8 @@ const initialState = {
   isAuthenticated: false,
   mustChangePassword: false,
   accountStatus: null, // "Active" | "Inactive" | "Suspended"
+  require2FA: false,
+  tempToken: null,
   isLoading: false,
   isCheckingAuth: true, // Start true so App.jsx shows a loader initially
   error: null,
@@ -20,6 +22,18 @@ export const login = createAsyncThunk(
       return res.data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Login failed");
+    }
+  }
+);
+
+export const validate2FA = createAsyncThunk(
+  "auth/validate2FA",
+  async ({ tempToken, otp }, { rejectWithValue }) => {
+    try {
+      const res = await api.post("/api/v2/auth/2fa/validate", { tempToken, otp });
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "2FA Validation failed");
     }
   }
 );
@@ -136,13 +150,39 @@ const authSlice = createSlice({
     });
     builder.addCase(login.fulfilled, (state, { payload }) => {
       state.isLoading = false;
+      
+      if (payload.require2FA) {
+        state.require2FA = true;
+        state.tempToken = payload.tempToken;
+      } else {
+        state.isAuthenticated = true;
+        state.user = payload.user;
+        state.accessToken = payload.accessToken;
+        state.mustChangePassword = payload.user.mustChangePassword;
+        state.accountStatus = payload.user.accountStatus;
+      }
+    });
+    builder.addCase(login.rejected, (state, { payload }) => {
+      state.isLoading = false;
+      state.error = payload;
+    });
+
+    // Validate 2FA
+    builder.addCase(validate2FA.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(validate2FA.fulfilled, (state, { payload }) => {
+      state.isLoading = false;
+      state.require2FA = false;
+      state.tempToken = null;
       state.isAuthenticated = true;
       state.user = payload.user;
       state.accessToken = payload.accessToken;
       state.mustChangePassword = payload.user.mustChangePassword;
       state.accountStatus = payload.user.accountStatus;
     });
-    builder.addCase(login.rejected, (state, { payload }) => {
+    builder.addCase(validate2FA.rejected, (state, { payload }) => {
       state.isLoading = false;
       state.error = payload;
     });

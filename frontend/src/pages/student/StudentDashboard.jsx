@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { QrCode, AlertTriangle, Book, History, LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { fetchStudentDashboard, fetchStudentHistory } from "../../store/slices/studentSlice";
 import { logoutUser } from "../../store/slices/authSlice";
+import NotificationCenter from "../../components/layout/NotificationCenter";
 
 export default function StudentDashboard() {
   const dispatch = useDispatch();
@@ -57,9 +58,11 @@ export default function StudentDashboard() {
             <Link to="/student/dashboard" className="px-3 py-2 text-sm font-semibold text-sky-600 bg-sky-50 rounded-lg flex items-center gap-2 whitespace-nowrap">
               <LayoutDashboard className="w-4 h-4" /> Dashboard
             </Link>
-            <Link to="/student/classes" className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap transition-colors">
-              Classes
-            </Link>
+            {currentSubjects.length > 0 && (
+              <Link to={`/student/classes/${currentSubjects[0].id}`} className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap transition-colors">
+                Classes
+              </Link>
+            )}
             <Link to="/student/reports" className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg whitespace-nowrap transition-colors">
               Reports
             </Link>
@@ -68,6 +71,7 @@ export default function StudentDashboard() {
             </Link>
             
             <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
+              <NotificationCenter />
               <button className="p-2 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-full transition-colors">
                 <Settings className="w-5 h-5" />
               </button>
@@ -138,7 +142,7 @@ export default function StudentDashboard() {
               const isDefaulter = percentage < 75;
 
               return (
-                <div key={sub.id} className="card p-6 border-slate-200 hover:border-sky-300 hover:shadow-md transition-all">
+                <Link to={`/student/classes/${sub.id}`} key={sub.id} className="card p-6 border-slate-200 hover:border-sky-300 hover:shadow-md transition-all block text-left">
                   <div className="flex justify-between items-start mb-6">
                     <span className="font-mono text-xs font-bold text-sky-700 bg-sky-100 border border-sky-200 px-2.5 py-1 rounded">
                       {sub.code}
@@ -160,7 +164,7 @@ export default function StudentDashboard() {
                       ></div>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>
