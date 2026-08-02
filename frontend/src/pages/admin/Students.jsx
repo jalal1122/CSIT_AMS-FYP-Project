@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchStudents, resetStudentPassword, resetStudentDevice, updateStudentStatus } from "../../store/slices/studentSlice.js";
+import { fetchStudents, resetStudentPassword, resetStudentDevice, updateStudentStatus, transferStudent } from "../../store/slices/studentSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
 import { Search, Filter, KeyRound, Smartphone, GitPullRequest, Eye, UserX, UserCheck } from "lucide-react";
 import Badge from "../../components/shared/Badge";
@@ -42,6 +42,24 @@ export default function Students() {
       await dispatch(updateStudentStatus({ id, status: newStatus })).unwrap();
       dispatch(fetchStudents());
       dispatch(addToast({ title: "Success", message: `Student marked as ${newStatus}`, type: "success" }));
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+    }
+  };
+
+  const handleTransferStudent = async (student) => {
+    const newSection = window.prompt(`Transfer ${student.name} from Section ${student.info?.section} to which section? (e.g., A, B, C)`);
+    if (!newSection || newSection.trim() === "") return;
+    
+    if (newSection.trim() === student.info?.section) {
+      dispatch(addToast({ title: "Warning", message: "Student is already in this section", type: "warning" }));
+      return;
+    }
+
+    try {
+      await dispatch(transferStudent({ id: student._id, newSection: newSection.trim() })).unwrap();
+      dispatch(fetchStudents());
+      dispatch(addToast({ title: "Success", message: `Student transferred to section ${newSection.trim()}`, type: "success" }));
     } catch (err) {
       dispatch(addToast({ title: "Error", message: err, type: "error" }));
     }
@@ -141,7 +159,7 @@ export default function Students() {
                         <button onClick={() => handleResetDevice(student._id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors" title="Unbind Device">
                           <Smartphone className="w-4 h-4" />
                         </button>
-                        <button onClick={() => alert("Transfer logic unimplemented")} className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Transfer Section">
+                        <button onClick={() => handleTransferStudent(student)} className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Transfer Section">
                           <GitPullRequest className="w-4 h-4" />
                         </button>
                       </div>

@@ -679,3 +679,68 @@ export const getStudentClassReport = asyncHandler(async (req, res) => {
     history: report
   }, "Student report retrieved"));
 });
+
+// @desc    Transfer a student to a different section
+// @route   POST /api/v2/academic/student/:id/transfer
+// @access  Admin
+export const transferStudent = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { newSection } = req.body;
+
+  if (!newSection) {
+    throw new ApiError(400, "New section name is required");
+  }
+
+  const student = await User.findById(id);
+  if (!student || student.role !== "student") {
+    throw new ApiError(404, "Student not found");
+  }
+
+  const currentSection = student.info.section;
+  if (currentSection === newSection) {
+    throw new ApiError(400, "Student is already in this section");
+  }
+
+  // Find all active course allocations for this student's batch
+  const allocations = await CourseAllocation.find({
+    batchId: student.info.batchId,
+    isActive: true,
+  });
+
+  for (const alloc of allocations) {
+    let studentMoved = false;
+
+    // Check if new section exists in this allocation
+    const newSecExists = alloc.sections.some(s => s.name === newSection);
+    if (!newSecExists) {
+      throw new ApiError(400, `Cannot transfer: Section ${newSection} does not exist in active allocations`);
+    }
+
+    // Remove from old section
+    for (const sec of alloc.sections) {
+      if (sec.name === currentSection) {
+        sec.students = sec.students.filter(
+          (studentId) => studentId.toString() !== id.toString()
+        );
+      }
+    }
+
+    // Add to new section
+    for (const sec of alloc.sections) {
+      if (sec.name === newSection) {
+        sec.students.push(id);
+        studentMoved = true;
+      }
+    }
+
+    if (studentMoved) {
+      await alloc.save();
+    }
+  }
+
+  // Update student profile
+  student.info.section = newSection;
+  await student.save();
+
+  res.status(200).json(new ApiResponse(200, student, `Student transferred to section ${newSection} successfully`));
+});

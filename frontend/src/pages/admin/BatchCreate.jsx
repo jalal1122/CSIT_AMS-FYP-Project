@@ -61,7 +61,7 @@ export default function BatchCreate() {
       data.append("name", formData.name || `${disciplines.find(d => d._id === formData.disciplineId)?.code || 'Batch'} ${new Date().getFullYear()}`);
       data.append("departmentId", formData.departmentId);
       data.append("disciplineId", formData.disciplineId);
-      data.append("maxStudentsPerSection", formData.capacity);
+      data.append("maxStudentsPerSection", formData.capacity || 50);
       data.append("file", formData.file);
 
       const result = await dispatch(createBatch(data)).unwrap();
@@ -161,7 +161,10 @@ export default function BatchCreate() {
                 max="200"
                 className="input text-lg py-3 text-center font-semibold shadow-sm"
                 value={formData.capacity}
-                onChange={e => setFormData({...formData, capacity: parseInt(e.target.value) || 50})}
+                onChange={e => {
+                  const val = e.target.value;
+                  setFormData({...formData, capacity: val === "" ? "" : parseInt(val, 10)});
+                }}
               />
               
               <div className="p-4 bg-sky-50 border border-sky-100 rounded-xl mt-6 flex items-start gap-3">

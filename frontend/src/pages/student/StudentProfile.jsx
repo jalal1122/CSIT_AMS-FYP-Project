@@ -4,6 +4,7 @@ import { ArrowLeft, User, Smartphone, ShieldCheck, Key, AlertTriangle } from "lu
 import { Link } from "react-router-dom";
 import { updatePassword } from "../../store/slices/authSlice";
 import TwoFactorSettings from "../../components/shared/TwoFactorSettings";
+import { addToast } from "../../store/slices/toastSlice";
 
 export default function StudentProfile() {
   const { user } = useSelector(state => state.auth);
@@ -16,18 +17,18 @@ export default function StudentProfile() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if(newPassword !== confirmPassword) {
-      alert("Passwords do not match");
+      dispatch(addToast({ title: "Error", message: "Passwords do not match", type: "error" }));
       return;
     }
     
     try {
       await dispatch(updatePassword({currentPassword, newPassword})).unwrap();
-      alert("Password changed successfully.");
+      dispatch(addToast({ title: "Success", message: "Password changed successfully.", type: "success" }));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      alert(err || "Failed to change password.");
+      dispatch(addToast({ title: "Error", message: err || "Failed to change password.", type: "error" }));
     }
   };
 

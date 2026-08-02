@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setupProfile, clearError } from "../../store/slices/authSlice.js";
+import { addToast } from "../../store/slices/toastSlice.js";
 
 export default function SetupProfile() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function SetupProfile() {
   const handleSetup = async (e) => {
     e.preventDefault();
     if (password !== confirm) {
-      alert("Passwords do not match");
+      dispatch(addToast({ title: "Error", message: "Passwords do not match", type: "error" }));
       return;
     }
 

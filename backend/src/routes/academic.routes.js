@@ -18,6 +18,8 @@ router.post("/batch/:id/rollback", ...adminOnly, academic.rollbackPromotion);
 router.post("/allocation/assign", ...adminOnly, academic.allocateCourse);
 router.get("/allocations", verifyJWT, hasRole(["admin", "teacher"]), academic.getAllocations);
 
+router.post("/student/:id/transfer", ...adminOnly, academic.transferStudent);
+
 // Teacher Dashboard
 router.get("/teacher/dashboard", ...teacherOnly, academic.getTeacherDashboard);
 router.get("/teacher/history", ...teacherOnly, academic.getTeacherHistory);

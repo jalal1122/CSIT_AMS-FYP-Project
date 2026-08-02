@@ -65,7 +65,7 @@ export default function TeacherDashboard() {
       setIsModalOpen(false);
       navigate(`/teacher/session/live/${res._id}`);
     } catch (err) {
-      alert(err);
+      toast.error(err);
     }
   };
 

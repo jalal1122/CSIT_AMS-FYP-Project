@@ -87,6 +87,17 @@ export default function Foundation() {
     }
   };
 
+  const handleArchiveSubject = async (sub) => {
+    if (!window.confirm(`Are you sure you want to ${sub.isArchived ? 'unarchive' : 'archive'} this subject?`)) return;
+    try {
+      await dispatch(updateSubject({ id: sub._id, data: { isArchived: !sub.isArchived } })).unwrap();
+      dispatch(fetchSubjects());
+      dispatch(addToast({ title: "Success", message: `Subject ${sub.isArchived ? 'unarchived' : 'archived'} successfully`, type: "success" }));
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err, type: "error" }));
+    }
+  };
+
   const handleCreateDiscipline = async (data) => {
     try {
       await dispatch(createDiscipline(data)).unwrap();
@@ -302,7 +313,7 @@ export default function Foundation() {
                           <button onClick={() => setEditingSubj(sub)} className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors" title="Edit Subject">
                             <Pencil className="w-4 h-4" />
                           </button>
-                          <button onClick={() => alert("Archiving not implemented yet")} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors" title="Archive Subject">
+                          <button onClick={() => handleArchiveSubject(sub)} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors" title={sub.isArchived ? "Unarchive Subject" : "Archive Subject"}>
                             <Archive className="w-4 h-4" />
                           </button>
                         </div>

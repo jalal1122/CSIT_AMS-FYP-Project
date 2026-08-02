@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, MapPin, Settings, Crosshair } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { updateSecuritySettings } from "../../store/slices/sessionSlice";
+import toast from "react-hot-toast";
 
 export default function LiveSessionSecurityModal({ isOpen, onClose, sessionId, currentConfig }) {
   const dispatch = useDispatch();
@@ -37,7 +38,7 @@ export default function LiveSessionSecurityModal({ isOpen, onClose, sessionId, c
       })).unwrap();
       onClose();
     } catch (err) {
-      alert(err);
+      toast.error(err);
     } finally {
       setIsSaving(false);
     }

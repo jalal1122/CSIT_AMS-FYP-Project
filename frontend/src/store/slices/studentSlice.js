@@ -36,9 +36,9 @@ export const resetStudentDevice = createAsyncThunk("student/resetStudentDevice",
   }
 });
 
-export const transferStudent = createAsyncThunk("student/transferStudent", async ({ id, data }, { rejectWithValue }) => {
+export const transferStudent = createAsyncThunk("student/transferStudent", async ({ id, newSection }, { rejectWithValue }) => {
   try {
-    const res = await api.put(`/api/v2/admin/users/${id}/transfer`, data);
+    const res = await api.post(`/api/v2/academic/student/${id}/transfer`, { newSection });
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to transfer student");
