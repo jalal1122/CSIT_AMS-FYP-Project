@@ -338,12 +338,12 @@ export const exportStudentTranscript = asyncHandler(async (req, res) => {
 // @access  Admin, Teacher
 export const getComprehensiveReport = asyncHandler(async (req, res) => {
   const { 
-    groupBy = "batch", 
+    groupBy = "section", 
     departmentId, 
     disciplineId, 
     batchId, 
-    subjectId, 
-    teacherId,
+    allocationId,
+    section,
     startDate,
     endDate
   } = req.query;
@@ -356,22 +356,23 @@ export const getComprehensiveReport = asyncHandler(async (req, res) => {
     allocMatch["sections.teacherId"] = req.user._id;
   }
 
-  if (subjectId) allocMatch.subjectId = subjectId;
+  if (allocationId) allocMatch._id = allocationId;
   
   // If we need to filter by batch/discipline/department, we need to populate batch first
-  // However, in aggregate, we can just fetch all matching allocations first
-  const allocationQuery = CourseAllocation.find(allocMatch);
-  
-  if (batchId || disciplineId || departmentId) {
-    allocationQuery.populate({
+  const allocationQuery = CourseAllocation.find(allocMatch)
+    .populate("subjectId", "name code")
+    .populate({
       path: "batchId",
       match: {
         ...(batchId && { _id: batchId }),
         ...(disciplineId && { disciplineId }),
         ...(departmentId && { departmentId })
-      }
+      },
+      populate: [
+        { path: "departmentId", select: "name" },
+        { path: "disciplineId", select: "name" }
+      ]
     });
-  }
 
   const allocationsRaw = await allocationQuery;
   // Filter out null batches (if they didn't match the populate match)
@@ -379,11 +380,12 @@ export const getComprehensiveReport = asyncHandler(async (req, res) => {
   const allocationIds = allocations.map(a => a._id);
 
   if (allocationIds.length === 0) {
-    return res.status(200).json(new ApiResponse(200, [], "No data found for the given criteria"));
+    return res.status(200).json(new ApiResponse(200, null, "No data found for the given criteria"));
   }
 
   // 2. Find Sessions for these allocations
   const sessionMatch = { allocationId: { $in: allocationIds } };
+  if (section) sessionMatch.sectionName = section;
   if (startDate && endDate) {
     sessionMatch.startTime = { 
       $gte: new Date(startDate), 
@@ -391,61 +393,114 @@ export const getComprehensiveReport = asyncHandler(async (req, res) => {
     };
   }
 
-  if (teacherId) {
-    sessionMatch.teacherId = teacherId;
-  } else if (req.user.role === "teacher") {
+  if (req.user.role === "teacher") {
     sessionMatch.teacherId = req.user._id;
   }
 
-  const sessions = await Session.find(sessionMatch).select("_id allocationId teacherId");
+  const sessions = await Session.find(sessionMatch).sort({ startTime: 1 }).lean();
   const sessionIds = sessions.map(s => s._id);
 
   if (sessionIds.length === 0) {
-    return res.status(200).json(new ApiResponse(200, [], "No sessions found for the given criteria"));
+    return res.status(200).json(new ApiResponse(200, null, "No sessions found for the given criteria"));
   }
 
-  // 3. Aggregate Attendance
-  // Depending on groupBy, we group differently
-  let groupId = "$sessionId"; // Default to session
-  let lookupStage = null;
+  // 3. Fetch Attendance
+  const attendanceRecords = await Attendance.find({ sessionId: { $in: sessionIds } }).lean();
 
-  if (groupBy === "student") {
-    groupId = "$studentId";
-    lookupStage = {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "studentInfo"
-      }
-    };
-  } else if (groupBy === "batch" || groupBy === "subject" || groupBy === "teacher") {
-    // For these, we need to join back to session -> allocation -> batch/subject
-    groupId = "$allocationId";
-  }
+  // 4. Process Data
+  let totalPresent = 0;
+  let totalAbsences = 0;
+  
+  const studentStats = {};
+  const trendMap = {};
+  const comparisonMap = {};
 
-  const pipeline = [
-    { $match: { sessionId: { $in: sessionIds } } },
-    {
-      $group: {
-        _id: groupId,
-        totalAttendance: { $sum: 1 },
-        presentCount: { $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] } },
-        absentCount: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } }
-      }
-    },
-    {
-      $addFields: {
-        percentage: {
-          $multiply: [{ $divide: ["$presentCount", { $max: ["$totalAttendance", 1] }] }, 100]
-        }
-      }
+  attendanceRecords.forEach(record => {
+    if (record.status === "Present") totalPresent++;
+    if (record.status === "Absent") totalAbsences++;
+
+    // Defaulters calc
+    if (!studentStats[record.studentId]) {
+      studentStats[record.studentId] = { present: 0, absent: 0, total: 0, section: record.section };
     }
-  ];
+    studentStats[record.studentId].total++;
+    if (record.status === "Present") studentStats[record.studentId].present++;
+    else if (record.status === "Absent") studentStats[record.studentId].absent++;
+    
+    // Trend calc
+    const sess = sessions.find(s => s._id.toString() === record.sessionId.toString());
+    if (sess) {
+      const dateStr = new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!trendMap[dateStr]) trendMap[dateStr] = { date: dateStr, present: 0, absent: 0 };
+      if (record.status === "Present") trendMap[dateStr].present++;
+      else if (record.status === "Absent") trendMap[dateStr].absent++;
 
-  if (lookupStage) pipeline.push(lookupStage);
+      // Comparison calc
+      let compKey = "Unknown";
+      const alloc = allocations.find(a => a._id.toString() === record.allocationId.toString());
+      
+      if (groupBy === "department" && alloc?.batchId?.departmentId) {
+        compKey = alloc.batchId.departmentId.name;
+      } else if (groupBy === "discipline" && alloc?.batchId?.disciplineId) {
+        compKey = alloc.batchId.disciplineId.name;
+      } else if (groupBy === "batch" && alloc?.batchId) {
+        compKey = alloc.batchId.name;
+      } else if (groupBy === "class" && alloc?.subjectId) {
+        compKey = alloc.subjectId.name;
+      } else {
+        compKey = record.section;
+      }
 
-  const reportData = await Attendance.aggregate(pipeline);
+      if (!comparisonMap[compKey]) comparisonMap[compKey] = { section: compKey, present: 0, total: 0 };
+      comparisonMap[compKey].total++;
+      if (record.status === "Present") comparisonMap[compKey].present++;
+    }
+  });
+
+  const avgAttendancePercentage = attendanceRecords.length > 0 
+    ? Math.round((totalPresent / attendanceRecords.length) * 100) 
+    : 0;
+
+  const attendanceTrend = Object.values(trendMap);
+  const sectionComparison = Object.values(comparisonMap).map(c => ({
+    section: c.section,
+    avgAttendance: c.total > 0 ? Math.round((c.present / c.total) * 100) : 0
+  }));
+
+  // Identify Defaulters (< 75%)
+  const defaulterIds = Object.keys(studentStats).filter(sid => {
+    const stat = studentStats[sid];
+    const pct = stat.total > 0 ? (stat.present / stat.total) * 100 : 100;
+    return pct < 75;
+  });
+
+  let defaulters = [];
+  if (defaulterIds.length > 0) {
+    const users = await User.find({ _id: { $in: defaulterIds } }).select("name info.rollNo").lean();
+    defaulters = users.map(u => {
+      const stat = studentStats[u._id.toString()];
+      return {
+        studentId: u.info?.rollNo,
+        studentName: u.name,
+        section: stat.section,
+        present: stat.present,
+        total: stat.total,
+        attendancePercentage: Math.round((stat.present / stat.total) * 100)
+      };
+    }).sort((a, b) => a.attendancePercentage - b.attendancePercentage);
+  }
+
+  const reportData = {
+    summary: {
+      totalSessions: sessions.length,
+      avgAttendancePercentage,
+      defaultersCount: defaulters.length,
+      totalAbsences
+    },
+    attendanceTrend,
+    sectionComparison,
+    defaulters
+  };
 
   res.status(200).json(new ApiResponse(200, reportData, "Comprehensive report generated"));
 });
