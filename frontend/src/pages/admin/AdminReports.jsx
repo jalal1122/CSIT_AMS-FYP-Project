@@ -64,8 +64,8 @@ export default function AdminReports() {
   const currentDisciplineBatches = batches.filter(b => b.disciplineId?._id === selectedDiscipline);
 
   const handleExport = (reportType, format) => {
-    if (!selectedAllocation) {
-      toast.error("Export is currently supported at the Class level only.");
+    if (!selectedAllocation || !selectedSection) {
+      toast.error("Please select a specific Class and Section to export.");
       return;
     }
 
