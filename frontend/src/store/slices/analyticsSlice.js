@@ -40,7 +40,7 @@ export const exportAdminReport = createAsyncThunk(
   "analytics/exportAdminReport",
   async ({ reportType, allocationId, sectionName, startDate, endDate, format = "xlsx" }, { rejectWithValue }) => {
     try {
-      let url = `/analytics/export/admin?reportType=${reportType}&format=${format}`;
+      let url = `/api/v2/analytics/export/admin?reportType=${reportType}&format=${format}`;
       if (allocationId) url += `&allocationId=${allocationId}`;
       if (sectionName) url += `&sectionName=${sectionName}`;
       if (startDate) url += `&startDate=${startDate}`;
@@ -63,7 +63,7 @@ export const exportTeacherReport = createAsyncThunk(
   "analytics/exportTeacherReport",
   async ({ allocationId, sectionName, startDate, endDate, format = "xlsx" }, { rejectWithValue }) => {
     try {
-      let url = `/analytics/export/teacher?allocationId=${allocationId}&sectionName=${sectionName}&format=${format}`;
+      let url = `/api/v2/analytics/export/teacher?allocationId=${allocationId}&sectionName=${sectionName}&format=${format}`;
       if (startDate) url += `&startDate=${startDate}`;
       if (endDate) url += `&endDate=${endDate}`;
 
@@ -84,7 +84,7 @@ export const exportStudentTranscript = createAsyncThunk(
   "analytics/exportStudentTranscript",
   async ({ startDate, endDate, format = "xlsx" }, { rejectWithValue }) => {
     try {
-      let url = `/analytics/export/student?format=${format}`;
+      let url = `/api/v2/analytics/export/student?format=${format}`;
       if (startDate) url += `&startDate=${startDate}`;
       if (endDate) url += `&endDate=${endDate}`;
 
