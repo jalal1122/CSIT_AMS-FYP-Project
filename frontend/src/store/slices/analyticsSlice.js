@@ -17,8 +17,12 @@ export const fetchComprehensiveReport = createAsyncThunk(
   "analytics/fetchComprehensiveReport",
   async (filters, { rejectWithValue }) => {
     try {
-      let url = "/api/v2/analytics/reports/comprehensive";
+      let url = "/api/v2/analytics/comprehensive";
       const params = new URLSearchParams();
+      if (filters.groupBy) params.append("groupBy", filters.groupBy);
+      if (filters.departmentId) params.append("departmentId", filters.departmentId);
+      if (filters.disciplineId) params.append("disciplineId", filters.disciplineId);
+      if (filters.batchId) params.append("batchId", filters.batchId);
       if (filters.allocationId) params.append("allocationId", filters.allocationId);
       if (filters.section) params.append("section", filters.section);
       if (filters.startDate) params.append("startDate", filters.startDate);
