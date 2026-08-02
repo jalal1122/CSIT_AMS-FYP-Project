@@ -321,14 +321,16 @@ export const getBatch = asyncHandler(async (req, res) => {
 // @route   GET /api/v2/academic/allocations
 // @access  Admin
 export const getAllocations = asyncHandler(async (req, res) => {
-  const { batchId, semester } = req.query;
-  if (!batchId) throw new ApiError(400, "batchId is required");
+  const { batchId, semester, isActive } = req.query;
 
-  const query = { batchId };
+  const query = {};
+  if (batchId) query.batchId = batchId;
   if (semester) query.semester = semester;
+  if (isActive !== undefined) query.isActive = isActive === "true" || isActive === true;
 
   const allocations = await CourseAllocation.find(query)
     .populate("subjectId", "name code creditHours")
+    .populate("batchId", "name semester academicYear")
     .populate("sections.teacherId", "name username")
     .lean();
 
