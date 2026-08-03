@@ -6,7 +6,7 @@ export const fetchNotifications = createAsyncThunk(
   "notifications/fetchNotifications",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("/notifications");
+      const response = await api.get("/api/v2/notifications");
       return response.data.data; // { notifications, unreadCount }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch notifications");
@@ -19,7 +19,7 @@ export const markAsRead = createAsyncThunk(
   "notifications/markAsRead",
   async (id, { rejectWithValue }) => {
     try {
-      await api.patch(`/notifications/${id}/read`);
+      await api.patch(`/api/v2/notifications/${id}/read`);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to mark as read");
@@ -32,7 +32,7 @@ export const markAllAsRead = createAsyncThunk(
   "notifications/markAllAsRead",
   async (_, { rejectWithValue }) => {
     try {
-      await api.patch(`/notifications/read-all`);
+      await api.patch(`/api/v2/notifications/read-all`);
       return true;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to mark all as read");
@@ -45,7 +45,7 @@ export const deleteNotification = createAsyncThunk(
   "notifications/deleteNotification",
   async (id, { rejectWithValue }) => {
     try {
-      await api.delete(`/notifications/${id}`);
+      await api.delete(`/api/v2/notifications/${id}`);
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to delete notification");
@@ -58,7 +58,7 @@ export const clearReadNotifications = createAsyncThunk(
   "notifications/clearReadNotifications",
   async (_, { rejectWithValue }) => {
     try {
-      await api.delete(`/notifications/read`);
+      await api.delete(`/api/v2/notifications/read`);
       return true;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to clear read notifications");

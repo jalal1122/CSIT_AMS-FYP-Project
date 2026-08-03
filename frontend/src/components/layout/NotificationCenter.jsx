@@ -9,7 +9,7 @@ import {
   clearReadNotifications,
   addNotification 
 } from "../../store/slices/notificationSlice";
-import { socket } from "../../services/socket";
+import socket from "../../services/socket";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 

@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectIsAuthenticated, selectCurrentUser, selectIsCheckingAuth, checkAuth } from "./store/slices/authSlice.js";
 import { fetchSettings } from "./store/slices/systemSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
+import PublicRoute from "./components/PublicRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
 
 // Auth & Public Pages
