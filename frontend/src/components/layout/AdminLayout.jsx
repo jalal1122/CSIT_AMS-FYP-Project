@@ -17,7 +17,11 @@ import {
   Bell,
   Search,
   Menu,
-  X
+  X,
+  PieChart,
+  HeartPulse,
+  ShieldAlert,
+  BrainCircuit
 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
@@ -36,6 +40,10 @@ export default function AdminLayout({ children }) {
     { name: "Promotions", href: "/admin/promotion", icon: TrendingUp },
     { name: "Students", href: "/admin/students", icon: UserCheck },
     { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { name: "HOD Reports", href: "/admin/hod-reports", icon: PieChart },
+    { name: "Student Affairs", href: "/admin/affairs-reports", icon: HeartPulse },
+    { name: "Security Analytics", href: "/admin/security-analytics", icon: ShieldAlert },
+    { name: "Behavioral Analytics", href: "/admin/behavioral-analytics", icon: BrainCircuit },
   ];
 
   const handleLogout = () => {

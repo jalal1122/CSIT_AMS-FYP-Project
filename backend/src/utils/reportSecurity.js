@@ -10,7 +10,14 @@ export const getSecurityMatch = (user, collectionPrefix = "") => {
   }
   
   if (user.role === "student") {
-    return { [`${prefix}sections.students`]: user._id };
+    // For universal pipelines, if we know we are querying Attendance,
+    // studentId is faster. But to be safe across Session/Allocation queries:
+    return { 
+      $or: [
+        { studentId: user._id },
+        { [`${prefix}sections.students`]: user._id }
+      ]
+    };
   }
   
   return { _id: null }; // Fallback to return nothing if role is unrecognized

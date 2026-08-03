@@ -21,8 +21,12 @@ import notificationRoutes from "./src/routes/notification.routes.js";
 
 import { initSocket } from "./src/services/socket.js";
 import { initCronJobs } from "./src/utils/cronJobs.js";
+import { trafficLogger } from "./src/middlewares/trafficLogger.js";
 
 const app = express();
+
+// System Traffic Logger
+app.use(trafficLogger);
 
 // Security and utility middlewares
 app.use(helmet());

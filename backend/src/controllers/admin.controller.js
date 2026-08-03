@@ -2,8 +2,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import User from "../models/user.model.js";
-import CourseAllocation from "../models/courseAllocation.model.js";
 import Subject from "../models/subject.model.js";
+import DeviceResetLog from "../models/deviceResetLog.model.js";
 import bcrypt from "bcryptjs";
 import EmailService from "../services/email.service.js"; // To be created
 
@@ -16,8 +16,16 @@ export const resetDevice = asyncHandler(async (req, res) => {
 
   if (!user) throw new ApiError(404, "User not found");
 
+  const previousDeviceId = user.deviceId;
   user.deviceId = null;
   await user.save({ validateBeforeSave: false });
+
+  await DeviceResetLog.create({
+    studentId: user._id,
+    adminId: req.user._id,
+    previousDeviceId: previousDeviceId || "Unknown",
+    reason: req.body.reason || "Admin override",
+  });
 
   try {
     await EmailService.sendDeviceAlert(user, "reset", null);

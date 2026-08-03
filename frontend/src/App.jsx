@@ -29,6 +29,10 @@ const Allocation = lazy(() => import("./pages/admin/Allocation.jsx"));
 const Promotion = lazy(() => import("./pages/admin/Promotion.jsx"));
 const Students = lazy(() => import("./pages/admin/Students.jsx"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports.jsx"));
+const HODReports = lazy(() => import("./pages/admin/HODReports.jsx"));
+const StudentAffairsReports = lazy(() => import("./pages/admin/StudentAffairsReports.jsx"));
+const SecurityAnalytics = lazy(() => import("./pages/admin/SecurityAnalytics.jsx"));
+const BehavioralAnalytics = lazy(() => import("./pages/admin/BehavioralAnalytics.jsx"));
 
 // Teacher Pages
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard.jsx"));
@@ -106,6 +110,10 @@ function App() {
           <Route path="/admin/promotion" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Promotion /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/students" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Students /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminReports /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/hod-reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><HODReports /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/affairs-reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><StudentAffairsReports /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/security-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><SecurityAnalytics /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/behavioral-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><BehavioralAnalytics /></AdminLayout></PrivateRoute>} />
 
           {/* Teacher */}
           <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherDashboard /></PrivateRoute>} />

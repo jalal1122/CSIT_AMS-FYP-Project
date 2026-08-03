@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import moment from "moment-timezone";
 import Attendance from "../models/attendance.model.js";
 import Session from "../models/session.model.js";
+import User from "../models/user.model.js";
+import DeviceResetLog from "../models/deviceResetLog.model.js";
+import SystemTrafficLog from "../models/systemTrafficLog.model.js";
 
 const TIMEZONE = "Asia/Karachi";
 
@@ -19,6 +22,14 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
   
   if (filters?.batches && filters.batches.length > 0) {
     query[`${p}batchId`] = { $in: filters.batches.map(id => new mongoose.Types.ObjectId(id)) };
+  }
+
+  if (filters?.teachers && filters.teachers.length > 0) {
+    query[`${p}sections.teacherId`] = { $in: filters.teachers.map(id => new mongoose.Types.ObjectId(id)) };
+  }
+
+  if (filters?.students && filters.students.length > 0) {
+    query[`${p}sections.students`] = { $in: filters.students.map(id => new mongoose.Types.ObjectId(id)) };
   }
 
   // Timeframe logic
@@ -59,6 +70,521 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
 /**
  * Specific Insight Pipelines
  */
+
+export const getUniversalMatrix = async (matchQuery) => {
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: matchQuery },
+    {
+      $lookup: {
+        from: "users",
+        localField: "studentId",
+        foreignField: "_id",
+        as: "studentInfo",
+      }
+    },
+    { $unwind: "$studentInfo" },
+    {
+      $lookup: {
+        from: "subjects",
+        localField: "allocation.subjectId",
+        foreignField: "_id",
+        as: "subjectInfo",
+      }
+    },
+    { $unwind: { path: "$subjectInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $facet: {
+        // 1. Overall Attendance Summary
+        summary: [
+          {
+            $group: {
+              _id: null,
+              totalScans: { $sum: 1 },
+              totalPresents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } },
+              totalAbsents: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } },
+              totalLeaves: { $sum: { $cond: [{ $eq: ["$status", "Leave"] }, 1, 0] } },
+              manualOverrides: { $sum: { $cond: [{ $eq: ["$status", "Present (Manual)"] }, 1, 0] } }
+            }
+          }
+        ],
+        // 2. Student-Level Aggregation (For Teacher "At-Risk Radar" & "Comparison Matrix")
+        students: [
+          {
+            $group: {
+              _id: "$studentId",
+              name: { $first: "$studentInfo.name" },
+              rollNo: { $first: "$studentInfo.info.rollNo" },
+              discipline: { $first: "$studentInfo.info.discipline" },
+              totalScans: { $sum: 1 },
+              presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
+            }
+          },
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              rollNo: 1,
+              discipline: 1,
+              totalScans: 1,
+              presents: 1,
+              attendancePercentage: {
+                $cond: [
+                  { $gt: ["$totalScans", 0] },
+                  { $round: [{ $multiply: [{ $divide: ["$presents", "$totalScans"] }, 100] }, 1] },
+                  0
+                ]
+              }
+            }
+          },
+          { $sort: { rollNo: 1 } }
+        ],
+        // 3. Subject-Level Aggregation (For Student "Personal Transcript")
+        subjects: [
+          {
+            $group: {
+              _id: "$allocation.subjectId",
+              subjectName: { $first: "$subjectInfo.name" },
+              subjectCode: { $first: "$subjectInfo.code" },
+              totalScans: { $sum: 1 },
+              presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
+            }
+          },
+          {
+            $project: {
+              _id: 1,
+              subjectName: 1,
+              subjectCode: 1,
+              totalScans: 1,
+              presents: 1,
+              attendancePercentage: {
+                $cond: [
+                  { $gt: ["$totalScans", 0] },
+                  { $round: [{ $multiply: [{ $divide: ["$presents", "$totalScans"] }, 100] }, 1] },
+                  0
+                ]
+              }
+            }
+          },
+          { $sort: { subjectName: 1 } }
+        ]
+      }
+    }
+  ]);
+};
+
+export const getExamEligibilityMatrix = async (matchQuery, threshold = 75) => {
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: matchQuery },
+    {
+      $group: {
+        _id: "$studentId",
+        total: { $sum: 1 },
+        present: {
+          $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] },
+        },
+      },
+    },
+    {
+      $addFields: {
+        percentage: {
+          $multiply: [{ $divide: ["$present", "$total"] }, 100],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "studentInfo",
+      },
+    },
+    { $unwind: "$studentInfo" },
+    {
+      $project: {
+        studentId: "$_id",
+        name: "$studentInfo.name",
+        rollNo: "$studentInfo.info.rollNo",
+        percentage: 1,
+        total: 1,
+        present: 1,
+        status: {
+          $cond: [{ $gte: ["$percentage", Number(threshold)] }, "Eligible", "Detained"]
+        }
+      },
+    },
+    { $sort: { rollNo: 1 } }
+  ]);
+};
+
+export const getInterDisciplineBenchmark = async (matchQuery) => {
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: matchQuery },
+    {
+      $lookup: {
+        from: "batches",
+        localField: "allocation.batchId",
+        foreignField: "_id",
+        as: "batch",
+      }
+    },
+    { $unwind: "$batch" },
+    {
+      $group: {
+        _id: "$batch.disciplineId",
+        total: { $sum: 1 },
+        present: {
+          $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] },
+        },
+      }
+    },
+    {
+      $addFields: {
+        averageAttendance: {
+          $cond: [
+            { $gt: ["$total", 0] },
+            { $multiply: [{ $divide: ["$present", "$total"] }, 100] },
+            0
+          ]
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: "disciplines",
+        localField: "_id",
+        foreignField: "_id",
+        as: "disciplineInfo"
+      }
+    },
+    { $unwind: { path: "$disciplineInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        disciplineId: "$_id",
+        name: { $ifNull: ["$disciplineInfo.name", "Unknown Discipline"] },
+        averageAttendance: 1,
+        totalSessions: "$total"
+      }
+    },
+    { $sort: { averageAttendance: -1 } }
+  ]);
+};
+
+export const getMedicalLeaveLedger = async (matchQuery) => {
+  const query = { ...matchQuery, status: "Leave" };
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: query },
+    {
+      $lookup: {
+        from: "users",
+        localField: "studentId",
+        foreignField: "_id",
+        as: "studentInfo",
+      }
+    },
+    { $unwind: "$studentInfo" },
+    {
+      $group: {
+        _id: "$studentId",
+        name: { $first: "$studentInfo.name" },
+        rollNo: { $first: "$studentInfo.info.rollNo" },
+        totalLeaves: { $sum: 1 },
+      }
+    },
+    {
+      $project: {
+        studentId: "$_id",
+        name: 1,
+        rollNo: 1,
+        totalLeaves: 1
+      }
+    },
+    { $sort: { totalLeaves: -1 } }
+  ]);
+};
+
+export const getRepeaterMatrix = async (matchQuery) => {
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: matchQuery },
+    {
+      $lookup: {
+        from: "users",
+        localField: "studentId",
+        foreignField: "_id",
+        as: "studentInfo",
+      }
+    },
+    { $unwind: "$studentInfo" },
+    {
+      $match: {
+        $expr: { $ne: ["$allocation.batchId", "$studentInfo.info.batchId"] }
+      }
+    },
+    {
+      $group: {
+        _id: { studentId: "$studentId", allocationId: "$allocationId" },
+        name: { $first: "$studentInfo.name" },
+        rollNo: { $first: "$studentInfo.info.rollNo" },
+        subjectId: { $first: "$allocation.subjectId" },
+        total: { $sum: 1 },
+        present: { $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] } }
+      }
+    },
+    {
+      $lookup: {
+        from: "subjects",
+        localField: "subjectId",
+        foreignField: "_id",
+        as: "subjectInfo"
+      }
+    },
+    { $unwind: { path: "$subjectInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        studentId: "$_id.studentId",
+        allocationId: "$_id.allocationId",
+        name: 1,
+        rollNo: 1,
+        subjectName: { $ifNull: ["$subjectInfo.name", "Unknown Subject"] },
+        total: 1,
+        present: 1,
+        percentage: {
+          $cond: [
+            { $gt: ["$total", 0] },
+            { $multiply: [{ $divide: ["$present", "$total"] }, 100] },
+            0
+          ]
+        }
+      }
+    },
+    { $sort: { rollNo: 1 } }
+  ]);
+};
+
+export const getStudentOnboardingStatus = async () => {
+  return await User.aggregate([
+    { $match: { role: "student" } },
+    {
+      $match: {
+        $or: [
+          { mustChangePassword: true },
+          { email: null },
+          { email: "" },
+          { email: { $exists: false } }
+        ]
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        rollNo: "$info.rollNo",
+        mustChangePassword: 1,
+        email: 1,
+        createdAt: 1
+      }
+    },
+    { $sort: { rollNo: 1 } }
+  ]);
+};
+
+export const getGeofenceDrift = async (matchQuery) => {
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: matchQuery },
+    { $match: { "metadata.location.latitude": { $exists: true } } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "studentId",
+        foreignField: "_id",
+        as: "studentInfo",
+      }
+    },
+    { $unwind: "$studentInfo" },
+    {
+      $group: {
+        _id: "$studentId",
+        name: { $first: "$studentInfo.name" },
+        rollNo: { $first: "$studentInfo.info.rollNo" },
+        // Simple drift estimation (e.g. accuracy > 50m might indicate drift/spoofing)
+        driftIncidents: {
+          $sum: {
+            $cond: [
+              { $gt: [{ $toDouble: "$metadata.location.accuracy" }, 50] },
+              1, 0
+            ]
+          }
+        },
+        totalScans: { $sum: 1 }
+      }
+    },
+    { $match: { driftIncidents: { $gt: 0 } } },
+    {
+      $project: {
+        studentId: "$_id",
+        name: 1,
+        rollNo: 1,
+        driftIncidents: 1,
+        totalScans: 1
+      }
+    },
+    { $sort: { driftIncidents: -1 } }
+  ]);
+};
+
+export const getDeviceBindingAudit = async () => {
+  return await DeviceResetLog.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "studentId",
+        foreignField: "_id",
+        as: "student"
+      }
+    },
+    { $unwind: "$student" },
+    {
+      $lookup: {
+        from: "users",
+        localField: "adminId",
+        foreignField: "_id",
+        as: "admin"
+      }
+    },
+    { $unwind: "$admin" },
+    {
+      $project: {
+        _id: 1,
+        studentName: "$student.name",
+        rollNo: "$student.info.rollNo",
+        adminName: "$admin.name",
+        previousDeviceId: 1,
+        reason: 1,
+        resetDate: "$createdAt"
+      }
+    },
+    { $sort: { resetDate: -1 } }
+  ]);
+};
+
+export const getSystemUsagePeaks = async () => {
+  return await SystemTrafficLog.aggregate([
+    {
+      $group: {
+        _id: {
+          hour: { $hour: { date: "$timestampHour", timezone: TIMEZONE } },
+          dayOfWeek: { $dayOfWeek: { date: "$timestampHour", timezone: TIMEZONE } }
+        },
+        avgTraffic: { $avg: "$count" },
+        totalTraffic: { $sum: "$count" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        hour: "$_id.hour",
+        dayOfWeek: "$_id.dayOfWeek",
+        avgTraffic: { $round: ["$avgTraffic", 0] },
+        totalTraffic: 1
+      }
+    },
+    { $sort: { totalTraffic: -1 } }
+  ]);
+};
+
+export const getTimeOfDayAbsenteeism = async (matchQuery) => {
+  return await Session.aggregate([
+    {
+      $lookup: {
+        from: "courseallocations",
+        localField: "allocationId",
+        foreignField: "_id",
+        as: "allocation",
+      },
+    },
+    { $unwind: "$allocation" },
+    { $match: matchQuery },
+    {
+      $group: {
+        _id: {
+          hour: { $hour: { date: "$startTime", timezone: TIMEZONE } }
+        },
+        totalSessions: { $sum: 1 },
+        totalAbsents: { $sum: "$stats.absent" },
+        totalPresents: { $sum: "$stats.present" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        hour: "$_id.hour",
+        totalSessions: 1,
+        absentRate: {
+          $cond: [
+            { $gt: [{ $add: ["$totalPresents", "$totalAbsents"] }, 0] },
+            { $multiply: [{ $divide: ["$totalAbsents", { $add: ["$totalPresents", "$totalAbsents"] }] }, 100] },
+            0
+          ]
+        }
+      }
+    },
+    { $sort: { hour: 1 } }
+  ]);
+};
 
 export const getDefaulterMatrix = async (matchQuery) => {
   return await Attendance.aggregate([

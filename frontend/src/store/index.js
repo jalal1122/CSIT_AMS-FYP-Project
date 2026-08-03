@@ -9,6 +9,7 @@ import facultyReducer from "./slices/facultySlice.js";
 import studentReducer from "./slices/studentSlice.js";
 import teacherReducer from "./slices/teacherSlice.js";
 import notificationReducer from "./slices/notificationSlice.js";
+import { injectStore } from "../services/api.js";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,9 @@ export const store = configureStore({
     notifications: notificationReducer,
   },
 });
+
+// Inject store into API interceptors to break circular dependency
+injectStore(store);
 
 // Selectors
 export const selectAuth = (state) => state.auth;

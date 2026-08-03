@@ -1,7 +1,11 @@
 import axios from "axios";
-import { store } from "../store/index.js";
-import { logout, refreshAccessToken } from "../store/slices/authSlice.js";
+// Remove direct store import to avoid circular dependency
+// import { store } from "../store/index.js"; 
 
+let store;
+export const injectStore = (_store) => {
+  store = _store;
+};
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5001",
   withCredentials: true,
@@ -10,8 +14,10 @@ const api = axios.create({
 
 // Request interceptor: attach access token
 api.interceptors.request.use((config) => {
-  const token = store.getState().auth.accessToken;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (store) {
+    const token = store.getState().auth?.accessToken;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -33,7 +39,9 @@ api.interceptors.response.use(
       original._retry = true;
 
       // Reuse in-flight refresh if one is already in progress
-      if (!refreshPromise) {
+      if (!refreshPromise && store) {
+        // Dynamically import to prevent another circular dependency
+        const { refreshAccessToken } = await import("../store/slices/authSlice.js");
         refreshPromise = store
           .dispatch(refreshAccessToken())
           .unwrap()
@@ -44,11 +52,14 @@ api.interceptors.response.use(
 
       try {
         await refreshPromise;
-        const newToken = store.getState().auth.accessToken;
-        original.headers.Authorization = `Bearer ${newToken}`;
+        const newToken = store?.getState()?.auth?.accessToken;
+        if (newToken) {
+            original.headers.Authorization = `Bearer ${newToken}`;
+        }
         return api(original);
       } catch {
-        store.dispatch(logout());
+        const { logout } = await import("../store/slices/authSlice.js");
+        if (store) store.dispatch(logout());
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -56,7 +67,8 @@ api.interceptors.response.use(
 
     // Handle ACCOUNT_INACTIVE error code
     if (error.response?.data?.errorCode === "ACCOUNT_INACTIVE") {
-      store.dispatch(logout());
+      const { logout } = await import("../store/slices/authSlice.js");
+      if (store) store.dispatch(logout());
       window.location.href = "/login?reason=inactive";
     }
 

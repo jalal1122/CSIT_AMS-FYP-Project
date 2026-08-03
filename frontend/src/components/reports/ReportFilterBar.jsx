@@ -22,10 +22,8 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
   const [selectedBatches, setSelectedBatches] = useState([]);
 
   useEffect(() => {
-    if (userRole === "teacher" || userRole === "student") {
-      dispatch(fetchAllocations({ isActive: true }));
-    }
-  }, [dispatch, userRole]);
+    dispatch(fetchAllocations({ isActive: true }));
+  }, [dispatch]);
 
   // Extract unique subjects and batches from allocations for dropdowns
   const subjectOptions = Array.from(new Set(allocations.map(a => a.subjectId?._id)))

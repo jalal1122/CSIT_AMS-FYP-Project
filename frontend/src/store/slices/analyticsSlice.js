@@ -58,6 +58,15 @@ const initialState = {
   defaulterMatrix: [],
   teacherUtilization: [],
   atRiskTrajectory: [],
+  examEligibility: [],
+  interDisciplineBenchmark: [],
+  medicalLeaveLedger: [],
+  repeaterTracking: [],
+  studentOnboardingStatus: [],
+  geofenceDrift: [],
+  deviceBindingAudit: [],
+  systemUsagePeaks: [],
+  timeOfDayAbsenteeism: [],
   loading: false,
   error: null,
 };
@@ -100,6 +109,24 @@ const analyticsSlice = createSlice({
           state.teacherUtilization = data;
         } else if (target === "at-risk-trajectory") {
           state.atRiskTrajectory = data;
+        } else if (target === "exam-eligibility") {
+          state.examEligibility = data;
+        } else if (target === "inter-discipline-benchmark") {
+          state.interDisciplineBenchmark = data;
+        } else if (target === "medical-leave-ledger") {
+          state.medicalLeaveLedger = data;
+        } else if (target === "repeater-tracking") {
+          state.repeaterTracking = data;
+        } else if (target === "student-onboarding-status") {
+          state.studentOnboardingStatus = data;
+        } else if (target === "geofence-drift") {
+          state.geofenceDrift = data;
+        } else if (target === "device-binding-audit") {
+          state.deviceBindingAudit = data;
+        } else if (target === "system-usage-peaks") {
+          state.systemUsagePeaks = data;
+        } else if (target === "time-of-day-absenteeism") {
+          state.timeOfDayAbsenteeism = data;
         }
       })
       .addCase(fetchV2Reports.rejected, (state, action) => {

@@ -76,6 +76,36 @@ export const generateReport = asyncHandler(async (req, res) => {
     case "at-risk-trajectory":
       data = await analyticsService.getAtRiskTrajectory(dynamicMatch);
       break;
+    case "exam-eligibility":
+      data = await analyticsService.getExamEligibilityMatrix(dynamicMatch);
+      break;
+    case "inter-discipline-benchmark":
+      data = await analyticsService.getInterDisciplineBenchmark(dynamicMatch);
+      break;
+    case "medical-leave-ledger":
+      data = await analyticsService.getMedicalLeaveLedger(dynamicMatch);
+      break;
+    case "repeater-tracking":
+      data = await analyticsService.getRepeaterMatrix(dynamicMatch);
+      break;
+    case "student-onboarding-status":
+      data = await analyticsService.getStudentOnboardingStatus();
+      break;
+    case "geofence-drift":
+      data = await analyticsService.getGeofenceDrift(dynamicMatch);
+      break;
+    case "device-binding-audit":
+      data = await analyticsService.getDeviceBindingAudit();
+      break;
+    case "system-usage-peaks":
+      data = await analyticsService.getSystemUsagePeaks();
+      break;
+    case "time-of-day-absenteeism":
+      data = await analyticsService.getTimeOfDayAbsenteeism(dynamicMatch);
+      break;
+    case "universal":
+      data = await analyticsService.getUniversalMatrix(dynamicMatch);
+      break;
     default:
       throw new ApiError(400, "Invalid report target");
   }
@@ -105,6 +135,30 @@ export const exportReport = asyncHandler(async (req, res) => {
       break;
     case "at-risk-trajectory":
       data = await analyticsService.getAtRiskTrajectory(dynamicMatch);
+      break;
+    case "exam-eligibility":
+      data = await analyticsService.getExamEligibilityMatrix(dynamicMatch);
+      break;
+    case "inter-discipline-benchmark":
+      data = await analyticsService.getInterDisciplineBenchmark(dynamicMatch);
+      break;
+    case "medical-leave-ledger":
+      data = await analyticsService.getMedicalLeaveLedger(dynamicMatch);
+      break;
+    case "repeater-tracking":
+      data = await analyticsService.getRepeaterMatrix(dynamicMatch);
+      break;
+    case "student-onboarding-status":
+      data = await analyticsService.getStudentOnboardingStatus();
+      break;
+    case "geofence-drift":
+      data = await analyticsService.getGeofenceDrift(dynamicMatch);
+      break;
+    case "device-binding-audit":
+      data = await analyticsService.getDeviceBindingAudit();
+      break;
+    case "system-usage-peaks":
+      data = await analyticsService.getSystemUsagePeaks();
       break;
     default:
       throw new ApiError(400, "Invalid export target");
