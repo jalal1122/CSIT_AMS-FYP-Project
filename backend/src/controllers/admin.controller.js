@@ -234,7 +234,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 // @route   POST /api/v2/admin/users
 // @access  Admin
 export const createUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role, info } = req.body;
+  const { username, name, email, password, role, info } = req.body;
 
   const userExists = await User.findOne({ email });
   if (userExists) {
@@ -242,6 +242,7 @@ export const createUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.create({
+    username,
     name,
     email,
     password,

@@ -35,8 +35,26 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess, defaultRol
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    
+    const payload = {
+      username: formData.username,
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      role: formData.role,
+      info: {}
+    };
+
+    if (formData.role === "teacher" || formData.role === "student") {
+      if (formData.departmentId) payload.info.departmentId = formData.departmentId;
+    }
+    if (formData.role === "student") {
+      if (formData.batchId) payload.info.batchId = formData.batchId;
+      if (formData.section) payload.info.section = formData.section;
+    }
+
     try {
-      await api.post("/api/v2/admin/users", formData);
+      await api.post("/api/v2/admin/users", payload);
       toast.success("User created successfully!");
       onSuccess();
       onClose();
