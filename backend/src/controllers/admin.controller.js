@@ -199,6 +199,7 @@ export const getUsers = asyncHandler(async (req, res) => {
   const users = await User.find(query)
     .select("-password -refreshToken -twoFactorSecret")
     .populate("info.departmentId", "name code")
+    .populate("info.batchId", "name currentSemester")
     .sort({ name: 1 })
     .lean();
 

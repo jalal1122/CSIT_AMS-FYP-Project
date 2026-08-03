@@ -130,7 +130,7 @@ export default function Students() {
                     <td className="px-6 py-4">
                       <div className="text-slate-700 text-sm font-medium">{student.info?.batchId?.name || "-"}</div>
                       <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                        <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Sem {student.info?.currentSemester || "-"}</span>
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Sem {student.info?.semester || student.info?.batchId?.currentSemester || "-"}</span>
                         <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Sec {student.info?.section || "-"}</span>
                       </div>
                     </td>
