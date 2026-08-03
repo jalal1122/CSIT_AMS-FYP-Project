@@ -1,130 +1,202 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import UniversalFilterSidebar from "../../components/reports/UniversalFilterSidebar";
 import { useDispatch, useSelector } from "react-redux";
-import { Download, FileSpreadsheet, AlertOctagon, Users } from "lucide-react";
+import { fetchV2Reports } from "../../store/slices/analyticsSlice";
+import { AlertTriangle, Users, BookOpen, Fingerprint } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import EmptyState from "../../components/shared/EmptyState";
-import ReportFilterBar from "../../components/reports/ReportFilterBar";
-import { fetchV2Reports, exportV2Report } from "../../store/slices/analyticsSlice";
-import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { logoutUser } from "../../store/slices/authSlice";
+import NotificationCenter from "../../components/layout/NotificationCenter";
+import { LayoutDashboard, FileSpreadsheet } from "lucide-react";
 
 export default function TeacherReports() {
   const dispatch = useDispatch();
-  const { atRiskTrajectory, teacherUtilization, loading } = useSelector((state) => state.analytics);
+  const { reportData, isReportLoading } = useSelector(state => state.analytics);
+  const { user } = useSelector(state => state.auth);
 
-  const [currentFilters, setCurrentFilters] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const handleFilterChange = (filterPayload) => {
-    setCurrentFilters(filterPayload);
-    // Fetch insights for Teacher
-    dispatch(fetchV2Reports({ target: "at-risk-trajectory", ...filterPayload }));
-    dispatch(fetchV2Reports({ target: "teacher-utilization", ...filterPayload }));
+  const handleFilterChange = (payload) => {
+    dispatch(fetchV2Reports({
+      target: "universal",
+      timeframe: payload.timeframe,
+      filters: payload.filters
+    }));
+    setHasSearched(true);
   };
 
-  const handleExport = (format) => {
-    if (!currentFilters) {
-      toast.error("Please apply filters first.");
-      return;
-    }
-    // Teachers usually export the defaulter matrix
-    dispatch(exportV2Report({ target: "defaulter-matrix", ...currentFilters, format }));
-  };
+  const summary = reportData?.summary?.[0] || {};
+  const students = reportData?.students || [];
+
+  const atRiskStudents = students.filter(s => s.attendancePercentage < 75);
+  
+  const manualOverrideRate = summary.totalScans > 0 
+    ? Math.round((summary.manualOverrides / summary.totalScans) * 100) 
+    : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Class Reports & Insights</h2>
-          <p className="text-slate-500 text-sm mt-1">Analyze attendance trajectories and export class matrices.</p>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Header aligned with TeacherDashboard */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">Classroom Command Center</h1>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">Reporting & Analytics</p>
+            </div>
+          </div>
+          
+          <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
+            <Link to="/teacher/dashboard" className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap">
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
+            </Link>
+            <Link to="/teacher/reports" className="px-3 py-2 text-sm font-semibold text-sky-600 bg-sky-50 rounded-lg whitespace-nowrap transition-colors flex items-center gap-2">
+               <FileSpreadsheet className="w-4 h-4" /> Reports
+            </Link>
+            
+            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
+              <NotificationCenter />
+              <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200">
+                {user?.name?.charAt(0) || "T"}
+              </div>
+              <button 
+                className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
+                onClick={() => dispatch(logoutUser())}
+              >
+                Logout
+              </button>
+            </div>
+          </nav>
         </div>
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <button 
-            onClick={() => handleExport("pdf")}
-            className="flex-1 md:flex-none btn-secondary flex items-center justify-center gap-2"
-          >
-            <Download className="w-4 h-4" /> Export Defaulters (PDF)
-          </button>
-          <button 
-            onClick={() => handleExport("xlsx")}
-            className="flex-1 md:flex-none btn-primary flex items-center justify-center gap-2"
-          >
-            <FileSpreadsheet className="w-4 h-4" /> Export Defaulters (Excel)
-          </button>
+      </header>
+      
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
+        
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <UniversalFilterSidebar onFilterChange={handleFilterChange} userRole="teacher" />
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 space-y-6">
+            {!hasSearched ? (
+              <EmptyState 
+                icon={BookOpen} 
+                title="Universal Reporting Engine"
+                message="Select your criteria from the sidebar to dynamically construct a report across your classes and students."
+              />
+            ) : isReportLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : (
+              <>
+                {/* Top KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="card bg-white p-5 border-slate-200 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-500 font-medium">Total Scans</p>
+                      <h3 className="text-2xl font-bold text-slate-800">{summary.totalScans || 0}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <Fingerprint className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="card bg-white p-5 border-slate-200 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-500 font-medium">Manual Override Rate</p>
+                      <h3 className="text-2xl font-bold text-slate-800">{manualOverrideRate}%</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                      <AlertTriangle className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className="card bg-white p-5 border-slate-200 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-500 font-medium">At-Risk Students</p>
+                      <h3 className="text-2xl font-bold text-red-600">{atRiskStudents.length}</h3>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                      <Users className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* At-Risk Radar */}
+                  <div className="card bg-white p-5 border-slate-200">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-red-500" /> At-Risk Radar (< 75%)
+                    </h3>
+                    {atRiskStudents.length === 0 ? (
+                      <div className="text-center py-10 text-slate-500 text-sm">
+                        No students are currently at risk in this scope. Great job!
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                        {atRiskStudents.map(student => (
+                          <div key={student._id} className="flex justify-between items-center p-3 bg-red-50/50 border border-red-100 rounded-lg">
+                            <div>
+                              <p className="font-semibold text-slate-800 text-sm">{student.name}</p>
+                              <p className="text-xs text-slate-500">{student.rollNo}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-red-600">{student.attendancePercentage}%</p>
+                              <p className="text-xs text-slate-500">{student.totalScans} Total Classes</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Student Comparison Matrix (Radar Chart) */}
+                  <div className="card bg-white p-5 border-slate-200">
+                    <h3 className="font-bold text-slate-800 mb-4">Student Comparison Matrix</h3>
+                    {students.length === 0 ? (
+                      <div className="text-center py-10 text-slate-500 text-sm">
+                        No students found for this filter.
+                      </div>
+                    ) : (
+                      <div className="h-80">
+                        {/* We use Bar Chart because Radar gets messy with too many students. If < 8, Radar is cool. */}
+                        {students.length <= 8 && students.length > 2 ? (
+                           <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={students}>
+                              <PolarGrid stroke="#e2e8f0" />
+                              <PolarAngleAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10 }} />
+                              <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                              <Radar name="Attendance %" dataKey="attendancePercentage" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.6} />
+                              <RechartsTooltip />
+                            </RadarChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={students.slice(0, 20)} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                              <XAxis dataKey="name" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                              <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                              <RechartsTooltip cursor={{ fill: '#f8fafc' }} />
+                              <Bar dataKey="attendancePercentage" fill="#6366f1" radius={[4, 4, 0, 0]} name="Attendance %" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        )}
+                        {students.length > 20 && (
+                          <p className="text-xs text-center text-slate-400 mt-2">Showing top 20 students for comparison.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-      <ReportFilterBar onFilterChange={handleFilterChange} userRole="teacher" />
-
-      {loading && <div className="text-center text-slate-500 py-10">Loading insights...</div>}
-
-      {!loading && currentFilters && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* At Risk Radar */}
-          <div className="card p-5 bg-white border-slate-200">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-              <AlertOctagon className="w-5 h-5 text-rose-500" />
-              At-Risk Trajectory
-            </h3>
-            {atRiskTrajectory && atRiskTrajectory.length > 0 ? (
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={atRiskTrajectory}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="name" />
-                    <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} />
-                    <Radar name="Absences (Last 5 Sessions)" dataKey="absencesInLastFive" stroke="#f43f5e" fill="#f43f5e" fillOpacity={0.6} />
-                    <RechartsTooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <EmptyState 
-                icon={AlertOctagon} 
-                title="No At-Risk Students" 
-                subtitle="All students have good attendance in the recent sessions." 
-              />
-            )}
-          </div>
-
-          {/* Teacher Utilization */}
-          <div className="card p-5 bg-white border-slate-200">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-indigo-500" />
-              Session Verification Modes
-            </h3>
-            {teacherUtilization && teacherUtilization.length > 0 ? (
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={teacherUtilization} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Legend />
-                    <Bar dataKey="totalSessions" fill="#6366f1" name="Total Sessions" />
-                    <Bar dataKey="manualOverrideRate" fill="#f59e0b" name="Manual Override %" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <EmptyState 
-                icon={Users} 
-                title="No Sessions Recorded" 
-                subtitle="No session verification data available for this timeframe." 
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {!loading && !currentFilters && (
-        <div className="card p-10 bg-slate-50/50 flex items-center justify-center">
-          <EmptyState 
-            icon={FileSpreadsheet} 
-            title="Select filters to generate insights" 
-            subtitle="Apply filters above to view the At-Risk radar and session analytics." 
-          />
-        </div>
-      )}
     </div>
   );
 }
