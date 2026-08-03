@@ -38,13 +38,19 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
     const now = moment.tz(TIMEZONE);
     
     switch (timeframe) {
-      case "Last Week":
-        startDate = now.clone().subtract(1, "weeks").startOf("week").toDate();
-        endDate = now.clone().subtract(1, "weeks").endOf("week").toDate();
+      case "Today":
+        startDate = now.clone().startOf("day").toDate();
+        endDate = now.clone().endOf("day").toDate();
         break;
+      case "Last 7 Days":
+      case "Last Week":
+        startDate = now.clone().subtract(7, "days").startOf("day").toDate();
+        endDate = now.clone().endOf("day").toDate();
+        break;
+      case "Last 30 Days":
       case "Last Month":
-        startDate = now.clone().subtract(1, "months").startOf("month").toDate();
-        endDate = now.clone().subtract(1, "months").endOf("month").toDate();
+        startDate = now.clone().subtract(30, "days").startOf("day").toDate();
+        endDate = now.clone().endOf("day").toDate();
         break;
       case "Full Semester":
         // Depending on business logic, this could span 6 months. For now, we omit date filtering for full.
@@ -71,7 +77,75 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
  * Specific Insight Pipelines
  */
 
-export const getUniversalMatrix = async (matchQuery) => {
+export const getUniversalMatrix = async (matchQuery, isExport = false) => {
+  const studentsPipeline = [
+    {
+      $group: {
+        _id: "$studentId",
+        name: { $first: "$studentInfo.name" },
+        rollNo: { $first: "$studentInfo.info.rollNo" },
+        discipline: { $first: "$studentInfo.info.discipline" },
+        totalScans: { $sum: 1 },
+        presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        rollNo: 1,
+        discipline: 1,
+        totalScans: 1,
+        presents: 1,
+        attendancePercentage: {
+          $cond: [
+            { $gt: ["$totalScans", 0] },
+            { $round: [{ $multiply: [{ $divide: ["$presents", "$totalScans"] }, 100] }, 1] },
+            0
+          ]
+        }
+      }
+    },
+    { $sort: { attendancePercentage: 1, rollNo: 1 } }
+  ];
+
+  if (!isExport) {
+    studentsPipeline.push({ $limit: 500 });
+  }
+
+  const subjectsPipeline = [
+    {
+      $group: {
+        _id: "$allocation.subjectId",
+        subjectName: { $first: "$subjectInfo.name" },
+        subjectCode: { $first: "$subjectInfo.code" },
+        totalScans: { $sum: 1 },
+        presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        subjectName: 1,
+        subjectCode: 1,
+        totalScans: 1,
+        presents: 1,
+        attendancePercentage: {
+          $cond: [
+            { $gt: ["$totalScans", 0] },
+            { $round: [{ $multiply: [{ $divide: ["$presents", "$totalScans"] }, 100] }, 1] },
+            0
+          ]
+        }
+      }
+    },
+    { $sort: { subjectName: 1 } }
+  ];
+
+  if (!isExport) {
+    subjectsPipeline.push({ $limit: 100 });
+  }
+
   return await Attendance.aggregate([
     {
       $lookup: {
@@ -117,65 +191,9 @@ export const getUniversalMatrix = async (matchQuery) => {
           }
         ],
         // 2. Student-Level Aggregation (For Teacher "At-Risk Radar" & "Comparison Matrix")
-        students: [
-          {
-            $group: {
-              _id: "$studentId",
-              name: { $first: "$studentInfo.name" },
-              rollNo: { $first: "$studentInfo.info.rollNo" },
-              discipline: { $first: "$studentInfo.info.discipline" },
-              totalScans: { $sum: 1 },
-              presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
-            }
-          },
-          {
-            $project: {
-              _id: 1,
-              name: 1,
-              rollNo: 1,
-              discipline: 1,
-              totalScans: 1,
-              presents: 1,
-              attendancePercentage: {
-                $cond: [
-                  { $gt: ["$totalScans", 0] },
-                  { $round: [{ $multiply: [{ $divide: ["$presents", "$totalScans"] }, 100] }, 1] },
-                  0
-                ]
-              }
-            }
-          },
-          { $sort: { rollNo: 1 } }
-        ],
+        students: studentsPipeline,
         // 3. Subject-Level Aggregation (For Student "Personal Transcript")
-        subjects: [
-          {
-            $group: {
-              _id: "$allocation.subjectId",
-              subjectName: { $first: "$subjectInfo.name" },
-              subjectCode: { $first: "$subjectInfo.code" },
-              totalScans: { $sum: 1 },
-              presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
-            }
-          },
-          {
-            $project: {
-              _id: 1,
-              subjectName: 1,
-              subjectCode: 1,
-              totalScans: 1,
-              presents: 1,
-              attendancePercentage: {
-                $cond: [
-                  { $gt: ["$totalScans", 0] },
-                  { $round: [{ $multiply: [{ $divide: ["$presents", "$totalScans"] }, 100] }, 1] },
-                  0
-                ]
-              }
-            }
-          },
-          { $sort: { subjectName: 1 } }
-        ]
+        subjects: subjectsPipeline
       }
     }
   ]);

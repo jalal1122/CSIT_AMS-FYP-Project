@@ -160,6 +160,9 @@ export const exportReport = asyncHandler(async (req, res) => {
     case "system-usage-peaks":
       data = await analyticsService.getSystemUsagePeaks();
       break;
+    case "universal":
+      data = await analyticsService.getUniversalMatrix(dynamicMatch, true);
+      break;
     default:
       throw new ApiError(400, "Invalid export target");
   }
@@ -168,7 +171,12 @@ export const exportReport = asyncHandler(async (req, res) => {
     throw new ApiError(404, "No data to export");
   }
 
-  const buffer = await ExportService.generateDynamicExport(data, format);
+  let buffer;
+  if (target === "universal") {
+    buffer = await ExportService.generateUniversalExport(data, format);
+  } else {
+    buffer = await ExportService.generateDynamicExport(data, format);
+  }
   
   res.setHeader('Content-Disposition', `attachment; filename="AttendX_${target}_${timeframe || 'Export'}.${format}"`);
   res.setHeader('Content-Type', format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
