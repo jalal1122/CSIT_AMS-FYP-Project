@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDepartments, createDepartment, updateDepartment, deleteDepartment, fetchSubjects, createSubject, updateSubject, fetchDisciplines, createDiscipline, updateDiscipline, deleteDiscipline, clearError } from "../../store/slices/systemSlice.js";
+import { fetchBatches } from "../../store/slices/academicSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
 import { Building2, Book, Plus, Trash2, Archive, Pencil, GraduationCap } from "lucide-react";
 import Badge from "../../components/shared/Badge";
@@ -25,11 +26,13 @@ export default function Foundation() {
 
   const dispatch = useDispatch();
   const { departments, subjects, disciplines, isLoading, error } = useSelector((state) => state.system);
+  const { batches } = useSelector((state) => state.academic);
 
   useEffect(() => {
     dispatch(fetchDepartments());
     dispatch(fetchSubjects());
     dispatch(fetchDisciplines());
+    dispatch(fetchBatches());
   }, [dispatch]);
 
   const handleCreateDepartment = async (data) => {
@@ -218,12 +221,15 @@ export default function Foundation() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {departments.map((dept) => (
+                  {departments.map((dept) => {
+                    const deptDisciplines = disciplines.filter(d => d.departmentId?._id === dept._id || d.departmentId === dept._id);
+                    const deptBatches = (batches || []).filter(b => deptDisciplines.some(d => d._id === (b.disciplineId?._id || b.disciplineId)));
+                    return (
                     <tr key={dept._id} className="hover:bg-slate-50 transition-colors group">
                       <td className="px-6 py-4 text-sm font-mono text-sky-600 font-medium bg-sky-50/30">{dept.code}</td>
                       <td className="px-6 py-4 text-sm text-slate-800 font-medium">{dept.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">0</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">0</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{deptDisciplines.length}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{deptBatches.length}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => setEditingDept(dept)} className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Edit Department">
@@ -235,7 +241,8 @@ export default function Foundation() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             )}
