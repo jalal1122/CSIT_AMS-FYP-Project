@@ -8,6 +8,7 @@ import NotificationCenter from "../../components/layout/NotificationCenter";
 import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
 import { startLiveSession } from "../../store/slices/sessionSlice";
 import { exportTeacherReport } from "../../store/slices/analyticsSlice";
+import { logoutUser } from "../../store/slices/authSlice";
 import toast from "react-hot-toast";
 
 export default function TeacherDashboard() {
@@ -117,7 +118,7 @@ export default function TeacherDashboard() {
               </div>
               <button 
                 className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
-                onClick={() => dispatch(import("../../store/slices/authSlice").then(m => m.logoutUser()))}
+                onClick={() => dispatch(logoutUser())}
               >
                 Logout
               </button>
