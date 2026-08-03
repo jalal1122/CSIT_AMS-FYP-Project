@@ -332,6 +332,10 @@ export const getAllocations = asyncHandler(async (req, res) => {
     .populate("subjectId", "name code creditHours")
     .populate("batchId", "name semester academicYear")
     .populate("sections.teacherId", "name username")
+    .populate({
+      path: "sections.students",
+      select: "name info.rollNo"
+    })
     .lean();
 
   res.status(200).json(new ApiResponse(200, allocations, "Allocations retrieved successfully"));
