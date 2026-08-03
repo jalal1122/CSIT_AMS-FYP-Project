@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { Filter, Calendar } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllocations } from "../../../store/slices/academicSlice";
+import { fetchAllocations } from "../../store/slices/academicSlice";
 
 const TIMEFRAMES = [
   { value: "Full Semester", label: "Full Semester" },
