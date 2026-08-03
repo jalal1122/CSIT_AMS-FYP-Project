@@ -7,6 +7,33 @@ import moment from "moment";
  */
 class ExportService {
   /**
+   * Generates a basic tabular export for dynamic V2 metrics
+   */
+  static async generateDynamicExport(data, format = "xlsx") {
+    if (!data || data.length === 0) return null;
+    
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Report Data");
+    
+    // Extract headers from first object
+    const headers = Object.keys(data[0]);
+    
+    sheet.columns = headers.map(h => ({
+      header: h.charAt(0).toUpperCase() + h.slice(1),
+      key: h,
+      width: 20
+    }));
+    
+    sheet.getRow(1).font = { bold: true };
+    
+    data.forEach(row => {
+      sheet.addRow(row);
+    });
+    
+    return await workbook.xlsx.writeBuffer();
+  }
+
+  /**
    * Color scheme for reports
    */
   static COLORS = {

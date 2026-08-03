@@ -1,14 +1,12 @@
 import { Router } from "express";
 import {
   getDashboardStats,
-  getDefaulters,
-  exportAdminReport,
-  exportTeacherReport,
-  exportStudentTranscript,
-  getComprehensiveReport
+  generateReport,
+  exportReport
 } from "../controllers/analytics.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { hasRole } from "../middlewares/role.middleware.js";
+import { parseAntigravityFilters } from "../middlewares/antigravity.middleware.js";
 
 const router = Router();
 const adminOnly = [verifyJWT, hasRole(["admin"])];
@@ -17,11 +15,9 @@ const studentOnly = [verifyJWT, hasRole(["student"])];
 const adminOrTeacher = [verifyJWT, hasRole(["admin", "teacher"])];
 
 router.get("/dashboard", ...adminOnly, getDashboardStats);
-router.get("/defaulters", ...adminOnly, getDefaulters);
-router.get("/comprehensive", ...adminOrTeacher, getComprehensiveReport);
 
-router.get("/export/admin", ...adminOnly, exportAdminReport);
-router.get("/export/teacher", ...teacherOnly, exportTeacherReport);
-router.get("/export/student", ...studentOnly, exportStudentTranscript);
+// V2 Universal Endpoints
+router.post("/generate", verifyJWT, parseAntigravityFilters, generateReport);
+router.post("/export", verifyJWT, parseAntigravityFilters, exportReport);
 
 export default router;
