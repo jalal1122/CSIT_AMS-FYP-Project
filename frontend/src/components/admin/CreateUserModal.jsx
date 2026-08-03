@@ -86,14 +86,16 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess, defaultRol
 
         <div className="p-6 overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Role</label>
-              <select name="role" value={formData.role} onChange={handleChange} className="input py-2.5" disabled={fixedRole}>
-                <option value="student">Student</option>
-                <option value="teacher">Teacher</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
+            {!fixedRole && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Role</label>
+                <select name="role" value={formData.role} onChange={handleChange} className="input py-2.5" disabled={fixedRole}>
+                  <option value="student">Student</option>
+                  <option value="teacher">Teacher</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
