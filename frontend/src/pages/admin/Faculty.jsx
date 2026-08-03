@@ -167,6 +167,7 @@ export default function Faculty() {
         onClose={() => setIsAddModalOpen(false)} 
         onSuccess={() => dispatch(fetchTeachers())}
         defaultRole="teacher"
+        fixedRole={true}
       />
       
       {editingTeacher && (

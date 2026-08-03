@@ -3,7 +3,7 @@ import { X, UserPlus, Shield, Eye, EyeOff } from "lucide-react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
 
-export default function CreateUserModal({ isOpen, onClose, onSuccess, defaultRole = "student" }) {
+export default function CreateUserModal({ isOpen, onClose, onSuccess, defaultRole = "student", fixedRole = false }) {
   const [formData, setFormData] = useState({
     username: "",
     name: "",
@@ -88,7 +88,7 @@ export default function CreateUserModal({ isOpen, onClose, onSuccess, defaultRol
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Role</label>
-              <select name="role" value={formData.role} onChange={handleChange} className="input py-2.5">
+              <select name="role" value={formData.role} onChange={handleChange} className="input py-2.5" disabled={fixedRole}>
                 <option value="student">Student</option>
                 <option value="teacher">Teacher</option>
                 <option value="admin">Admin</option>
