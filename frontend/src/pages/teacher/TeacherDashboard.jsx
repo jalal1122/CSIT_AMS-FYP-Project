@@ -7,7 +7,7 @@ import Badge from "../../components/shared/Badge";
 import NotificationCenter from "../../components/layout/NotificationCenter";
 import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
 import { startLiveSession } from "../../store/slices/sessionSlice";
-import { exportTeacherReport } from "../../store/slices/analyticsSlice";
+import { exportV2Report } from "../../store/slices/analyticsSlice";
 import { logoutUser } from "../../store/slices/authSlice";
 import toast from "react-hot-toast";
 
@@ -78,11 +78,13 @@ export default function TeacherDashboard() {
     const alloc = activeAllocations.find(a => a._id === reportAllocationId);
     if (!alloc) return;
 
-    dispatch(exportTeacherReport({
-      allocationId: alloc._id,
-      sectionName: alloc.sectionName || alloc.section,
-      startDate: reportStartDate,
-      endDate: reportEndDate,
+    dispatch(exportV2Report({
+      target: "universal",
+      filters: { 
+         allocationId: alloc._id,
+         startDate: reportStartDate,
+         endDate: reportEndDate
+      },
       format
     }));
   };

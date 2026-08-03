@@ -130,7 +130,7 @@ export default function TeacherReports() {
                   {/* At-Risk Radar */}
                   <div className="card bg-white p-5 border-slate-200">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-red-500" /> At-Risk Radar (< 75%)
+                      <AlertTriangle className="w-4 h-4 text-red-500" /> At-Risk Radar (&lt; 75%)
                     </h3>
                     {atRiskStudents.length === 0 ? (
                       <div className="text-center py-10 text-slate-500 text-sm">
@@ -196,7 +196,7 @@ export default function TeacherReports() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

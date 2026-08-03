@@ -11,6 +11,7 @@ import { fetchSettings } from "./store/slices/systemSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import PublicRoute from "./components/PublicRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
+import ToastContainer from "./components/shared/ToastContainer.jsx";
 
 // Auth & Public Pages
 const Login = lazy(() => import("./pages/auth/Login.jsx"));
@@ -49,7 +50,6 @@ const MyAttendance = lazy(() => import("./pages/student/MyAttendance.jsx"));
 const StudentReports = lazy(() => import("./pages/student/StudentReports.jsx"));
 
 // Shared Components
-const ToastContainer = lazy(() => import("./components/shared/ToastContainer.jsx"));
 
 function App() {
   const dispatch = useDispatch();
