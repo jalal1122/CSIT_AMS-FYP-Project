@@ -8,137 +8,119 @@ export const fetchDashboardStats = createAsyncThunk(
       const response = await api.get("/api/v2/analytics/dashboard");
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch stats");
+      return rejectWithValue(error.response?.data?.message || "Failed to fetch dashboard stats");
     }
   }
 );
 
-export const fetchComprehensiveReport = createAsyncThunk(
-  "analytics/fetchComprehensiveReport",
-  async (filters, { rejectWithValue }) => {
+export const fetchV2Reports = createAsyncThunk(
+  "analytics/fetchV2Reports",
+  async ({ target, timeframe, filters }, { rejectWithValue }) => {
     try {
-      let url = "/api/v2/analytics/comprehensive";
-      const params = new URLSearchParams();
-      if (filters.groupBy) params.append("groupBy", filters.groupBy);
-      if (filters.departmentId) params.append("departmentId", filters.departmentId);
-      if (filters.disciplineId) params.append("disciplineId", filters.disciplineId);
-      if (filters.batchId) params.append("batchId", filters.batchId);
-      if (filters.allocationId) params.append("allocationId", filters.allocationId);
-      if (filters.section) params.append("section", filters.section);
-      if (filters.startDate) params.append("startDate", filters.startDate);
-      if (filters.endDate) params.append("endDate", filters.endDate);
-      
-      const response = await api.get(`${url}?${params.toString()}`);
-      return response.data.data;
+      // Must send application/json
+      const response = await api.post("/api/v2/analytics/generate", {
+        target,
+        timeframe,
+        filters
+      });
+      return { target, data: response.data.data };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || "Failed to fetch comprehensive report");
+      return rejectWithValue(error.response?.data?.message || `Failed to fetch ${target}`);
     }
   }
 );
 
-export const exportAdminReport = createAsyncThunk(
-  "analytics/exportAdminReport",
-  async ({ reportType, allocationId, sectionName, startDate, endDate, format = "xlsx" }, { rejectWithValue }) => {
+export const exportV2Report = createAsyncThunk(
+  "analytics/exportV2Report",
+  async ({ target, timeframe, filters, format = "xlsx" }, { rejectWithValue }) => {
     try {
-      let url = `/api/v2/analytics/export/admin?reportType=${reportType}&format=${format}`;
-      if (allocationId) url += `&allocationId=${allocationId}`;
-      if (sectionName) url += `&sectionName=${sectionName}`;
-      if (startDate) url += `&startDate=${startDate}`;
-      if (endDate) url += `&endDate=${endDate}`;
+      const response = await api.post("/api/v2/analytics/export", {
+        target,
+        timeframe,
+        filters,
+        format
+      }, { responseType: 'blob' });
 
-      const response = await api.get(url, { responseType: 'blob' });
       const blob = new Blob([response.data]);
       const link = document.createElement("a");
       link.href = window.URL.createObjectURL(blob);
-      link.download = `AdminReport_${Date.now()}.${format}`;
+      link.download = `AttendX_${target}_${timeframe || 'Export'}.${format}`;
       link.click();
       return true;
     } catch (error) {
       return rejectWithValue("Failed to export report");
-    }
-  }
-);
-
-export const exportTeacherReport = createAsyncThunk(
-  "analytics/exportTeacherReport",
-  async ({ allocationId, sectionName, startDate, endDate, format = "xlsx" }, { rejectWithValue }) => {
-    try {
-      let url = `/api/v2/analytics/export/teacher?allocationId=${allocationId}&sectionName=${sectionName}&format=${format}`;
-      if (startDate) url += `&startDate=${startDate}`;
-      if (endDate) url += `&endDate=${endDate}`;
-
-      const response = await api.get(url, { responseType: 'blob' });
-      const blob = new Blob([response.data]);
-      const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `TeacherReport_${Date.now()}.${format}`;
-      link.click();
-      return true;
-    } catch (error) {
-      return rejectWithValue("Failed to export report");
-    }
-  }
-);
-
-export const exportStudentTranscript = createAsyncThunk(
-  "analytics/exportStudentTranscript",
-  async ({ startDate, endDate, format = "xlsx" }, { rejectWithValue }) => {
-    try {
-      let url = `/api/v2/analytics/export/student?format=${format}`;
-      if (startDate) url += `&startDate=${startDate}`;
-      if (endDate) url += `&endDate=${endDate}`;
-
-      const response = await api.get(url, { responseType: 'blob' });
-      const blob = new Blob([response.data]);
-      const link = document.createElement("a");
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `StudentTranscript_${Date.now()}.${format}`;
-      link.click();
-      return true;
-    } catch (error) {
-      return rejectWithValue("Failed to export transcript");
     }
   }
 );
 
 const initialState = {
   dashboardStats: null,
-  comprehensiveReport: null,
-  isLoading: false,
+  defaulterMatrix: [],
+  teacherUtilization: [],
+  atRiskTrajectory: [],
+  loading: false,
   error: null,
 };
 
 const analyticsSlice = createSlice({
   name: "analytics",
   initialState,
-  reducers: {},
+  reducers: {
+    clearAnalyticsError: (state) => {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+      // Dashboard Stats
       .addCase(fetchDashboardStats.pending, (state) => {
-        state.isLoading = true;
+        state.loading = true;
         state.error = null;
       })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
-        state.isLoading = false;
+        state.loading = false;
         state.dashboardStats = action.payload;
       })
       .addCase(fetchDashboardStats.rejected, (state, action) => {
-        state.isLoading = false;
+        state.loading = false;
         state.error = action.payload;
       })
-      .addCase(fetchComprehensiveReport.pending, (state) => {
-        state.isLoading = true;
+      
+      // V2 Reports Generate
+      .addCase(fetchV2Reports.pending, (state) => {
+        state.loading = true;
         state.error = null;
       })
-      .addCase(fetchComprehensiveReport.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.comprehensiveReport = action.payload;
+      .addCase(fetchV2Reports.fulfilled, (state, action) => {
+        state.loading = false;
+        const { target, data } = action.payload;
+        if (target === "defaulter-matrix") {
+          state.defaulterMatrix = data;
+        } else if (target === "teacher-utilization") {
+          state.teacherUtilization = data;
+        } else if (target === "at-risk-trajectory") {
+          state.atRiskTrajectory = data;
+        }
       })
-      .addCase(fetchComprehensiveReport.rejected, (state, action) => {
-        state.isLoading = false;
+      .addCase(fetchV2Reports.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // V2 Reports Export
+      .addCase(exportV2Report.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(exportV2Report.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(exportV2Report.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload;
       });
   },
 });
 
+export const { clearAnalyticsError } = analyticsSlice.actions;
 export default analyticsSlice.reducer;
