@@ -125,21 +125,48 @@ export const getTeacherUtilization = async (matchQuery) => {
     { $unwind: "$allocation" },
     { $match: matchQuery },
     {
+      $lookup: {
+        from: "attendances",
+        localField: "_id",
+        foreignField: "sessionId",
+        as: "attendanceRecords",
+      },
+    },
+    {
+      $unwind: { path: "$attendanceRecords", preserveNullAndEmptyArrays: true }
+    },
+    {
       $group: {
-        _id: "$teacherId",
-        totalSessions: { $sum: 1 },
+        _id: { sessionId: "$_id", teacherId: "$teacherId" },
         manualVerifications: {
-          $sum: { $cond: [{ $eq: ["$verificationMethod", "Manual"] }, 1, 0] }
+          $sum: { $cond: [{ $eq: ["$attendanceRecords.verificationMethod", "Manual"] }, 1, 0] }
         },
         qrVerifications: {
-          $sum: { $cond: [{ $eq: ["$verificationMethod", "QR"] }, 1, 0] }
+          $sum: { $cond: [{ $eq: ["$attendanceRecords.verificationMethod", "QR"] }, 1, 0] }
         }
+      }
+    },
+    {
+      $group: {
+        _id: "$_id.teacherId",
+        totalSessions: { $sum: 1 },
+        totalManual: { $sum: "$manualVerifications" },
+        totalQR: { $sum: "$qrVerifications" }
+      }
+    },
+    {
+      $addFields: {
+        totalVerifications: { $add: ["$totalManual", "$totalQR"] }
       }
     },
     {
       $addFields: {
         manualOverrideRate: {
-          $multiply: [{ $divide: ["$manualVerifications", "$totalSessions"] }, 100]
+          $cond: [
+            { $gt: ["$totalVerifications", 0] },
+            { $multiply: [{ $divide: ["$totalManual", "$totalVerifications"] }, 100] },
+            0
+          ]
         }
       }
     },
