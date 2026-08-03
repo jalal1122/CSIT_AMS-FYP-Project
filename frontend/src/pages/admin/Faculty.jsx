@@ -12,6 +12,7 @@ import EmptyState from "../../components/shared/EmptyState";
 export default function Faculty() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const dispatch = useDispatch();
   const { teachers, isLoading, error } = useSelector((state) => state.faculty);
   const { departments } = useSelector((state) => state.system);
@@ -64,6 +65,15 @@ export default function Faculty() {
     }
   };
 
+  const filteredTeachers = teachers?.filter(teacher => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      teacher.name?.toLowerCase().includes(searchLower) ||
+      teacher.username?.toLowerCase().includes(searchLower) ||
+      (teacher.info?.departmentId?.name || teacher.department || "").toLowerCase().includes(searchLower)
+    );
+  }) || [];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -74,7 +84,13 @@ export default function Faculty() {
         <div className="flex items-center gap-4 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input type="text" placeholder="Search faculty..." className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" />
+            <input 
+              type="text" 
+              placeholder="Search faculty..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500" 
+            />
           </div>
           <button onClick={() => setIsAddModalOpen(true)} className="btn-primary flex items-center gap-2 whitespace-nowrap">
             <Plus className="w-4 h-4" /> Add Teacher
@@ -100,7 +116,7 @@ export default function Faculty() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {teachers.map((teacher) => (
+                {filteredTeachers.map((teacher) => (
                   <tr key={teacher._id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4 text-sm text-slate-800 font-medium flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200 shrink-0">
@@ -133,6 +149,13 @@ export default function Faculty() {
                     </td>
                   </tr>
                 ))}
+                {filteredTeachers.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-8 text-center text-slate-500">
+                      No teachers found matching your search.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}
