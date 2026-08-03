@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { BookOpen, Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar } from "lucide-react";
+import { BookOpen, Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar, LayoutDashboard } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
 import NotificationCenter from "../../components/layout/NotificationCenter";
