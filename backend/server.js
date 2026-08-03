@@ -20,7 +20,7 @@ import systemSettingsRoutes from "./src/routes/systemSettings.routes.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
 
 import { initSocket } from "./src/services/socket.js";
-import { initCronJobs } from "./src/utils/cronJobs.js";
+import CronService from "./src/services/cron.service.js";
 import { trafficLogger } from "./src/middlewares/trafficLogger.js";
 
 const app = express();
@@ -94,7 +94,7 @@ connectDB()
     const server = app.listen(PORT, () => {
       console.log(`🚀 CSIT AMS v2 Server running on port ${PORT}`);
       initSocket(server);
-      initCronJobs();
+      CronService.init();
     });
   })
   .catch((err) => {
