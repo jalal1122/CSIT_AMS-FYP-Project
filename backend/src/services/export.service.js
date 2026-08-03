@@ -7,6 +7,93 @@ import moment from "moment";
  */
 class ExportService {
   /**
+   * Generates Universal Export (3 Sheets: Summary, Students, Subjects)
+   */
+  static async generateUniversalExport(data, format = "xlsx") {
+    if (!data || data.length === 0) return null;
+    
+    // getUniversalMatrix returns an array with a single object containing the facets
+    const report = data[0]; 
+    if (!report || !report.summary || !report.students || !report.subjects) return null;
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "AttendX AMS";
+    workbook.created = new Date();
+
+    // 1. Summary Sheet
+    const summarySheet = workbook.addWorksheet("Overview Summary");
+    summarySheet.columns = [
+      { header: "Metric", key: "metric", width: 30 },
+      { header: "Value", key: "value", width: 20 }
+    ];
+    summarySheet.getRow(1).font = { bold: true, color: { argb: ExportService.COLORS.headerText } };
+    summarySheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ExportService.COLORS.headerBg } };
+
+    const sum = report.summary[0] || { totalScans: 0, totalPresents: 0, totalAbsents: 0, totalLeaves: 0, manualOverrides: 0 };
+    summarySheet.addRows([
+      { metric: "Total Attendance Records", value: sum.totalScans },
+      { metric: "Total Presents", value: sum.totalPresents },
+      { metric: "Total Absents", value: sum.totalAbsents },
+      { metric: "Approved Leaves", value: sum.totalLeaves },
+      { metric: "Manual Overrides", value: sum.manualOverrides },
+      { metric: "Overall Attendance %", value: sum.totalScans > 0 ? ((sum.totalPresents / sum.totalScans) * 100).toFixed(1) + "%" : "0%" }
+    ]);
+
+    // 2. Students Sheet
+    const studentSheet = workbook.addWorksheet("Students Matrix");
+    studentSheet.columns = [
+      { header: "Roll No", key: "rollNo", width: 15 },
+      { header: "Name", key: "name", width: 25 },
+      { header: "Discipline", key: "discipline", width: 15 },
+      { header: "Total Scans", key: "totalScans", width: 15 },
+      { header: "Presents", key: "presents", width: 15 },
+      { header: "Attendance %", key: "attendancePercentage", width: 15 }
+    ];
+    studentSheet.getRow(1).font = { bold: true, color: { argb: ExportService.COLORS.headerText } };
+    studentSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ExportService.COLORS.headerBg } };
+
+    report.students.forEach(s => {
+      const row = studentSheet.addRow({
+        rollNo: s.rollNo,
+        name: s.name,
+        discipline: s.discipline,
+        totalScans: s.totalScans,
+        presents: s.presents,
+        attendancePercentage: s.attendancePercentage + "%"
+      });
+      // Highlight low attendance
+      if (s.attendancePercentage < 75) {
+        row.getCell('attendancePercentage').font = { color: { argb: ExportService.COLORS.absentText }, bold: true };
+        row.getCell('attendancePercentage').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ExportService.COLORS.absentBg } };
+      }
+    });
+
+    // 3. Subjects Sheet
+    const subjectSheet = workbook.addWorksheet("Subjects Matrix");
+    subjectSheet.columns = [
+      { header: "Subject Code", key: "subjectCode", width: 15 },
+      { header: "Subject Name", key: "subjectName", width: 35 },
+      { header: "Total Scans", key: "totalScans", width: 15 },
+      { header: "Presents", key: "presents", width: 15 },
+      { header: "Attendance %", key: "attendancePercentage", width: 15 }
+    ];
+    subjectSheet.getRow(1).font = { bold: true, color: { argb: ExportService.COLORS.headerText } };
+    subjectSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ExportService.COLORS.headerBg } };
+
+    report.subjects.forEach(s => {
+      subjectSheet.addRow({
+        subjectCode: s.subjectCode,
+        subjectName: s.subjectName,
+        totalScans: s.totalScans,
+        presents: s.presents,
+        attendancePercentage: s.attendancePercentage + "%"
+      });
+    });
+
+    return await workbook.xlsx.writeBuffer();
+  }
+
+  /**
    * Generates a basic tabular export for dynamic V2 metrics
    */
   static async generateDynamicExport(data, format = "xlsx") {
