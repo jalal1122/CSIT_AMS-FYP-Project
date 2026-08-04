@@ -544,7 +544,7 @@ export const getTeacherHistory = asyncHandler(async (req, res) => {
       allocationId: sess.allocationId?._id || sess.allocationId,
       subject: sess.allocationId?.subjectId?.name || "Unknown",
       section: sess.sectionName,
-      date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
       type: sess.type,
       present: presentCount,
       total
@@ -596,7 +596,7 @@ export const getClassDetails = asyncHandler(async (req, res) => {
     });
     return {
       _id: sess._id,
-      date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
       type: sess.type || "Lecture",
       present: presentCount,
       total: section.students.length
@@ -664,7 +664,7 @@ export const getClassSessions = asyncHandler(async (req, res) => {
     });
     return {
       _id: sess._id,
-      date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
       startTime: sess.startTime,
       endTime: sess.endTime,
       type: sess.type || "Lecture",
@@ -713,7 +713,7 @@ export const getStudentClassReport = asyncHandler(async (req, res) => {
 
   const report = sessions.map(sess => ({
     sessionId: sess._id,
-    date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
     type: sess.type || "Lecture",
     status: attendanceMap[sess._id.toString()] || "Absent"
   }));
@@ -800,7 +800,6 @@ export const transferStudent = asyncHandler(async (req, res) => {
 export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
   const { allocationId } = req.params;
   const studentId = req.user._id;
-  const { section } = req.user.info;
 
   const allocation = await CourseAllocation.findById(allocationId)
     .populate("subjectId", "name code")
@@ -811,13 +810,18 @@ export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
     .lean();
   if (!allocation) throw new ApiError(404, "Allocation not found");
 
-  const sec = allocation.sections.find(s => s.name === section);
+  const sec = allocation.sections.find(s => 
+    s.students.some(id => id.toString() === studentId.toString())
+  );
+  if (!sec) throw new ApiError(403, "You are not enrolled in this class");
+  
+  const sectionName = sec.name;
   const teacherName = sec?.teacherId?.name || "Unknown";
 
   // All sessions for this allocation+section
   const sessions = await Session.find({
     allocationId,
-    sectionName: section,
+    sectionName: sectionName,
     active: false
   }).sort({ startTime: -1 }).lean();
 
@@ -825,7 +829,7 @@ export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
   const attendanceRecords = await Attendance.find({
     studentId,
     allocationId,
-    section
+    section: sectionName
   }).lean();
 
   const attendanceMap = {};

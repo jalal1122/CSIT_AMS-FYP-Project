@@ -101,6 +101,18 @@ export default function TeacherReports() {
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
               </div>
+            ) : error ? (
+              <EmptyState 
+                icon={AlertTriangle} 
+                title="Report Error"
+                message={typeof error === 'string' ? error : "An error occurred while generating the report."}
+              />
+            ) : !reportData ? (
+              <EmptyState 
+                icon={BookOpen} 
+                title="No Data Found"
+                message="No attendance data is available for the selected filters and timeframe."
+              />
             ) : (
               <>
                 {/* Top KPI Cards */}
