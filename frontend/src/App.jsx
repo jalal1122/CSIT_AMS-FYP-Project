@@ -22,6 +22,7 @@ const SetupProfile = lazy(() => import("./pages/auth/SetupProfile.jsx"));
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
 const RegisterAdmin = lazy(() => import("./pages/RegisterAdmin.jsx"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 // Admin Pages
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard.jsx"));
@@ -90,7 +91,6 @@ function App() {
     );
   }
 
-  return (
   return (
     <Router>
       <ErrorBoundary>

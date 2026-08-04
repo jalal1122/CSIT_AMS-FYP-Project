@@ -632,9 +632,12 @@ export const getClassSessions = asyncHandler(async (req, res) => {
     return {
       _id: sess._id,
       date: new Date(sess.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      startTime: sess.startTime,
+      endTime: sess.endTime,
       type: sess.type || "Lecture",
       present: presentCount,
-      total: section.students.length
+      total: section.students.length,
+      attendanceRecords: new Array(presentCount) // mock for history length check
     };
   }));
 

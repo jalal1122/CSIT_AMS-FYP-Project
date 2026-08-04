@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock, Edit2, Info, Users, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Edit2, Info, Users, Trash2, History } from "lucide-react";
 import api from "../../services/api";
 import EmptyState from "../../components/shared/EmptyState";
 
@@ -19,8 +19,8 @@ export default function SessionHistory() {
   const fetchSessions = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get(`/api/v2/sessions?allocationId=${allocationId}&sectionName=${sectionName}`);
-      setSessions(res.data.data);
+      const res = await api.get(`/api/v2/academic/teacher/class/${allocationId}/${sectionName}/sessions?limit=50`);
+      setSessions(res.data.data.sessions || res.data.data);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load session history");

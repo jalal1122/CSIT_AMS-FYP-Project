@@ -19,12 +19,6 @@ export default function ClassDetails() {
     return () => dispatch(clearClassDetails());
   }, [dispatch, allocationId, sectionName]);
 
-  if (isLoading || !classDetails) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading class details...</div>;
-  }
-
-  const { subject, batch, section, semester, students, sessions = [] } = classDetails;
-
   const [localSessions, setLocalSessions] = useState([]);
   const [skip, setSkip] = useState(10);
   const [hasMore, setHasMore] = useState(true);
@@ -33,12 +27,19 @@ export default function ClassDetails() {
   const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
   
   useEffect(() => {
+    const sessions = classDetails?.sessions || [];
     if (sessions.length > 0 && localSessions.length === 0) {
       setLocalSessions(sessions);
       setSkip(10);
       setHasMore(sessions.length === 10);
     }
-  }, [sessions, localSessions.length]);
+  }, [classDetails, localSessions.length]);
+
+  if (isLoading || !classDetails) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading class details...</div>;
+  }
+
+  const { subject, batch, section, semester, students, sessions = [] } = classDetails;
 
   const loadMoreSessions = async () => {
     try {
@@ -111,12 +112,12 @@ export default function ClassDetails() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {students.map((student) => {
+                  {students.map((student, index) => {
                     const percentage = student.total > 0 ? Math.round((student.present / student.total) * 100) : 0;
                     const isDefaulter = student.total > 0 && percentage < 75;
                     
                     return (
-                      <tr key={student.id} className="hover:bg-slate-50 transition-colors bg-white">
+                      <tr key={student._id || student.id || index} className="hover:bg-slate-50 transition-colors bg-white">
                         <td className="px-6 py-4">
                           <div className="font-bold text-slate-800 text-sm">{student.name}</div>
                           <div className="text-xs text-slate-500 font-mono mt-0.5"><span className="font-semibold text-slate-600">{student.rollNo}</span></div>
