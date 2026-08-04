@@ -9,6 +9,7 @@ export const initSocket = (httpServer) => {
       methods: ["GET", "POST"],
       credentials: true,
     },
+    transports: ['websocket', 'polling'], // Allow fallback for cPanel
   });
 
   io.on("connection", (socket) => {

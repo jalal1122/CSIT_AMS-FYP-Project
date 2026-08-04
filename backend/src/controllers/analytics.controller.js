@@ -11,7 +11,9 @@ import ExportService from "../services/export.service.js";
 import os from "os-utils";
 
 const getCpuUsage = () => new Promise((resolve) => {
+  const timeout = setTimeout(() => resolve(0), 1500); // fallback to 0 after 1.5s
   os.cpuUsage((v) => {
+    clearTimeout(timeout);
     resolve(Math.round(v * 100));
   });
 });
