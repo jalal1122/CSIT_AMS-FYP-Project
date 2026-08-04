@@ -94,7 +94,7 @@ export default function MyAttendance() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {session.status === 'Present' ? (
+                      {(session.status === 'Present' || session.status === 'Present (Manual)') ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
                           <CheckCircle className="w-3.5 h-3.5" /> Present
                         </span>
