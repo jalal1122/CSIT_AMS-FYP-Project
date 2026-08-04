@@ -233,16 +233,36 @@ export default function BatchCreate() {
           )}
 
           {step === 6 && (
-            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 text-center py-12">
-              <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-                <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
-                  <Check className="w-8 h-8 text-white" strokeWidth={3} />
+            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-700 py-8">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-200">
+                    <Check className="w-6 h-6 text-white" strokeWidth={3} />
+                  </div>
+                </div>
+                <h3 className="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Batch Created Successfully!</h3>
+                <p className="text-slate-500 max-w-md mx-auto mb-8 text-lg">
+                  {creationResult?.batch?.name || "The batch"} has been initialized with {creationResult?.studentsCreated || 0} students across {creationResult?.sections?.length || 0} sections.
+                </p>
+              </div>
+
+              <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 max-w-md mx-auto text-left shadow-sm">
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Required Next Steps</h4>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs shrink-0 mt-0.5">1</div>
+                    <p className="text-slate-600 font-medium">Batch Created & Students Enrolled <span className="text-emerald-500 ml-1">✓</span></p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 font-bold text-xs shrink-0 mt-0.5">2</div>
+                    <p className="text-slate-700 font-bold">Create Course Allocations for this batch</p>
+                  </div>
+                  <div className="flex items-start gap-3 opacity-60">
+                    <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs shrink-0 mt-0.5">3</div>
+                    <p className="text-slate-500 font-medium">Assign Teachers to Sections</p>
+                  </div>
                 </div>
               </div>
-              <h3 className="text-3xl font-extrabold text-slate-800 mb-3 tracking-tight">Batch Created Successfully!</h3>
-              <p className="text-slate-500 max-w-md mx-auto mb-8 text-lg">
-                {creationResult?.batch?.name || "The batch"} has been initialized with {creationResult?.studentsCreated || 0} students across {creationResult?.sections?.length || 0} sections.
-              </p>
             </div>
           )}
         </div>
@@ -269,8 +289,8 @@ export default function BatchCreate() {
         
         {step === 6 && (
           <div className="flex justify-center mt-8 pt-6 border-t border-slate-100">
-            <button onClick={() => navigate('/admin/allocation')} className="btn-primary px-8 py-3 text-lg">
-              Go to Allocations
+            <button onClick={() => navigate('/admin/allocation')} className="btn-primary px-8 py-3 text-lg flex items-center gap-2 shadow-lg shadow-sky-200">
+              Go to Allocations <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         )}

@@ -221,10 +221,10 @@ export const promoteBatch = asyncHandler(async (req, res) => {
   batch.currentSemester = newSemester;
   await batch.save();
 
-  // 3. Increment all student semester values
+  // 3. Sync all student semester values to the batch's new semester
   await User.updateMany(
     { "info.batchId": id, role: "student" },
-    { $inc: { "info.semester": 1 } }
+    { $set: { "info.semester": newSemester } }
   );
 
   res.status(200).json(new ApiResponse(200, {
@@ -264,10 +264,10 @@ export const rollbackPromotion = asyncHandler(async (req, res) => {
   batch.previousSemester = previousSem > 1 ? previousSem - 1 : null;
   await batch.save();
 
-  // 4. Rollback students
+  // 4. Rollback students to the previous semester
   await User.updateMany(
     { "info.batchId": id, role: "student" },
-    { $inc: { "info.semester": -1 } }
+    { $set: { "info.semester": previousSem } }
   );
 
   res.status(200).json(new ApiResponse(200, {
