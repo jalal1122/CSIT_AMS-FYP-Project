@@ -22,6 +22,13 @@ export default function ClassDetails() {
   const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
   
   useEffect(() => {
+    dispatch(fetchClassDetails({ allocationId, sectionName }));
+    return () => {
+      dispatch(clearClassDetails());
+    };
+  }, [dispatch, allocationId, sectionName]);
+  
+  useEffect(() => {
     const sessions = classDetails?.sessions || [];
     if (sessions.length > 0 && localSessions.length === 0) {
       setLocalSessions(sessions);
