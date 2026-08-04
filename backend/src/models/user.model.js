@@ -59,6 +59,7 @@ const userSchema = new mongoose.Schema(
         // Teacher fields
         designation: { type: String, trim: true },
         phone: { type: String, trim: true },
+        fatherName: { type: String, trim: true },
       }, { _id: false }),
       default: {},
     },

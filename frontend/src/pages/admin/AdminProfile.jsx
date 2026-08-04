@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { ArrowLeft, User, Smartphone, ShieldCheck, Key, AlertTriangle, Save, Loader2, BookOpen, MapPin } from "lucide-react";
+import { ArrowLeft, User, Key, Save } from "lucide-react";
 import { Link } from "react-router-dom";
 import { updatePassword, updateProfile } from "../../store/slices/authSlice";
 import TwoFactorSettings from "../../components/shared/TwoFactorSettings";
 import { addToast } from "../../store/slices/toastSlice";
 
-export default function StudentProfile() {
-  const { user, isLoading } = useSelector(state => state.auth);
+export default function AdminProfile() {
+  const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
   // Password State
@@ -25,7 +25,7 @@ export default function StudentProfile() {
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
-    if(newPassword !== confirmPassword) {
+    if (newPassword !== confirmPassword) {
       dispatch(addToast({ title: "Error", message: "Passwords do not match", type: "error" }));
       return;
     }
@@ -56,10 +56,10 @@ export default function StudentProfile() {
     <div className="flex flex-col">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link to={`/${user?.role || 'student'}/dashboard`} className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg bg-white border border-slate-200 shadow-sm">
+          <Link to={`/admin/dashboard`} className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg bg-white border border-slate-200 shadow-sm">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">My Profile</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Admin Profile</h1>
         </div>
         {!isEditing && (
           <button onClick={() => setIsEditing(true)} className="btn-secondary py-2 px-4 shadow-sm">
@@ -113,47 +113,11 @@ export default function StudentProfile() {
                 <p className="font-bold text-slate-700">{user?.info?.fatherName || "N/A"}</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-400 mb-1">Roll Number</p>
-                <p className="font-bold text-slate-700">{user?.info?.rollNo || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-400 mb-1">Section</p>
-                <p className="font-bold text-slate-700">Section {user?.info?.section || "N/A"}</p>
+                <p className="text-sm font-semibold text-slate-400 mb-1">Username</p>
+                <p className="font-bold text-slate-700">{user?.username}</p>
               </div>
             </div>
           )}
-        </div>
-
-        {/* Security & Device */}
-        <div className="card p-8 shadow-sm">
-          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-500" /> Security & Device
-          </h3>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-xl">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-100 border border-emerald-200 rounded-full text-emerald-600">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800">Device Binding</h4>
-                  <p className="text-xs font-medium text-slate-500 mt-1">This device is securely bound to your account.</p>
-                </div>
-              </div>
-              <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-md border border-emerald-200">Bound</span>
-            </div>
-
-            <div className="p-5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-4">
-              <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-sm font-bold text-amber-900">Need to change your device?</h4>
-                <p className="text-xs font-medium text-amber-700/80 mt-1">
-                  You cannot unbind your device yourself. Please visit the admin office to request a device reset if you bought a new phone.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Two-Factor Authentication */}

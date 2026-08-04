@@ -37,8 +37,10 @@ const AdminReports = lazy(() => import("./pages/admin/AdminReports.jsx"));
 const AdminLiveMonitor = lazy(() => import("./pages/admin/AdminLiveMonitor.jsx"));
 const SecurityAnalytics = lazy(() => import("./pages/admin/SecurityAnalytics.jsx"));
 const BehavioralAnalytics = lazy(() => import("./pages/admin/BehavioralAnalytics.jsx"));
+const AdminProfile = lazy(() => import("./pages/admin/AdminProfile.jsx"));
 
 // Teacher Pages
+const TeacherProfile = lazy(() => import("./pages/teacher/TeacherProfile.jsx"));
 const TeacherDashboard = lazy(() => import("./pages/teacher/TeacherDashboard.jsx"));
 const LiveSession = lazy(() => import("./pages/teacher/LiveSession.jsx"));
 const ClassDetails = lazy(() => import("./pages/teacher/ClassDetails.jsx"));
@@ -124,8 +126,10 @@ function App() {
           <Route path="/admin/reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminReports /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/security-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><SecurityAnalytics /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/behavioral-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><BehavioralAnalytics /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/profile" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminProfile /></AdminLayout></PrivateRoute>} />
 
           {/* Teacher */}
+          <Route path="/teacher/profile" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><TeacherProfile /></TeacherLayout></PrivateRoute>} />
           <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><TeacherDashboard /></TeacherLayout></PrivateRoute>} />
           <Route path="/teacher/session/live/:sessionId" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><LiveSession /></TeacherLayout></PrivateRoute>} />
           <Route path="/teacher/class/:allocationId/:sectionName" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><ClassDetails /></TeacherLayout></PrivateRoute>} />

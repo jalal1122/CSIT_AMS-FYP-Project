@@ -809,7 +809,7 @@ export const updatePassword = asyncHandler(async (req, res) => {
  * PATCH /api/v1/auth/update-profile
  */
 export const updateProfile = asyncHandler(async (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, fatherName, designation } = req.body;
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -817,12 +817,25 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (name) user.name = name;
+  
   if (email && email !== user.email) {
     const existing = await User.findOne({ email });
     if (existing && existing._id.toString() !== user._id.toString()) {
       throw ApiError.badRequest("Email is already in use");
     }
     user.email = email;
+  }
+
+  if (fatherName !== undefined) {
+    user.info = user.info || {};
+    user.info.fatherName = fatherName;
+    user.markModified("info");
+  }
+
+  if (designation !== undefined && user.role === "teacher") {
+    user.info = user.info || {};
+    user.info.designation = designation;
+    user.markModified("info");
   }
 
   await user.save();
