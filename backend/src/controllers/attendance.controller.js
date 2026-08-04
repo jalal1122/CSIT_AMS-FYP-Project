@@ -33,7 +33,7 @@ export const markAttendance = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Session is no longer active");
   }
 
-  const allocation = await CourseAllocation.findById(allocationId);
+  const allocation = await CourseAllocation.findById(allocationId).populate("subjectId", "name");
   if (!allocation) throw new ApiError(404, "Allocation not found");
 
   const section = allocation.sections.find(s => s.name === sectionName);
@@ -137,7 +137,13 @@ export const markAttendance = asyncHandler(async (req, res) => {
 
   emitToSession(sessionId.toString(), "attendance:updated", { studentId: req.user._id, status, isSuspicious });
 
-  res.status(201).json(new ApiResponse(201, attendance, `Attendance marked as ${status}`));
+  const responseData = {
+    ...attendance.toObject(),
+    subjectName: allocation.subjectId.name,
+    sectionName: sectionName
+  };
+
+  res.status(201).json(new ApiResponse(201, responseData, `Attendance marked as ${status}`));
 });
 
 // @desc    Manual attendance update by teacher
