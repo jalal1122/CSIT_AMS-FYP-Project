@@ -231,6 +231,48 @@ export default function StudentReports() {
                     </div>
                   )}
                 </div>
+                {/* Per-Subject Breakdown Table */}
+                <div className="card bg-white p-6 border-slate-200 shadow-sm mt-6">
+                  <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-sky-600" />
+                    Subject Breakdown
+                  </h3>
+                  
+                  {reportData?.subjects?.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500 text-sm">No subject data available.</div>
+                  ) : (
+                    <div className="overflow-x-auto rounded-lg border border-slate-200">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-3">Subject Code</th>
+                            <th className="px-4 py-3">Subject Name</th>
+                            <th className="px-4 py-3 text-right">Classes Held</th>
+                            <th className="px-4 py-3 text-right">Attended</th>
+                            <th className="px-4 py-3 text-right">Attendance %</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {reportData?.subjects?.map((sub, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/50">
+                              <td className="px-4 py-3 font-medium text-slate-700">{sub.subjectCode}</td>
+                              <td className="px-4 py-3 text-slate-600">{sub.subjectName}</td>
+                              <td className="px-4 py-3 text-right text-slate-600">{sub.totalScans}</td>
+                              <td className="px-4 py-3 text-right text-slate-600">{sub.presents}</td>
+                              <td className="px-4 py-3 text-right">
+                                <span className={`inline-flex items-center justify-center px-2 py-1 rounded font-bold ${
+                                  sub.attendancePercentage < 75 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                                }`}>
+                                  {sub.attendancePercentage}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </div>
