@@ -14,6 +14,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
+    const interval = setInterval(() => {
+      dispatch(fetchDashboardStats());
+    }, 30000);
+    return () => clearInterval(interval);
   }, [dispatch]);
 
   const stats = [
@@ -54,9 +58,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
-        <p className="text-slate-500 text-sm mt-1">System overview and real-time management</p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
+          <p className="text-slate-500 text-sm mt-1">System overview and real-time management</p>
+        </div>
+        <div className="text-xs text-slate-400 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Live Updates
+        </div>
       </div>
 
       {isLoading ? (

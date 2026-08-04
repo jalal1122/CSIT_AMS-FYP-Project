@@ -40,11 +40,16 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     Session.countDocuments({ active: true }),
     CourseAllocation.countDocuments({ isActive: true }),
     getCpuUsage(),
-    Batch.aggregate([
-      { $match: { isActive: true }},
-      { $project: { name: 1, studentCount: { $sum: { $map: { input: "$sections", as: "s", in: { $size: "$$s.students" } } } } } }
+    User.aggregate([
+      { $match: { role: "student", accountStatus: "Active", "info.batchId": { $exists: true } } },
+      { $group: { _id: "$info.batchId", studentCount: { $sum: 1 } } },
+      { $lookup: { from: "batches", localField: "_id", foreignField: "_id", as: "batch" } },
+      { $unwind: "$batch" },
+      { $match: { "batch.isActive": true } },
+      { $project: { _id: 0, name: "$batch.name", studentCount: 1 } },
+      { $sort: { name: 1 } }
     ]),
-    Session.find({ active: true })
+    Session.find({})
       .populate({ path: "allocationId", populate: [{ path: "subjectId", select: "name code" }, { path: "batchId", select: "name" }] })
       .populate("teacherId", "name")
       .limit(5)
