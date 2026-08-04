@@ -152,7 +152,7 @@ export default function Students() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      {student.info?.deviceId ? (
+                      {student.deviceId ? (
                         <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full w-fit border border-emerald-200">
                           <Smartphone className="w-3.5 h-3.5" /> Bound
                         </span>
