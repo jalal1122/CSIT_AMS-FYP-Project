@@ -67,6 +67,8 @@ const initialState = {
   deviceBindingAudit: [],
   systemUsagePeaks: [],
   timeOfDayAbsenteeism: [],
+  reportData: null,
+  isReportLoading: false,
   loading: false,
   error: null,
 };
@@ -98,10 +100,12 @@ const analyticsSlice = createSlice({
       // V2 Reports Generate
       .addCase(fetchV2Reports.pending, (state) => {
         state.loading = true;
+        state.isReportLoading = true;
         state.error = null;
       })
       .addCase(fetchV2Reports.fulfilled, (state, action) => {
         state.loading = false;
+        state.isReportLoading = false;
         const { target, data } = action.payload;
         if (target === "defaulter-matrix") {
           state.defaulterMatrix = data;
@@ -127,10 +131,13 @@ const analyticsSlice = createSlice({
           state.systemUsagePeaks = data;
         } else if (target === "time-of-day-absenteeism") {
           state.timeOfDayAbsenteeism = data;
+        } else if (target === "universal") {
+          state.reportData = data[0];
         }
       })
       .addCase(fetchV2Reports.rejected, (state, action) => {
         state.loading = false;
+        state.isReportLoading = false;
         state.error = action.payload;
       })
 

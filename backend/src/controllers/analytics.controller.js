@@ -62,7 +62,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 export const generateReport = asyncHandler(async (req, res) => {
   const { target, timeframe, filters } = req.body;
   const securityMatch = getSecurityMatch(req.user, "allocation");
-  const dynamicMatch = analyticsService.buildDynamicMatch(securityMatch, filters, timeframe, "allocation");
+  const dynamicMatch = await analyticsService.buildDynamicMatch(securityMatch, filters, timeframe, "allocation");
 
   let data = [];
   
@@ -110,7 +110,7 @@ export const generateReport = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Invalid report target");
   }
 
-  if (!data || data.length === 0) {
+  if (!data || data.length === 0 || (target === "universal" && data[0]?.students?.length === 0)) {
     return res.status(200).json(new ApiResponse(200, { total: 0, present: 0, percentage: null, data: [] }, "No data available for this timeframe"));
   }
 
@@ -123,7 +123,7 @@ export const generateReport = asyncHandler(async (req, res) => {
 export const exportReport = asyncHandler(async (req, res) => {
   const { target, timeframe, filters, format = "xlsx" } = req.body;
   const securityMatch = getSecurityMatch(req.user, "allocation");
-  const dynamicMatch = analyticsService.buildDynamicMatch(securityMatch, filters, timeframe, "allocation");
+  const dynamicMatch = await analyticsService.buildDynamicMatch(securityMatch, filters, timeframe, "allocation");
 
   let data = [];
   switch(target) {
@@ -176,6 +176,10 @@ export const exportReport = asyncHandler(async (req, res) => {
     buffer = await ExportService.generateUniversalExport(data, format);
   } else {
     buffer = await ExportService.generateDynamicExport(data, format);
+  }
+  
+  if (!buffer) {
+    throw new ApiError(500, "Failed to generate export buffer");
   }
   
   res.setHeader('Content-Disposition', `attachment; filename="AttendX_${target}_${timeframe || 'Export'}.${format}"`);

@@ -11,7 +11,7 @@ const TIMEZONE = "Asia/Karachi";
 /**
  * Merges security match, filters, and timeframe into a single query object.
  */
-export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = "") => {
+export const buildDynamicMatch = async (securityMatch, filters, timeframe, prefix = "") => {
   const query = { ...securityMatch };
   const p = prefix ? `${prefix}.` : "";
 
@@ -20,16 +20,49 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
     query[`${p}subjectId`] = { $in: filters.subjects.map(id => new mongoose.Types.ObjectId(id)) };
   }
   
+  // Department, Discipline & Batch logic
+  let allowedBatches = [];
   if (filters?.batches && filters.batches.length > 0) {
-    query[`${p}batchId`] = { $in: filters.batches.map(id => new mongoose.Types.ObjectId(id)) };
+    allowedBatches = filters.batches.map(id => new mongoose.Types.ObjectId(id));
+  } else if ((filters?.departments && filters.departments.length > 0) || (filters?.disciplines && filters.disciplines.length > 0)) {
+    const batchQuery = { isActive: true };
+    if (filters?.departments && filters.departments.length > 0) {
+      batchQuery.departmentId = { $in: filters.departments.map(id => new mongoose.Types.ObjectId(id)) };
+    }
+    if (filters?.disciplines && filters.disciplines.length > 0) {
+      batchQuery.disciplineId = { $in: filters.disciplines.map(id => new mongoose.Types.ObjectId(id)) };
+    }
+    const BatchModel = mongoose.model("Batch");
+    const matchingBatches = await BatchModel.find(batchQuery, "_id");
+    allowedBatches = matchingBatches.map(b => b._id);
+    if (allowedBatches.length === 0) {
+      // Force an impossible match if no batches match
+      allowedBatches = [new mongoose.Types.ObjectId()];
+    }
+  }
+
+  if (allowedBatches.length > 0) {
+    query[`${p}batchId`] = { $in: allowedBatches };
+  }
+
+  if (filters?.semester) {
+    query[`${p}semester`] = Number(filters.semester);
   }
 
   if (filters?.teachers && filters.teachers.length > 0) {
+    // If prefix is "allocation", this means we are aggregating Attendance or Session.
+    // Instead of filtering allocation.sections.teacherId which leaks other sections' data,
+    // we should filter on session.teacherId (if Session is looked up).
+    // For now, we will add an explicit session lookup in the pipeline if this is present.
+    // To support the existing pipeline, we will match BOTH allocation.sections.teacherId AND (later in the pipeline) session.teacherId
     query[`${p}sections.teacherId`] = { $in: filters.teachers.map(id => new mongoose.Types.ObjectId(id)) };
   }
 
   if (filters?.students && filters.students.length > 0) {
-    query[`${p}sections.students`] = { $in: filters.students.map(id => new mongoose.Types.ObjectId(id)) };
+    // Optimize: query the root studentId if it's an Attendance query
+    if (!query.$or) query.$or = [];
+    query.$or.push({ studentId: { $in: filters.students.map(id => new mongoose.Types.ObjectId(id)) } });
+    query.$or.push({ [`${p}sections.students`]: { $in: filters.students.map(id => new mongoose.Types.ObjectId(id)) } });
   }
 
   // Timeframe logic
@@ -53,7 +86,9 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
         endDate = now.clone().endOf("day").toDate();
         break;
       case "Full Semester":
-        // Depending on business logic, this could span 6 months. For now, we omit date filtering for full.
+        // Fallback to 6 month window
+        startDate = now.clone().subtract(6, "months").startOf("day").toDate();
+        endDate = now.clone().endOf("day").toDate();
         break;
       case "Custom Date Range":
         if (filters.startDate && filters.endDate) {
@@ -64,8 +99,6 @@ export const buildDynamicMatch = (securityMatch, filters, timeframe, prefix = ""
     }
 
     if (startDate && endDate) {
-      // Assuming Attendance/Session have a `date` field. Prefix might not apply if date is on root.
-      // We assume date is always on the root collection being aggregated (Attendance or Session).
       query.date = { $gte: startDate, $lte: endDate };
     }
   }
@@ -216,7 +249,7 @@ export const getExamEligibilityMatrix = async (matchQuery, threshold = 75) => {
         _id: "$studentId",
         total: { $sum: 1 },
         present: {
-          $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] },
+          $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] },
         },
       },
     },
@@ -621,7 +654,7 @@ export const getDefaulterMatrix = async (matchQuery) => {
         _id: "$studentId",
         total: { $sum: 1 },
         present: {
-          $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] },
+          $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] },
         },
       },
     },
