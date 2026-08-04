@@ -573,7 +573,7 @@ export const getClassDetails = asyncHandler(async (req, res) => {
   const section = allocation.sections.find(s => s.name === sectionName);
   if (!section) throw new ApiError(404, "Section not found");
 
-  if (section.teacherId.toString() !== req.user._id.toString()) {
+  if (section.teacherId.toString() !== req.user._id.toString() && req.user.role !== "admin") {
     throw new ApiError(403, "Not authorized to view this class");
   }
 

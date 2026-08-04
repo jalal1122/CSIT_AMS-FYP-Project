@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { ArrowLeft, Edit2, Calendar, FileText } from "lucide-react";
+import { ArrowLeft, Edit2, Calendar, FileText, AlertTriangle } from "lucide-react";
 import Badge from "../../components/shared/Badge";
 import api from "../../services/api";
 import toast from "react-hot-toast";
@@ -13,7 +13,7 @@ import { formatPKTDate } from "../../utils/dateUtils";
 export default function ClassDetails() {
   const { allocationId, sectionName } = useParams();
   const dispatch = useDispatch();
-  const { classDetails, isLoading } = useSelector(state => state.teacher);
+  const { classDetails, isLoading, error } = useSelector(state => state.teacher);
 
   const [localSessions, setLocalSessions] = useState([]);
   const [skip, setSkip] = useState(10);
@@ -38,8 +38,25 @@ export default function ClassDetails() {
     }
   }, [classDetails, localSessions.length]);
 
-  if (isLoading || !classDetails) {
+  if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-slate-50">Loading class details...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="text-red-500 mb-4"><AlertTriangle className="w-12 h-12" /></div>
+        <h2 className="text-xl font-bold text-slate-800">Failed to load class details</h2>
+        <p className="text-slate-500 mt-2">{error}</p>
+        <Link to="/teacher/dashboard" className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+          Return to Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  if (!classDetails) {
+    return null; // Or some fallback
   }
 
   const { subject, batch, section, semester, students, sessions = [] } = classDetails;
