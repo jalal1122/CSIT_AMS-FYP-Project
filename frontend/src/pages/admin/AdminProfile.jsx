@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { ArrowLeft, User, Key, Save } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -22,6 +22,16 @@ export default function AdminProfile() {
     email: user?.email || "",
     fatherName: user?.info?.fatherName || ""
   });
+
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        name: user.name || "",
+        email: user.email || "",
+        fatherName: user.info?.fatherName || ""
+      });
+    }
+  }, [user]);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();

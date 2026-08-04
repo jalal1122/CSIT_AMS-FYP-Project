@@ -839,5 +839,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   await user.save();
-  res.status(200).json(new ApiResponse(200, sanitizeUser(user), "Profile updated successfully"));
+  
+  const sanitizedUser = await User.findById(user._id).select("-password -twoFactorSecret -refreshToken");
+  res.status(200).json(new ApiResponse(200, sanitizedUser, "Profile updated successfully"));
 });
