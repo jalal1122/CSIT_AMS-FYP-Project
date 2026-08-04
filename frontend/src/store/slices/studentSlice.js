@@ -62,6 +62,24 @@ export const updateStudentStatus = createAsyncThunk("student/updateStudentStatus
   }
 });
 
+export const createStudent = createAsyncThunk("student/createStudent", async (data, { rejectWithValue }) => {
+  try {
+    const res = await api.post("/api/v2/admin/users", { ...data, role: "student" });
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to create student");
+  }
+});
+
+export const updateStudent = createAsyncThunk("student/updateStudent", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const res = await api.put(`/api/v2/admin/users/${id}`, data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to update student");
+  }
+});
+
 export const fetchStudentDashboard = createAsyncThunk("student/fetchDashboard", async (_, { rejectWithValue }) => {
   try {
     const res = await api.get("/api/v2/academic/student/dashboard");

@@ -263,6 +263,14 @@ export const createUser = asyncHandler(async (req, res) => {
     info: info || {}
   });
 
+  if (role === "student" && info?.batchId && info?.section) {
+    const mongoose = (await import('mongoose')).default;
+    await mongoose.model('CourseAllocation').updateMany(
+      { batchId: info.batchId, isActive: true, "sections.name": info.section },
+      { $addToSet: { "sections.$.students": user._id } }
+    );
+  }
+
   const createdUser = await User.findById(user._id).select("-password -twoFactorSecret -refreshToken");
 
   res.status(201).json(new ApiResponse(201, createdUser, "User created successfully"));

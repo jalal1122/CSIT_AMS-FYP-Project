@@ -6,6 +6,7 @@ import { addToast } from "../../store/slices/toastSlice.js";
 import { Search, Filter, KeyRound, Smartphone, GitPullRequest, Eye, UserX, UserCheck } from "lucide-react";
 import Badge from "../../components/shared/Badge";
 import SectionTransferModal from "../../components/admin/SectionTransferModal";
+import AddStudentModal from "../../components/admin/AddStudentModal";
 import EmptyState from "../../components/shared/EmptyState";
 
 export default function Students() {
@@ -15,6 +16,8 @@ export default function Students() {
   const [currentPage, setCurrentPage] = useState(1);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [selectedStudentForTransfer, setSelectedStudentForTransfer] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [studentToEdit, setStudentToEdit] = useState(null);
   const itemsPerPage = 10;
   
   const dispatch = useDispatch();
@@ -42,9 +45,22 @@ export default function Students() {
   const closeTransferModal = (wasSuccessful) => {
     setTransferModalOpen(false);
     setSelectedStudentForTransfer(null);
-    if (wasSuccessful) {
+    if (wasSuccessful === true) {
       dispatch(fetchStudents(filters));
     }
+  };
+
+  const closeAddModal = (wasSuccessful) => {
+    setAddModalOpen(false);
+    setStudentToEdit(null);
+    if (wasSuccessful === true) {
+      dispatch(fetchStudents(filters));
+    }
+  };
+
+  const handleEditStudent = (student) => {
+    setStudentToEdit(student);
+    setAddModalOpen(true);
   };
 
   const handleResetPassword = async (id) => {
@@ -84,8 +100,11 @@ export default function Students() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Student Management</h2>
-          <p className="text-slate-500 text-sm mt-1">Manage student records, sections, and security settings</p>
+          <p className="text-slate-500 text-sm mt-1">View, manage, and transfer students</p>
         </div>
+        <button onClick={() => setAddModalOpen(true)} className="btn-primary">
+          Add Student
+        </button>
       </div>
 
       <div className="card p-4 flex flex-col md:flex-row gap-4 justify-between items-center bg-white border-b-0 rounded-b-none shadow-none">
@@ -227,9 +246,16 @@ export default function Students() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleToggleStatus(student._id, student.accountStatus)} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors" title={student.accountStatus === "Active" ? "Deactivate" : "Activate"}>
                           {student.accountStatus === "Active" ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                        </button>
+                        <button 
+                          onClick={() => handleEditStudent(student)} 
+                          className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" 
+                          title="Edit Student"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
                         <button onClick={() => handleResetPassword(student._id)} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-md transition-colors" title="Reset Password">
                           <KeyRound className="w-4 h-4" />
@@ -283,6 +309,13 @@ export default function Students() {
         <SectionTransferModal 
           student={selectedStudentForTransfer} 
           onClose={closeTransferModal} 
+        />
+      )}
+
+      {addModalOpen && (
+        <AddStudentModal 
+          student={studentToEdit} 
+          onClose={closeAddModal} 
         />
       )}
     </div>
