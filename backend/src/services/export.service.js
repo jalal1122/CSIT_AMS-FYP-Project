@@ -83,6 +83,7 @@ class ExportService {
     subjectSheet.columns = [
       { header: "Subject Code", key: "subjectCode", width: 15 },
       { header: "Subject Name", key: "subjectName", width: 35 },
+      { header: "Teacher", key: "teacherName", width: 25 },
       { header: "Total Scans", key: "totalScans", width: 15 },
       { header: "Presents", key: "presents", width: 15 },
       { header: "Absents", key: "absents", width: 15 },
@@ -95,6 +96,7 @@ class ExportService {
       subjectSheet.addRow({
         subjectCode: s.subjectCode,
         subjectName: s.subjectName,
+        teacherName: s.teacherName || "N/A",
         totalScans: s.totalScans,
         presents: s.presents,
         absents: s.absents,

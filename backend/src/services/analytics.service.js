@@ -166,6 +166,7 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
         _id: "$allocation.subjectId",
         subjectName: { $first: "$subjectInfo.name" },
         subjectCode: { $first: "$subjectInfo.code" },
+        teacherName: { $first: "$teacherInfo.name" },
         totalScans: { $sum: 1 },
         presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } },
         absents: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } }
@@ -176,6 +177,7 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
         _id: 1,
         subjectName: 1,
         subjectCode: 1,
+        teacherName: 1,
         totalScans: 1,
         presents: 1,
         absents: 1,
@@ -251,6 +253,15 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
       }
     },
     { $unwind: { path: "$disciplineInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "allocation.teacherId",
+        foreignField: "_id",
+        as: "teacherInfo",
+      }
+    },
+    { $unwind: { path: "$teacherInfo", preserveNullAndEmptyArrays: true } },
     {
       $facet: {
         // 1. Overall Attendance Summary
