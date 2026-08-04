@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { StopCircle, Users, AlertCircle, Check, X, Settings } from "lucide-react";
+import { StopCircle, Users, AlertCircle, Check, X, Settings, ArrowLeft } from "lucide-react";
 import { 
   fetchLiveAttendance, 
   endLiveSession, 
@@ -82,7 +82,7 @@ export default function LiveSession() {
 
   return (
     <div className="flex flex-col">
-      <main className="max-w-7xl mx-auto w-full p-4 md:p-8 flex-1 space-y-6">
+      <header className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-6">
         <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-rose-50 border border-rose-200 rounded-2xl shadow-sm gap-4">
           <div className="flex items-center gap-4">
             <button onClick={handleEndSession} className="p-2 -ml-2 text-rose-500 hover:text-rose-700 hover:bg-rose-100 rounded-full transition-colors">

@@ -64,6 +64,23 @@ export default function StudentProfile() {
         
         {/* Personal Info */}
         <div className="card p-8 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <User className="w-5 h-5 text-sky-500" /> Personal Info
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm font-semibold text-slate-400 mb-1">Name</p>
+              <p className="font-bold text-slate-700">{user?.name}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-400 mb-1">Email</p>
+              <p className="font-bold text-slate-700">{user?.email}</p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-400 mb-1">Roll Number</p>
+              <p className="font-bold text-slate-700">{user?.info?.rollNo || "N/A"}</p>
+            </div>
+            <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Section</p>
               <p className="font-bold text-slate-700">Section {user?.info?.section || "N/A"}</p>
             </div>

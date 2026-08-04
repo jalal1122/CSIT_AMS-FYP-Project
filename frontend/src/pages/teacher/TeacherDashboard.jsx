@@ -6,10 +6,9 @@ import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
 import NotificationCenter from "../../components/layout/NotificationCenter";
 import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
-import { startLiveSession } from "../../store/slices/sessionSlice";
+import { startLiveSession, refreshQrToken } from "../../store/slices/sessionSlice";
 import { exportV2Report } from "../../store/slices/analyticsSlice";
-import { logoutUser } from "../../store/slices/authSlice";
-import toast from "react-hot-toast";
+import { addToast } from "../../store/slices/toastSlice";
 
 export default function TeacherDashboard() {
   const dispatch = useDispatch();
@@ -67,13 +66,13 @@ export default function TeacherDashboard() {
       await dispatch(refreshQrToken(res._id));
       navigate(`/teacher/session/live/${res._id}`);
     } catch (err) {
-      toast.error(err);
+      dispatch(addToast({ title: "Error", message: err || "Failed to start session", type: "error" }));
     }
   };
 
   const handleExport = (format) => {
     if (!reportAllocationId) {
-      toast.error("Please select a class to export.");
+      dispatch(addToast({ title: "Warning", message: "Please select a class to export.", type: "warning" }));
       return;
     }
     const alloc = activeAllocations.find(a => a._id === reportAllocationId);

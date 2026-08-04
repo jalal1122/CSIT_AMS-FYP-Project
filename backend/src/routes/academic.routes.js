@@ -30,5 +30,6 @@ router.get("/teacher/class/:allocationId/:sectionName/student/:studentId/report"
 // Student Dashboard
 router.get("/student/dashboard", ...studentOnly, academic.getStudentDashboard);
 router.get("/student/history", ...studentOnly, academic.getStudentHistory);
+router.get("/student/class/:allocationId/attendance", ...studentOnly, academic.getStudentAttendanceForClass);
 
 export default router;

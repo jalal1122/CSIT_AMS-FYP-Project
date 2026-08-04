@@ -753,3 +753,69 @@ export const transferStudent = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, student, `Student transferred to section ${newSection} successfully`));
 });
+
+// @desc    Get student's attendance records for a specific class
+// @route   GET /api/v2/academic/student/class/:allocationId/attendance
+// @access  Student
+export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
+  const { allocationId } = req.params;
+  const studentId = req.user._id;
+  const { section } = req.user.info;
+
+  const allocation = await CourseAllocation.findById(allocationId)
+    .populate("subjectId", "name code")
+    .populate({
+      path: "sections.teacherId",
+      select: "name"
+    })
+    .lean();
+  if (!allocation) throw new ApiError(404, "Allocation not found");
+
+  const sec = allocation.sections.find(s => s.name === section);
+  const teacherName = sec?.teacherId?.name || "Unknown";
+
+  // All sessions for this allocation+section
+  const sessions = await Session.find({
+    allocationId,
+    sectionName: section,
+    active: false
+  }).sort({ startTime: -1 }).lean();
+
+  // All attendance records for this student in this allocation
+  const attendanceRecords = await Attendance.find({
+    studentId,
+    allocationId,
+    section
+  }).lean();
+
+  const attendanceMap = {};
+  attendanceRecords.forEach(rec => {
+    attendanceMap[rec.sessionId.toString()] = {
+      status: rec.status,
+      markedAt: rec.updatedAt || rec.createdAt
+    };
+  });
+
+  const sessionList = sessions.map(sess => {
+    const rec = attendanceMap[sess._id.toString()];
+    return {
+      _id: sess._id,
+      date: sess.startTime,
+      type: sess.type || "Lecture",
+      status: rec?.status || "Absent",
+      markedAt: rec?.markedAt || null
+    };
+  });
+
+  const presentCount = sessionList.filter(s => s.status === "Present" || s.status === "Present (Manual)").length;
+
+  res.status(200).json(new ApiResponse(200, {
+    subject: {
+      name: allocation.subjectId.name,
+      code: allocation.subjectId.code,
+      teacher: teacherName
+    },
+    summary: { present: presentCount, total: sessionList.length },
+    sessions: sessionList
+  }, "Student attendance retrieved"));
+});

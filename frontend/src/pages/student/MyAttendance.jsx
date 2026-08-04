@@ -17,17 +17,10 @@ export default function MyAttendance() {
     const fetchAttendanceDetails = async () => {
       try {
         setIsLoading(true);
-        // Assuming we fetch details for a specific class/allocation
-        // In a real app, you'd fetch the student's attendance records for this allocation
-        const res = await api.get(`/api/v2/analytics/reports/student?allocationId=${allocationId || ''}`);
-        
-        // Mock data if backend endpoint isn't fully returning this array yet
-        setSessions([
-          { _id: '1', date: new Date().toISOString(), status: 'Present', type: 'Regular' },
-          { _id: '2', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Absent', type: 'Regular' },
-          { _id: '3', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'Present', type: 'Retroactive', markedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-        ]);
-        setSubjectInfo({ name: "Computer Networks", code: "CS301", teacher: "Dr. Smith" });
+        const res = await api.get(`/api/v2/academic/student/class/${allocationId}/attendance`);
+        const data = res.data.data;
+        setSessions(data.sessions || []);
+        setSubjectInfo(data.subject || null);
       } catch (err) {
         console.error(err);
       } finally {
@@ -57,7 +50,7 @@ export default function MyAttendance() {
           </div>
           <div className="flex gap-4">
             <div className="text-center px-4 border-r border-slate-100">
-              <p className="text-2xl font-black text-emerald-500">{sessions.filter(s => s.status === 'Present').length}</p>
+              <p className="text-2xl font-black text-emerald-500">{sessions.filter(s => s.status === 'Present' || s.status === 'Present (Manual)').length}</p>
               <p className="text-xs font-semibold text-slate-500 uppercase">Present</p>
             </div>
             <div className="text-center px-4 border-r border-slate-100">

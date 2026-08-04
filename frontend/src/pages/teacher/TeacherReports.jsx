@@ -57,7 +57,9 @@ export default function TeacherReports() {
               <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">Classroom Command Center</h1>
               <p className="text-xs font-medium text-slate-500 mt-0.5">Reporting & Analytics</p>
             </div>
-      
+          </div>
+        </div>
+      </header>
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
         
         <div className="flex justify-end">

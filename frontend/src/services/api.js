@@ -27,7 +27,16 @@ let refreshPromise = null;
 
 // Response interceptor: handle 401 -> refresh token
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If the server returns HTML (like a cPanel fallback index.html), it's not a valid API response.
+    // This happens when VITE_API_URL is incorrect and requests hit the frontend's React router instead.
+    if (typeof response.data === "string" && response.data.trim().startsWith("<")) {
+      const error = new Error("API returned HTML instead of JSON. Please check your VITE_API_URL configuration in .env");
+      error.response = { data: { message: error.message } };
+      return Promise.reject(error);
+    }
+    return response;
+  },
   async (error) => {
     const original = error.config;
 
