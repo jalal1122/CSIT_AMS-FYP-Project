@@ -12,6 +12,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import LiveSessionSecurityModal from "../../components/teacher/LiveSessionSecurityModal";
 import socket from "../../services/socket";
+import api from "../../services/api";
 
 export default function LiveSession() {
   const { sessionId } = useParams();
@@ -48,7 +49,7 @@ export default function LiveSession() {
           // let's fetch active session as fallback or ideally dispatch an action.
           // Since we don't have a slice action for single session fetch yet, we can set local state or just refresh dashboard.
           // For now, let's just use the current logic but know it might be undefined on hard refresh.
-          console.log("Fetched session:", res.data.data);
+          // console.log("Fetched session:", res.data.data);
         } catch (err) {
           console.error("Failed to fetch session", err);
         }

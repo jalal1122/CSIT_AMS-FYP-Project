@@ -71,10 +71,10 @@ export default function TeacherReports() {
         <div className="flex justify-end">
           <button 
             onClick={handleExport}
-            disabled={!hasSearched || isReportLoading}
+            disabled={!hasSearched || isLoading}
             className="btn-outline flex items-center gap-2 px-4 py-2 disabled:opacity-50"
           >
-            {isReportLoading ? (
+            {isLoading ? (
               <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
             ) : (
               <Download className="w-4 h-4" />
@@ -97,7 +97,7 @@ export default function TeacherReports() {
                 title="Universal Reporting Engine"
                 message="Select your criteria from the sidebar to dynamically construct a report across your classes and students."
               />
-            ) : isReportLoading ? (
+            ) : isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
               </div>

@@ -5,8 +5,8 @@ import Department from "../models/department.model.js";
 import Subject from "../models/subject.model.js";
 import Discipline from "../models/discipline.model.js";
 import User from "../models/user.model.js";
+import EmailService from "../services/email.service.js";
 import crypto from "crypto";
-// import { sendTeacherWelcome } from "../utils/sendEmail.js";
 
 // @desc    Create a new department
 // @route   POST /api/v2/system/department
@@ -332,8 +332,7 @@ export const createTeacher = asyncHandler(async (req, res) => {
     },
   });
 
-  // TODO: Send email
-  // await sendTeacherWelcome(teacher, tempPassword);
+  await EmailService.sendTeacherWelcome(teacher, tempPassword);
 
   const teacherResponse = teacher.toObject();
   delete teacherResponse.password;

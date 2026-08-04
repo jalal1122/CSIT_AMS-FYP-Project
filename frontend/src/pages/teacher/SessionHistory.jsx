@@ -10,10 +10,7 @@ export default function SessionHistory() {
   const { allocationId, sectionName } = useParams();
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    fetchSessions();
-  }, [allocationId, sectionName]);
+  const dispatch = useDispatch();
 
   const fetchSessions = async () => {
     try {
@@ -27,6 +24,12 @@ export default function SessionHistory() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSessions();
+  }, [allocationId, sectionName]);
+
+
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this session? This will remove attendance for all students in this session.")) return;

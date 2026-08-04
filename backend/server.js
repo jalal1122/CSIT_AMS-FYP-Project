@@ -89,15 +89,19 @@ app.use((err, req, res, next) => {
 // Connect to Database and start server
 const PORT = process.env.PORT || 5001;
 
-connectDB()
-  .then(() => {
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 CSIT AMS v2 Server running on port ${PORT}`);
-      initSocket(server);
-      CronService.init();
+if (process.env.NODE_ENV !== "test") {
+  connectDB()
+    .then(() => {
+      const server = app.listen(PORT, () => {
+        console.log(`🚀 CSIT AMS v2 Server running on port ${PORT}`);
+        initSocket(server);
+        CronService.init();
+      });
+    })
+    .catch((err) => {
+      console.error("❌ MongoDB connection failed", err);
+      process.exit(1);
     });
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection failed", err);
-    process.exit(1);
-  });
+}
+
+export default app;
