@@ -127,7 +127,7 @@ export default function LiveSession() {
                 <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
                 <h1 className="text-2xl font-extrabold text-rose-700 tracking-tight">LIVE SESSION</h1>
               </div>
-              <p className="text-sm font-medium text-rose-600/80 mt-0.5">{currentSession?.subjectName} ({currentSession?.batchName} - Sec {currentSession?.sectionName})</p>
+              <p className="text-sm font-medium text-rose-600/80 mt-0.5">{currentSession?.allocationId?.subjectId?.name} ({currentSession?.allocationId?.batchId?.name} - Sec {currentSession?.sectionName})</p>
             </div>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">

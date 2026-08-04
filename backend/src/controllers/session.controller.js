@@ -83,8 +83,17 @@ export const startSession = asyncHandler(async (req, res) => {
     securityConfig: finalSecurityConfig,
   });
 
+  const populatedSession = await Session.findById(session._id).populate({
+    path: "allocationId",
+    select: "subjectId batchId semester",
+    populate: [
+      { path: "subjectId", select: "name code" },
+      { path: "batchId", select: "name" }
+    ]
+  }).lean();
+
   // Emails and sockets
-  emitToSession(session._id.toString(), "session:started", { session });
+  emitToSession(session._id.toString(), "session:started", { session: populatedSession });
 
   // Send persistent notifications to all students in the section
   if (section.students && section.students.length > 0) {
@@ -99,7 +108,7 @@ export const startSession = asyncHandler(async (req, res) => {
     });
   }
 
-  res.status(201).json(new ApiResponse(201, session, "Session started successfully"));
+  res.status(201).json(new ApiResponse(201, populatedSession, "Session started successfully"));
 });
 
 // @desc    End Session
