@@ -255,8 +255,17 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
     { $unwind: { path: "$disciplineInfo", preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
+        from: "sessions",
+        localField: "sessionId",
+        foreignField: "_id",
+        as: "sessionInfo",
+      }
+    },
+    { $unwind: { path: "$sessionInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
         from: "users",
-        localField: "allocation.teacherId",
+        localField: "sessionInfo.teacherId",
         foreignField: "_id",
         as: "teacherInfo",
       }
