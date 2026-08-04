@@ -13,7 +13,10 @@ class CronService {
    * Initializes all cron jobs
    */
   static init() {
-    if (this.isInitialized) return;
+    if (process.env.NODE_ENV === "production") {
+      console.log("🕒 [CRON] Skipping node-cron init in production (use cPanel cron).");
+      return;
+    }
     
     console.log("🕒 Initializing CRON Services...");
 
@@ -64,13 +67,12 @@ class CronService {
 
       let sentCount = 0;
       for (const student of defaulters) {
-        // In a real scenario, the getUniversalMatrix should join the student's email.
-        // For now, we simulate the dispatch.
-        const mockEmail = `${student.rollNo}@csit.university.edu`;
+        // Use the actual student email from the universal matrix
+        const studentEmail = student.email;
         
         const mailOptions = {
           from: '"CSIT AMS automated" <no-reply@csit-ams.edu>',
-          to: mockEmail,
+          to: studentEmail,
           subject: "⚠️ Urgent: Attendance Shortfall Warning",
           html: `
             <h3>Attendance Warning</h3>

@@ -32,17 +32,18 @@ export default function AdminDashboard() {
   ];
   const PIE_COLORS = ['#10B981', '#0EA5E9', '#8B5CF6'];
 
-  const barData = [
-    { name: "B1", students: 40 },
-    { name: "B2", students: 30 },
-    { name: "B3", students: 20 },
-    { name: "B4", students: 15 },
-    { name: "B5", students: 7 }
-  ];
+  const barData = (dashboardStats?.batchStudentCounts || []).map(b => ({
+    name: b.name,
+    students: b.studentCount
+  }));
 
-  const recentClasses = [
-    { id: 1, name: "System active", batch: "Current", teacher: "Server", status: "Active" }
-  ];
+  const recentClasses = (dashboardStats?.recentSessions || []).map(s => ({
+    id: s._id,
+    name: s.allocationId?.subjectId?.name || "Subject",
+    batch: s.allocationId?.batchId?.name || "Batch",
+    teacher: s.teacherId?.name || "Teacher",
+    status: s.active ? "Active" : "Completed"
+  }));
 
   const formatUptime = (seconds) => {
     if (!seconds) return "0s";

@@ -7,10 +7,8 @@ import CourseAllocation from "../models/courseAllocation.model.js";
 import jwt from "jsonwebtoken";
 import { calculateDistance } from "../utils/geolocation.js";
 import { emitToSession } from "../services/socket.js";
-
-const getClientIP = (req) => {
-  return req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.connection?.remoteAddress || req.ip;
-};
+import { getClientIP } from "../utils/network.js";
+import User from "../models/user.model.js";
 
 // @desc    Mark attendance via QR scan
 // @route   POST /api/v2/attendance/mark
@@ -88,12 +86,27 @@ export const markAttendance = asyncHandler(async (req, res) => {
     }
   }
 
+  const incomingDeviceId = deviceId || "unknown";
+
+  // Auto-bind: if student has no device bound, bind this one NOW
+  if (!req.user.deviceId && incomingDeviceId !== "unknown") {
+    await User.findByIdAndUpdate(req.user._id, { deviceId: incomingDeviceId });
+    // Use the incoming deviceId for the rest of this request
+    req.user.deviceId = incomingDeviceId;
+  }
+
   // Anti-Buddy Punching (Device Lock)
-  const finalDeviceId = deviceId || req.user.deviceId || "unknown";
-  if (session.securityConfig.deviceLockEnabled && finalDeviceId !== "unknown") {
+  if (session.securityConfig.deviceLockEnabled && incomingDeviceId !== "unknown") {
+    // 1. Is the student using a DIFFERENT device than their bound one?
+    if (req.user.deviceId && req.user.deviceId !== "unknown" && req.user.deviceId !== incomingDeviceId) {
+      isSuspicious = true;
+      flagReason.push("Device mismatch (Not student's primary device)");
+    }
+
+    // 2. Has this device been used in this specific session by someone else?
     const deviceUsedByOther = await Attendance.findOne({
       sessionId,
-      deviceId: finalDeviceId,
+      deviceId: incomingDeviceId,
       studentId: { $ne: req.user._id }
     });
     
@@ -112,7 +125,7 @@ export const markAttendance = asyncHandler(async (req, res) => {
     section: sectionName,
     status,
     verificationMethod: "QR",
-    deviceId: finalDeviceId,
+    deviceId: incomingDeviceId,
     isSuspicious,
     metadata: {
       ipAddress: studentIP,
@@ -134,7 +147,7 @@ export const updateAttendance = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const attendanceId = req.params.id;
 
-  const validStatuses = ["Present", "Absent", "Late", "Leave"];
+  const validStatuses = ["Present", "Present (Manual)", "Absent", "Late", "Leave", "Pending"];
   if (!validStatuses.includes(status)) {
     throw new ApiError(400, "Invalid status");
   }

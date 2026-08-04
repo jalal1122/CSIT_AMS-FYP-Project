@@ -21,6 +21,7 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   const [endDate, setEndDate] = useState("");
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [selectedBatches, setSelectedBatches] = useState([]);
+  const [selectedSections, setSelectedSections] = useState([]);
   const [selectedTeachers, setSelectedTeachers] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
@@ -51,6 +52,15 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
       const batch = allocations.find(a => a.batchId?._id === id)?.batchId;
       return { value: id, label: batch?.name || "Unknown Batch" };
     });
+
+  // Extract Sections across all allocations
+  const sectionSet = new Set();
+  allocations.forEach(a => {
+    a.sections?.forEach(s => {
+      if (s.name) sectionSet.add(s.name);
+    });
+  });
+  const sectionOptions = Array.from(sectionSet).sort().map(name => ({ value: name, label: `Section ${name}` }));
 
   // Extract Teachers across all sections
   const teacherSet = new Map();
@@ -86,6 +96,7 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
       filters: {
         subjects: selectedSubjects.map(s => s.value),
         batches: selectedBatches.map(b => b.value),
+        sections: selectedSections.map(s => s.value),
         teachers: selectedTeachers.map(t => t.value),
         students: selectedStudents.map(s => s.value),
         departments: selectedDepartments.map(d => d.value),
@@ -218,6 +229,23 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
               value={selectedBatches}
               onChange={setSelectedBatches}
               placeholder="All Batches..."
+              className="text-sm"
+            />
+          </div>
+        )}
+
+        {/* Sections - For Teachers and Admins */}
+        {(userRole === "teacher" || userRole === "admin") && (
+          <div>
+            <label className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5" /> Sections
+            </label>
+            <Select 
+              isMulti
+              options={sectionOptions}
+              value={selectedSections}
+              onChange={setSelectedSections}
+              placeholder="All Sections..."
               className="text-sm"
             />
           </div>

@@ -11,6 +11,9 @@ import { fetchSettings } from "./store/slices/systemSlice.js";
 import PrivateRoute from "./components/PrivateRoute.jsx";
 import PublicRoute from "./components/PublicRoute.jsx";
 import AdminLayout from "./components/layout/AdminLayout.jsx";
+import StudentLayout from "./components/layout/StudentLayout.jsx";
+import TeacherLayout from "./components/layout/TeacherLayout.jsx";
+import ErrorBoundary from "./components/shared/ErrorBoundary.jsx";
 import ToastContainer from "./components/shared/ToastContainer.jsx";
 
 // Auth & Public Pages
@@ -30,8 +33,6 @@ const Allocation = lazy(() => import("./pages/admin/Allocation.jsx"));
 const Promotion = lazy(() => import("./pages/admin/Promotion.jsx"));
 const Students = lazy(() => import("./pages/admin/Students.jsx"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports.jsx"));
-const HODReports = lazy(() => import("./pages/admin/HODReports.jsx"));
-const StudentAffairsReports = lazy(() => import("./pages/admin/StudentAffairsReports.jsx"));
 const SecurityAnalytics = lazy(() => import("./pages/admin/SecurityAnalytics.jsx"));
 const BehavioralAnalytics = lazy(() => import("./pages/admin/BehavioralAnalytics.jsx"));
 
@@ -89,19 +90,28 @@ function App() {
   }
 
   return (
+  return (
     <Router>
-      <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div></div>}>
-        <ToastContainer />
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-          <Route path="/setup-profile" element={<PrivateRoute><SetupProfile /></PrivateRoute>} />
-          <Route path="/admin/bootstrap" element={<RegisterAdmin />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+      <ErrorBoundary>
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-4 border-sky-200 border-t-sky-600 rounded-full animate-spin"></div>
+              <p className="text-slate-500 font-medium">Loading...</p>
+            </div>
+          </div>
+        }>
+          <ToastContainer />
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/setup-profile" element={<PrivateRoute><SetupProfile /></PrivateRoute>} />
+            <Route path="/admin/bootstrap" element={<RegisterAdmin />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Admin */}
-          <Route path="/admin/dashboard" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminDashboard /></AdminLayout></PrivateRoute>} />
+            {/* Admin */}
+            <Route path="/admin/dashboard" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminDashboard /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/foundation" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Foundation /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/curriculum" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Curriculum /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/faculty" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Faculty /></AdminLayout></PrivateRoute>} />
@@ -110,29 +120,28 @@ function App() {
           <Route path="/admin/promotion" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Promotion /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/students" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Students /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminReports /></AdminLayout></PrivateRoute>} />
-          <Route path="/admin/hod-reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><HODReports /></AdminLayout></PrivateRoute>} />
-          <Route path="/admin/affairs-reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><StudentAffairsReports /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/security-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><SecurityAnalytics /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/behavioral-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><BehavioralAnalytics /></AdminLayout></PrivateRoute>} />
 
           {/* Teacher */}
-          <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherDashboard /></PrivateRoute>} />
-          <Route path="/teacher/session/live/:sessionId" element={<PrivateRoute allowedRoles={["teacher","admin"]}><LiveSession /></PrivateRoute>} />
-          <Route path="/teacher/class/:allocationId/:sectionName" element={<PrivateRoute allowedRoles={["teacher","admin"]}><ClassDetails /></PrivateRoute>} />
-          <Route path="/teacher/class/:allocationId/:sectionName/history" element={<PrivateRoute allowedRoles={["teacher","admin"]}><SessionHistory /></PrivateRoute>} />
-          <Route path="/teacher/reports" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherReports /></PrivateRoute>} />
+          <Route path="/teacher/dashboard" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><TeacherDashboard /></TeacherLayout></PrivateRoute>} />
+          <Route path="/teacher/session/live/:sessionId" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><LiveSession /></TeacherLayout></PrivateRoute>} />
+          <Route path="/teacher/class/:allocationId/:sectionName" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><ClassDetails /></TeacherLayout></PrivateRoute>} />
+          <Route path="/teacher/class/:allocationId/:sectionName/history" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><SessionHistory /></TeacherLayout></PrivateRoute>} />
+          <Route path="/teacher/reports" element={<PrivateRoute allowedRoles={["teacher","admin"]}><TeacherLayout><TeacherReports /></TeacherLayout></PrivateRoute>} />
 
           {/* Student */}
-          <Route path="/student/dashboard" element={<PrivateRoute allowedRoles={["student"]}><StudentDashboard /></PrivateRoute>} />
+          <Route path="/student/dashboard" element={<PrivateRoute allowedRoles={["student"]}><StudentLayout><StudentDashboard /></StudentLayout></PrivateRoute>} />
           <Route path="/student/scan" element={<PrivateRoute allowedRoles={["student"]}><ScanAttendance /></PrivateRoute>} />
-          <Route path="/student/classes/:allocationId" element={<PrivateRoute allowedRoles={["student"]}><MyAttendance /></PrivateRoute>} />
-          <Route path="/student/reports" element={<PrivateRoute allowedRoles={["student"]}><StudentReports /></PrivateRoute>} />
-          <Route path="/student/profile" element={<PrivateRoute allowedRoles={["student","teacher","admin"]}><StudentProfile /></PrivateRoute>} />
+          <Route path="/student/classes/:allocationId" element={<PrivateRoute allowedRoles={["student"]}><StudentLayout><MyAttendance /></StudentLayout></PrivateRoute>} />
+          <Route path="/student/reports" element={<PrivateRoute allowedRoles={["student"]}><StudentLayout><StudentReports /></StudentLayout></PrivateRoute>} />
+          <Route path="/student/profile" element={<PrivateRoute allowedRoles={["student","teacher","admin"]}><StudentLayout><StudentProfile /></StudentLayout></PrivateRoute>} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to={getDefaultRedirect()} replace />} />
-        </Routes>
-      </Suspense>
+          <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </Router>
   );
 }

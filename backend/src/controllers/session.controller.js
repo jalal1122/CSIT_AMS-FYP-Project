@@ -7,16 +7,7 @@ import Attendance from "../models/attendance.model.js";
 import jwt from "jsonwebtoken";
 import { emitToSession } from "../services/socket.js";
 // import EmailService from "../services/email.service.js";
-
-const getClientIP = (req) => {
-  return (
-    req.headers["x-forwarded-for"]?.split(",")[0].trim() ||
-    req.headers["x-real-ip"] ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    req.ip
-  );
-};
+import { getClientIP } from "../utils/network.js";
 
 // @desc    Start Live Session
 // @route   POST /api/v2/session/start

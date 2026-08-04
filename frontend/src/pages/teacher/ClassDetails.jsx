@@ -75,20 +75,17 @@ export default function ClassDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center gap-4">
-          <Link to="/teacher/dashboard" className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <main className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8 flex-1">
+        <div className="mb-4 flex items-center gap-4">
+          <Link to="/teacher/dashboard" className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">{subject?.name} ({subject?.code})</h1>
-            <p className="text-xs font-semibold text-slate-500 mt-0.5">{batch?.name} • Section {section} • Sem {semester}</p>
+            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">{subject?.name}</h1>
+            <p className="text-sm font-medium text-slate-500 mt-0.5">{batch?.name} - Section {section}</p>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
         
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
           <div className="card p-0 overflow-hidden xl:col-span-2">

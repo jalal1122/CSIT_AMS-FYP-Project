@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, Edit2, Info, Users, Trash2 } from "lucide-react";
 import api from "../../services/api";
 import EmptyState from "../../components/shared/EmptyState";
-import moment from "moment";
+
 import toast from "react-hot-toast";
 
 export default function SessionHistory() {
@@ -41,22 +41,19 @@ export default function SessionHistory() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+    <div className="flex flex-col">
+      <main className="max-w-6xl mx-auto w-full p-4 md:p-8 flex-1 space-y-6">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to={`/teacher/class/${allocationId}/${sectionName}`} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+            <Link to={`/teacher/class/${allocationId}/${sectionName}`} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">Session History</h1>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">Section {sectionName}</p>
+              <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Session History</h1>
+              <p className="text-sm font-medium text-slate-500 mt-0.5">Section {sectionName}</p>
             </div>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto w-full p-4 md:p-8 flex-1 space-y-6">
         <div className="card p-0 overflow-hidden">
           {isLoading ? (
             <div className="p-12 text-center text-slate-500">Loading sessions...</div>
@@ -81,10 +78,11 @@ export default function SessionHistory() {
                           <Calendar className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800 text-sm">{moment(session.startTime).format('MMM DD, YYYY')}</p>
-                          <p className="text-xs font-medium text-slate-500">
-                            {moment(session.startTime).format('hh:mm A')} - {session.endTime ? moment(session.endTime).format('hh:mm A') : 'Ongoing'}
-                          </p>
+                          <p className="font-bold text-slate-800 text-sm">{new Date(session.startTime).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <Clock className="w-3.5 h-3.5" />
+                            {new Date(session.startTime).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })} - {session.endTime ? new Date(session.endTime).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Ongoing'}
+                          </div>
                         </div>
                       </div>
                     </td>

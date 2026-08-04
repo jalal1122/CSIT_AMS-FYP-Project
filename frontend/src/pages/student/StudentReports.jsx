@@ -62,52 +62,7 @@ export default function StudentReports() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 relative pb-28 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-6 w-full sm:w-auto justify-between">
-            <div>
-              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight uppercase">Personal Transcript</h1>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">Reporting & Analytics</p>
-            </div>
-            <div className="sm:hidden flex items-center gap-3">
-              <button 
-                onClick={() => dispatch(logoutUser())}
-                className="p-1.5 text-rose-500 bg-rose-50 rounded-full hover:bg-rose-100 transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-               <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold border border-sky-200">
-                {(user?.name || "S").charAt(0)}
-              </div>
-            </div>
-          </div>
-          
-          <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
-            <Link to="/student/dashboard" className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg flex items-center gap-2 whitespace-nowrap transition-colors">
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </Link>
-            <Link to="/student/reports" className="px-3 py-2 text-sm font-semibold text-sky-600 bg-sky-50 rounded-lg whitespace-nowrap transition-colors flex items-center gap-2">
-               <FileSpreadsheet className="w-4 h-4" /> Reports
-            </Link>
-            
-            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
-              <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200">
-                {user?.name?.charAt(0) || "S"}
-              </div>
-              <button 
-                className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
-                onClick={() => dispatch(logoutUser())}
-              >
-                Logout
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
-
+    <div className="flex flex-col">
       <div className="container mx-auto px-4 py-8 max-w-7xl flex-1 space-y-8">
         
         <div className="flex justify-end">

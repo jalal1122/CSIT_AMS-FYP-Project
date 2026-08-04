@@ -113,8 +113,8 @@ const sessionSlice = createSlice({
       .addCase(startLiveSession.pending, (state) => { state.isLoading = true; })
       .addCase(startLiveSession.fulfilled, (state, { payload }) => {
         state.isLoading = false;
-        state.currentSession = payload.session;
-        state.qrToken = payload.qrToken;
+        state.currentSession = payload;
+        state.qrToken = null;
       })
       .addCase(startLiveSession.rejected, (state, { payload }) => {
         state.isLoading = false;

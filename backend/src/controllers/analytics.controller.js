@@ -27,7 +27,9 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     activeBatches,
     activeSessions,
     totalAllocations,
-    cpuUsage
+    cpuUsage,
+    batchStudentCounts,
+    recentSessions
   ] = await Promise.all([
     User.countDocuments(),
     User.countDocuments({ role: "student", accountStatus: "Active" }),
@@ -35,7 +37,17 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     Batch.countDocuments({ isActive: true }),
     Session.countDocuments({ active: true }),
     CourseAllocation.countDocuments({ isActive: true }),
-    getCpuUsage()
+    getCpuUsage(),
+    Batch.aggregate([
+      { $match: { isActive: true }},
+      { $project: { name: 1, studentCount: { $sum: { $map: { input: "$sections", as: "s", in: { $size: "$$s.students" } } } } } }
+    ]),
+    Session.find({ active: true })
+      .populate({ path: "allocationId", populate: [{ path: "subjectId", select: "name code" }, { path: "batchId", select: "name" }] })
+      .populate("teacherId", "name")
+      .limit(5)
+      .sort({ startTime: -1 })
+      .lean()
   ]);
 
   const memoryUsage = Math.round((1 - os.freememPercentage()) * 100);
@@ -48,6 +60,8 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     activeBatches,
     activeSessions,
     totalAllocations,
+    batchStudentCounts,
+    recentSessions,
     systemHealth: {
       cpuUsage,
       memoryUsage,

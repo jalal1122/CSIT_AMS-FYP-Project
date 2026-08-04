@@ -57,31 +57,6 @@ export default function TeacherReports() {
               <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">Classroom Command Center</h1>
               <p className="text-xs font-medium text-slate-500 mt-0.5">Reporting & Analytics</p>
             </div>
-          </div>
-          
-          <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
-            <Link to="/teacher/dashboard" className="px-3 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap">
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </Link>
-            <Link to="/teacher/reports" className="px-3 py-2 text-sm font-semibold text-sky-600 bg-sky-50 rounded-lg whitespace-nowrap transition-colors flex items-center gap-2">
-               <FileSpreadsheet className="w-4 h-4" /> Reports
-            </Link>
-            
-            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
-              <NotificationCenter />
-              <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200">
-                {user?.name?.charAt(0) || "T"}
-              </div>
-              <button 
-                className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
-                onClick={() => dispatch(logoutUser())}
-              >
-                Logout
-              </button>
-            </div>
-          </nav>
-        </div>
-      </header>
       
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
         

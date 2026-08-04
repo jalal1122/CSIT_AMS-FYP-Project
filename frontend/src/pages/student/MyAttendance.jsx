@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, CheckCircle, XCircle, Clock, Info } from "lucide-react";
 import api from "../../services/api";
 import EmptyState from "../../components/shared/EmptyState";
-import moment from "moment";
+
 
 export default function MyAttendance() {
   const { allocationId } = useParams();
@@ -23,9 +23,9 @@ export default function MyAttendance() {
         
         // Mock data if backend endpoint isn't fully returning this array yet
         setSessions([
-          { _id: '1', date: new Date().toISOString(), status: 'Present', type: 'Regular', markedAt: new Date().toISOString() },
-          { _id: '2', date: moment().subtract(2, 'days').toISOString(), status: 'Absent', type: 'Regular' },
-          { _id: '3', date: moment().subtract(5, 'days').toISOString(), status: 'Present', type: 'Retroactive', markedAt: moment().subtract(5, 'days').toISOString() },
+          { _id: '1', date: new Date().toISOString(), status: 'Present', type: 'Regular' },
+          { _id: '2', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), status: 'Absent', type: 'Regular' },
+          { _id: '3', date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), status: 'Present', type: 'Retroactive', markedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
         ]);
         setSubjectInfo({ name: "Computer Networks", code: "CS301", teacher: "Dr. Smith" });
       } catch (err) {
@@ -38,20 +38,18 @@ export default function MyAttendance() {
   }, [allocationId]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Link to="/student/dashboard" className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+    <div className="flex flex-col">
+      <main className="max-w-4xl mx-auto w-full p-4 md:p-8 flex-1 space-y-6">
+        
+        <div className="mb-2 flex items-center gap-4">
+          <Link to="/student/dashboard" className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">Attendance Details</h1>
-            <p className="text-xs font-medium text-slate-500 mt-0.5">{subjectInfo?.name || "Subject Name"}</p>
+            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Attendance Details</h1>
+            <p className="text-sm font-medium text-slate-500 mt-0.5">{subjectInfo?.name || "Subject Name"}</p>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto w-full p-4 md:p-8 flex-1 space-y-6">
         <div className="card p-6 bg-white flex flex-col md:flex-row justify-between items-center gap-4 border-sky-100">
           <div>
             <h2 className="text-lg font-bold text-slate-800">{subjectInfo?.name} ({subjectInfo?.code})</h2>
@@ -97,8 +95,8 @@ export default function MyAttendance() {
                           <Calendar className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800 text-sm">{moment(session.date).format('MMM DD, YYYY')}</p>
-                          <p className="text-xs font-medium text-slate-500">{moment(session.date).format('hh:mm A')}</p>
+                          <p className="font-bold text-slate-800 text-sm">{new Date(session.date).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+                          <p className="text-xs font-medium text-slate-500">{new Date(session.date).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                         </div>
                       </div>
                     </td>
@@ -119,7 +117,7 @@ export default function MyAttendance() {
                     <td className="px-6 py-4 text-sm text-slate-500">
                       {session.markedAt ? (
                         <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" /> {moment(session.markedAt).format('hh:mm A')}
+                          <Clock className="w-3.5 h-3.5" /> {new Date(session.markedAt).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </div>
                       ) : "-"}
                     </td>

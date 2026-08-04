@@ -58,6 +58,10 @@ export const buildDynamicMatch = async (securityMatch, filters, timeframe, prefi
     query[`${p}sections.teacherId`] = { $in: filters.teachers.map(id => new mongoose.Types.ObjectId(id)) };
   }
 
+  if (filters?.sections && filters.sections.length > 0) {
+    query[`${p}sections.name`] = { $in: filters.sections };
+  }
+
   if (filters?.students && filters.students.length > 0) {
     // Optimize: query the root studentId if it's an Attendance query
     if (!query.$or) query.$or = [];

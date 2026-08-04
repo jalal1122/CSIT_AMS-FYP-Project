@@ -5,7 +5,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 import ReportFilterBar from "../../components/reports/ReportFilterBar";
 import { fetchV2Reports, exportV2Report } from "../../store/slices/analyticsSlice";
 import EmptyState from "../../components/shared/EmptyState";
-import moment from "moment";
 
 export default function BehavioralAnalytics() {
   const dispatch = useDispatch();
@@ -23,7 +22,10 @@ export default function BehavioralAnalytics() {
   };
 
   const formatHour = (hour) => {
-    return moment().hour(hour).minute(0).format("ha");
+    if (hour === 0) return "12am";
+    if (hour < 12) return `${hour}am`;
+    if (hour === 12) return "12pm";
+    return `${hour - 12}pm`;
   };
 
   return (
