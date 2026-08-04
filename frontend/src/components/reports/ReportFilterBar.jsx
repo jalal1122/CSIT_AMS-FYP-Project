@@ -3,6 +3,7 @@ import Select from "react-select";
 import { Filter, Calendar } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllocations } from "../../store/slices/academicSlice";
+import { fetchDepartments, fetchDisciplines } from "../../store/slices/systemSlice";
 
 const TIMEFRAMES = [
   { value: "Full Semester", label: "Full Semester" },
@@ -20,10 +21,19 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
   const [endDate, setEndDate] = useState("");
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [selectedBatches, setSelectedBatches] = useState([]);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [selectedDisciplines, setSelectedDisciplines] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState(null);
+
+  const { departments, disciplines } = useSelector(state => state.system);
 
   useEffect(() => {
     dispatch(fetchAllocations({ isActive: true }));
-  }, [dispatch]);
+    if (userRole === "admin" || userRole === "hod") {
+      dispatch(fetchDepartments());
+      dispatch(fetchDisciplines());
+    }
+  }, [dispatch, userRole]);
 
   // Extract unique subjects and batches from allocations for dropdowns
   const subjectOptions = Array.from(new Set(allocations.map(a => a.subjectId?._id)))
@@ -40,12 +50,19 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
       return { value: id, label: batch?.name || "Unknown Batch" };
     });
 
+  const departmentOptions = departments.map(d => ({ value: d._id, label: d.name }));
+  const disciplineOptions = disciplines.map(d => ({ value: d._id, label: d.name }));
+  const semesterOptions = Array.from({ length: 8 }, (_, i) => ({ value: i + 1, label: `Semester ${i + 1}` }));
+
   const handleApply = () => {
     onFilterChange({
       timeframe: timeframe.value,
       filters: {
         subjects: selectedSubjects.map(s => s.value),
         batches: selectedBatches.map(b => b.value),
+        departments: selectedDepartments.map(d => d.value),
+        disciplines: selectedDisciplines.map(d => d.value),
+        semester: selectedSemester?.value || null,
         startDate: timeframe.value === "Custom Date Range" ? startDate : null,
         endDate: timeframe.value === "Custom Date Range" ? endDate : null
       }
@@ -130,6 +147,49 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
             />
           </div>
         )}
+        
+        {/* Departments - For Admin and HOD */}
+        {(userRole === "admin" || userRole === "hod") && (
+          <div>
+            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Filter by Department</label>
+            <Select 
+              isMulti
+              options={departmentOptions}
+              value={selectedDepartments}
+              onChange={setSelectedDepartments}
+              placeholder="All Departments..."
+              className="text-sm"
+            />
+          </div>
+        )}
+
+        {/* Disciplines - For Admin and HOD */}
+        {(userRole === "admin" || userRole === "hod") && (
+          <div>
+            <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Filter by Discipline</label>
+            <Select 
+              isMulti
+              options={disciplineOptions}
+              value={selectedDisciplines}
+              onChange={setSelectedDisciplines}
+              placeholder="All Disciplines..."
+              className="text-sm"
+            />
+          </div>
+        )}
+
+        {/* Semester */}
+        <div>
+          <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Semester</label>
+          <Select 
+            isClearable
+            options={semesterOptions}
+            value={selectedSemester}
+            onChange={setSelectedSemester}
+            placeholder="All Semesters..."
+            className="text-sm"
+          />
+        </div>
       </div>
 
       <div className="mt-5 flex justify-end">

@@ -3,6 +3,7 @@ import Select from "react-select";
 import { Filter, Calendar, Users, BookOpen, Layers } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAllocations } from "../../store/slices/academicSlice";
+import { fetchDepartments, fetchDisciplines } from "../../store/slices/systemSlice";
 
 const TIMEFRAMES = [
   { value: "Full Semester", label: "Full Semester" },
@@ -22,10 +23,19 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   const [selectedBatches, setSelectedBatches] = useState([]);
   const [selectedTeachers, setSelectedTeachers] = useState([]);
   const [selectedStudents, setSelectedStudents] = useState([]);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const [selectedDisciplines, setSelectedDisciplines] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState(null);
+
+  const { departments, disciplines } = useSelector(state => state.system);
 
   useEffect(() => {
     dispatch(fetchAllocations({ isActive: true }));
-  }, [dispatch]);
+    if (userRole === "admin" || userRole === "hod") {
+      dispatch(fetchDepartments());
+      dispatch(fetchDisciplines());
+    }
+  }, [dispatch, userRole]);
 
   // Derive Options dynamically from allocations
   const subjectOptions = Array.from(new Set(allocations.map(a => a.subjectId?._id)))
@@ -66,6 +76,10 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   });
   const studentOptions = Array.from(studentSet.entries()).map(([id, name]) => ({ value: id, label: name }));
 
+  const departmentOptions = departments.map(d => ({ value: d._id, label: d.name }));
+  const disciplineOptions = disciplines.map(d => ({ value: d._id, label: d.name }));
+  const semesterOptions = Array.from({ length: 8 }, (_, i) => ({ value: i + 1, label: `Semester ${i + 1}` }));
+
   const handleApply = () => {
     onFilterChange({
       timeframe: timeframe.value,
@@ -74,6 +88,9 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
         batches: selectedBatches.map(b => b.value),
         teachers: selectedTeachers.map(t => t.value),
         students: selectedStudents.map(s => s.value),
+        departments: selectedDepartments.map(d => d.value),
+        disciplines: selectedDisciplines.map(d => d.value),
+        semester: selectedSemester?.value || null,
         startDate: timeframe.value === "Custom Date Range" ? startDate : null,
         endDate: timeframe.value === "Custom Date Range" ? endDate : null
       }
@@ -136,6 +153,55 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
             value={selectedSubjects}
             onChange={setSelectedSubjects}
             placeholder="All Subjects..."
+            className="text-sm"
+          />
+        </div>
+
+        {/* Departments - For Admin and HOD */}
+        {(userRole === "admin" || userRole === "hod") && (
+          <div>
+            <label className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5" /> Departments
+            </label>
+            <Select 
+              isMulti
+              options={departmentOptions}
+              value={selectedDepartments}
+              onChange={setSelectedDepartments}
+              placeholder="All Departments..."
+              className="text-sm"
+            />
+          </div>
+        )}
+
+        {/* Disciplines - For Admin and HOD */}
+        {(userRole === "admin" || userRole === "hod") && (
+          <div>
+            <label className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-2">
+              <BookOpen className="w-3.5 h-3.5" /> Disciplines
+            </label>
+            <Select 
+              isMulti
+              options={disciplineOptions}
+              value={selectedDisciplines}
+              onChange={setSelectedDisciplines}
+              placeholder="All Disciplines..."
+              className="text-sm"
+            />
+          </div>
+        )}
+
+        {/* Semester */}
+        <div>
+          <label className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5" /> Semester
+          </label>
+          <Select 
+            isClearable
+            options={semesterOptions}
+            value={selectedSemester}
+            onChange={setSelectedSemester}
+            placeholder="All Semesters..."
             className="text-sm"
           />
         </div>
