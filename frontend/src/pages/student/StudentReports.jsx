@@ -12,7 +12,7 @@ import { Download } from "lucide-react";
 
 export default function StudentReports() {
   const dispatch = useDispatch();
-  const { reportData, isReportLoading } = useSelector(state => state.analytics);
+  const { reportData, isLoading } = useSelector(state => state.analytics);
   const { user } = useSelector(state => state.auth);
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPayload, setCurrentPayload] = useState(null);
@@ -68,10 +68,10 @@ export default function StudentReports() {
         <div className="flex justify-end">
           <button 
             onClick={handleExport}
-            disabled={!hasSearched || isReportLoading}
+            disabled={!hasSearched || isLoading}
             className="btn-outline flex items-center gap-2 px-4 py-2 disabled:opacity-50"
           >
-            {isReportLoading ? (
+            {isLoading ? (
               <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
             ) : (
               <Download className="w-4 h-4" />
@@ -94,7 +94,7 @@ export default function StudentReports() {
                 title="Your Academic Trace"
                 message="Select subjects or timeframes from the sidebar to visualize your attendance performance."
               />
-            ) : isReportLoading ? (
+            ) : isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-600"></div>
               </div>
