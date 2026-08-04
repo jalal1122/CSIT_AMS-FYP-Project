@@ -188,12 +188,16 @@ export const archiveSubject = asyncHandler(async (req, res) => {
 // @route   GET /api/v2/admin/users
 // @access  Admin
 export const getUsers = asyncHandler(async (req, res) => {
-  const { role, batchId, section, search } = req.query;
+  const { role, batchId, section, search, accountStatus, deviceStatus } = req.query;
 
   const query = {};
   if (role) query.role = role;
   if (batchId) query["info.batchId"] = batchId;
   if (section) query["info.section"] = section;
+  if (accountStatus) query.accountStatus = accountStatus;
+  
+  if (deviceStatus === "bound") query.deviceId = { $ne: null };
+  if (deviceStatus === "unbound") query.deviceId = null;
   
   if (search) {
     query.$or = [

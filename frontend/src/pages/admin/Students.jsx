@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchStudents, resetStudentPassword, resetStudentDevice, updateStudentStatus, transferStudent } from "../../store/slices/studentSlice.js";
+import { fetchBatches } from "../../store/slices/academicSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
 import { Search, Filter, KeyRound, Smartphone, GitPullRequest, Eye, UserX, UserCheck } from "lucide-react";
 import Badge from "../../components/shared/Badge";
@@ -8,14 +9,21 @@ import EmptyState from "../../components/shared/EmptyState";
 
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ batchId: "", section: "", deviceStatus: "", accountStatus: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
   const dispatch = useDispatch();
   const { students, isLoading } = useSelector((state) => state.student);
+  const { batches } = useSelector((state) => state.academic);
 
   useEffect(() => {
-    dispatch(fetchStudents());
+    dispatch(fetchStudents(filters));
+  }, [dispatch, filters]);
+
+  useEffect(() => {
+    dispatch(fetchBatches());
   }, [dispatch]);
 
   // Handle pagination reset on search
@@ -94,11 +102,66 @@ export default function Students() {
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto">
-          <button className="btn-secondary flex items-center justify-center gap-2">
+          <button 
+            onClick={() => setShowFilters(!showFilters)} 
+            className={`btn-secondary flex items-center justify-center gap-2 ${showFilters ? 'bg-slate-100' : ''}`}
+          >
             <Filter className="w-4 h-4" /> Filters
           </button>
         </div>
       </div>
+
+      {showFilters && (
+        <div className="bg-slate-50 p-4 border-x border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Batch</label>
+            <select 
+              className="input w-full py-2" 
+              value={filters.batchId} 
+              onChange={(e) => setFilters({...filters, batchId: e.target.value})}
+            >
+              <option value="">All Batches</option>
+              {batches?.map(b => (
+                <option key={b._id} value={b._id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Section</label>
+            <input 
+              type="text" 
+              placeholder="e.g. A" 
+              className="input w-full py-2 uppercase" 
+              value={filters.section}
+              onChange={(e) => setFilters({...filters, section: e.target.value.toUpperCase()})}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Device Status</label>
+            <select 
+              className="input w-full py-2" 
+              value={filters.deviceStatus} 
+              onChange={(e) => setFilters({...filters, deviceStatus: e.target.value})}
+            >
+              <option value="">All</option>
+              <option value="bound">Bound</option>
+              <option value="unbound">Unbound</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Account Status</label>
+            <select 
+              className="input w-full py-2" 
+              value={filters.accountStatus} 
+              onChange={(e) => setFilters({...filters, accountStatus: e.target.value})}
+            >
+              <option value="">All</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       <div className="card p-0 overflow-hidden border-t-0 rounded-t-none">
         <div className="overflow-x-auto">

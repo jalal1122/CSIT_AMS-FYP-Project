@@ -9,9 +9,16 @@ const initialState = {
   error: null,
 };
 
-export const fetchStudents = createAsyncThunk("student/fetchStudents", async (_, { rejectWithValue }) => {
+export const fetchStudents = createAsyncThunk("student/fetchStudents", async (filters = {}, { rejectWithValue }) => {
   try {
-    const res = await api.get("/api/v2/admin/users?role=student");
+    const params = new URLSearchParams();
+    params.append("role", "student");
+    if (filters.batchId) params.append("batchId", filters.batchId);
+    if (filters.section) params.append("section", filters.section);
+    if (filters.accountStatus) params.append("accountStatus", filters.accountStatus);
+    if (filters.deviceStatus) params.append("deviceStatus", filters.deviceStatus);
+    
+    const res = await api.get(`/api/v2/admin/users?${params.toString()}`);
     return res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch students");
