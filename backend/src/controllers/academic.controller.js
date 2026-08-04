@@ -638,12 +638,16 @@ export const getClassSessions = asyncHandler(async (req, res) => {
   const skip = parseInt(req.query.skip) || 0;
   const limit = parseInt(req.query.limit) || 10;
 
-  const allocation = await CourseAllocation.findById(allocationId).lean();
+  const allocation = await CourseAllocation.findById(allocationId)
+    .populate("subjectId", "name code")
+    .populate("batchId", "name")
+    .populate("sections.teacherId", "name")
+    .lean();
   if (!allocation) throw new ApiError(404, "Allocation not found");
   const section = allocation.sections.find(s => s.name === sectionName);
   if (!section) throw new ApiError(404, "Section not found");
 
-  if (section.teacherId.toString() !== req.user._id.toString()) {
+  if (section.teacherId._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
     throw new ApiError(403, "Not authorized to view this class");
   }
 
@@ -672,7 +676,14 @@ export const getClassSessions = asyncHandler(async (req, res) => {
 
   const total = await Session.countDocuments({ allocationId, sectionName, active: false });
 
-  res.status(200).json(new ApiResponse(200, { sessions, total, hasMore: skip + sessions.length < total }, "Sessions retrieved"));
+  res.status(200).json(new ApiResponse(200, { 
+    sessions, 
+    total, 
+    hasMore: skip + sessions.length < total,
+    subject: allocation.subjectId,
+    batch: allocation.batchId,
+    teacher: section.teacherId
+  }, "Sessions retrieved"));
 });
 
 // @desc    Get specific student's attendance report for a class

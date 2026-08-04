@@ -7,7 +7,8 @@ import {
   endLiveSession, 
   updateAttendanceStatus,
   refreshQrToken,
-  resetSession 
+  resetSession,
+  fetchSessionDetails
 } from "../../store/slices/sessionSlice";
 import { QRCodeSVG } from "qrcode.react";
 import LiveSessionSecurityModal from "../../components/teacher/LiveSessionSecurityModal";
@@ -40,19 +41,8 @@ export default function LiveSession() {
   // Live feed websocket
   useEffect(() => {
     const initSession = async () => {
-      // If we don't have the session in Redux, fetch it by ID
       if (!currentSession || currentSession._id !== sessionId) {
-        try {
-          const res = await api.get(`/api/v2/session/${sessionId}`);
-          // The backend now returns the populated session object
-          // Update the redux state or handle it locally if needed, but since we rely on currentSession, 
-          // let's fetch active session as fallback or ideally dispatch an action.
-          // Since we don't have a slice action for single session fetch yet, we can set local state or just refresh dashboard.
-          // For now, let's just use the current logic but know it might be undefined on hard refresh.
-          // console.log("Fetched session:", res.data.data);
-        } catch (err) {
-          console.error("Failed to fetch session", err);
-        }
+        dispatch(fetchSessionDetails(sessionId));
       }
     };
     initSession();

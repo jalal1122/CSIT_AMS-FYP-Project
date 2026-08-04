@@ -10,6 +10,7 @@ import { formatPKTDate, formatPKTTime } from "../../utils/dateUtils";
 export default function SessionHistory() {
   const { allocationId, sectionName } = useParams();
   const [sessions, setSessions] = useState([]);
+  const [meta, setMeta] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const dispatch = useDispatch();
 
@@ -18,6 +19,13 @@ export default function SessionHistory() {
       setIsLoading(true);
       const res = await api.get(`/api/v2/academic/teacher/class/${allocationId}/${sectionName}/sessions?limit=50`);
       setSessions(res.data.data.sessions || res.data.data);
+      if (res.data.data.subject) {
+        setMeta({
+          subject: res.data.data.subject,
+          batch: res.data.data.batch,
+          teacher: res.data.data.teacher
+        });
+      }
     } catch (err) {
       console.error(err);
       dispatch(addToast({ title: "Error", message: "Failed to load session history", type: "error" }));
@@ -53,8 +61,12 @@ export default function SessionHistory() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Session History</h1>
-              <p className="text-sm font-medium text-slate-500 mt-0.5">Section {sectionName}</p>
+              <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">
+                {meta ? meta.subject?.name : 'Session History'}
+              </h1>
+              <p className="text-sm font-medium text-slate-500 mt-0.5">
+                {meta ? `${meta.batch?.name} - Section ${sectionName} | Teacher: ${meta.teacher?.name}` : `Section ${sectionName}`}
+              </p>
             </div>
           </div>
         </div>

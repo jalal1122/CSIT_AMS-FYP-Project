@@ -46,6 +46,18 @@ export const fetchActiveSession = createAsyncThunk(
   }
 );
 
+export const fetchSessionDetails = createAsyncThunk(
+  "session/fetchDetails",
+  async (sessionId, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/api/v2/session/${sessionId}`);
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch session details");
+    }
+  }
+);
+
 export const fetchLiveAttendance = createAsyncThunk(
   "session/fetchLiveAttendance",
   async (sessionId, { rejectWithValue }) => {
@@ -150,6 +162,9 @@ const sessionSlice = createSlice({
         if (state.currentSession) {
           state.currentSession.securityConfig = action.payload.securityConfig;
         }
+      })
+      .addCase(fetchSessionDetails.fulfilled, (state, action) => {
+        state.currentSession = action.payload;
       });
   },
 });
