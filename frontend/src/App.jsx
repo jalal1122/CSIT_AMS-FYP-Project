@@ -33,6 +33,7 @@ const Allocation = lazy(() => import("./pages/admin/Allocation.jsx"));
 const Promotion = lazy(() => import("./pages/admin/Promotion.jsx"));
 const Students = lazy(() => import("./pages/admin/Students.jsx"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports.jsx"));
+const AdminLiveMonitor = lazy(() => import("./pages/admin/AdminLiveMonitor.jsx"));
 const SecurityAnalytics = lazy(() => import("./pages/admin/SecurityAnalytics.jsx"));
 const BehavioralAnalytics = lazy(() => import("./pages/admin/BehavioralAnalytics.jsx"));
 
@@ -119,6 +120,7 @@ function App() {
           <Route path="/admin/allocation" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Allocation /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/promotion" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Promotion /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/students" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Students /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/live-monitor" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminLiveMonitor /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/reports" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><AdminReports /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/security-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><SecurityAnalytics /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/behavioral-analytics" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><BehavioralAnalytics /></AdminLayout></PrivateRoute>} />

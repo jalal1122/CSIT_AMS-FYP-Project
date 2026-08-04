@@ -14,6 +14,7 @@ import {
   validate2FALogin,
   forgotPassword,
   resetPassword,
+  updateProfile,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -35,6 +36,7 @@ router.post("/setup-profile", verifyJWT, setupProfile);
 router.get("/me", verifyJWT, getCurrentUser);
 router.post("/logout", verifyJWT, logoutUser);
 router.patch("/update-password", verifyJWT, updatePassword);
+router.patch("/update-profile", verifyJWT, updateProfile);
 router.post("/2fa/enable", verifyJWT, enable2FA);
 router.post("/2fa/verify", verifyJWT, verify2FA);
 router.post("/2fa/disable", verifyJWT, disable2FA);

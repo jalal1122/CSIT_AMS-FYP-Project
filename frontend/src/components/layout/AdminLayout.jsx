@@ -21,7 +21,8 @@ import {
   PieChart,
   HeartPulse,
   ShieldAlert,
-  BrainCircuit
+  BrainCircuit,
+  Activity
 } from "lucide-react";
 
 export default function AdminLayout({ children }) {
@@ -39,6 +40,7 @@ export default function AdminLayout({ children }) {
     { name: "Allocations", href: "/admin/allocation", icon: ClipboardList },
     { name: "Promotions", href: "/admin/promotion", icon: TrendingUp },
     { name: "Students", href: "/admin/students", icon: UserCheck },
+    { name: "Live Monitor", href: "/admin/live-monitor", icon: Activity },
     { name: "Reports", href: "/admin/reports", icon: BarChart3 },
     { name: "Security Analytics", href: "/admin/security-analytics", icon: ShieldAlert },
     { name: "Behavioral Analytics", href: "/admin/behavioral-analytics", icon: BrainCircuit },

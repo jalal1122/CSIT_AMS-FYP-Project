@@ -7,13 +7,16 @@ import {
   getLiveAttendance,
   updateSessionSecurity,
   createRetroactiveSession,
+  getActiveSessionsForAdmin,
 } from "../controllers/session.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { hasRole } from "../middlewares/role.middleware.js";
 
 const router = Router();
 const teacherOnly = [verifyJWT, hasRole(["teacher"])];
+const adminOnly = [verifyJWT, hasRole(["admin"])];
 
+router.get("/active-all", ...adminOnly, getActiveSessionsForAdmin);
 router.post("/start", ...teacherOnly, startSession);
 router.post("/retroactive", ...teacherOnly, createRetroactiveSession);
 router.post("/:id/end", ...teacherOnly, endSession);

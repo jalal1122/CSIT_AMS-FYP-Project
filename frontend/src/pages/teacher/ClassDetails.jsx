@@ -7,6 +7,7 @@ import api from "../../services/api";
 import toast from "react-hot-toast";
 import { fetchClassDetails, clearClassDetails } from "../../store/slices/teacherSlice";
 import StudentReportModal from "../../components/teacher/StudentReportModal";
+import RetroactiveSessionModal from "../../components/teacher/RetroactiveSessionModal";
 
 export default function ClassDetails() {
   const { allocationId, sectionName } = useParams();
@@ -29,6 +30,7 @@ export default function ClassDetails() {
   const [hasMore, setHasMore] = useState(true);
   const [reportStudentId, setReportStudentId] = useState(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isRetroModalOpen, setIsRetroModalOpen] = useState(false);
   
   useEffect(() => {
     if (sessions.length > 0 && localSessions.length === 0) {
@@ -159,9 +161,17 @@ export default function ClassDetails() {
           </div>
 
           <div className="card p-0 xl:col-span-1 border-sky-100 shadow-md">
-            <div className="px-6 py-4 border-b border-sky-100 bg-sky-50/50 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-sky-500" /> 
-              <h3 className="text-lg font-bold text-sky-900">Session History</h3>
+            <div className="px-6 py-4 border-b border-sky-100 bg-sky-50/50 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-sky-500" /> 
+                <h3 className="text-lg font-bold text-sky-900">Session History</h3>
+              </div>
+              <button 
+                onClick={() => setIsRetroModalOpen(true)}
+                className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors shadow-sm"
+              >
+                + Add Session
+              </button>
             </div>
             <div className="p-6 space-y-4 bg-white">
               {localSessions.length === 0 ? (
@@ -201,6 +211,18 @@ export default function ClassDetails() {
         allocationId={allocationId}
         sectionName={sectionName}
         studentId={reportStudentId}
+      />
+
+      <RetroactiveSessionModal 
+        isOpen={isRetroModalOpen}
+        onClose={() => setIsRetroModalOpen(false)}
+        allocationId={allocationId}
+        sectionName={sectionName}
+        students={students}
+        onSuccess={() => {
+          dispatch(fetchClassDetails({ allocationId, sectionName }));
+          // Note: The UI will automatically update via Redux state
+        }}
       />
     </div>
   );

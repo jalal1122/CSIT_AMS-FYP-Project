@@ -169,3 +169,45 @@ export const updateAttendance = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, attendance, "Attendance updated successfully"));
 });
+
+// @desc    Bulk insert/update attendance for a session
+// @route   POST /api/v2/attendance/bulk
+// @access  Teacher
+export const insertBulkAttendance = asyncHandler(async (req, res) => {
+  const { sessionId, attendanceRecords } = req.body;
+  
+  if (!sessionId || !Array.isArray(attendanceRecords)) {
+    throw new ApiError(400, "Session ID and an array of attendance records are required");
+  }
+
+  const session = await Session.findById(sessionId);
+  if (!session) throw new ApiError(404, "Session not found");
+
+  if (session.teacherId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized for this session");
+  }
+
+  // Create an array of operations for bulkWrite
+  const ops = attendanceRecords.map(record => ({
+    updateOne: {
+      filter: { sessionId: session._id, studentId: record.studentId },
+      update: {
+        $set: {
+          status: record.status,
+          allocationId: session.allocationId,
+          section: session.sectionName,
+          verificationMethod: "Manual",
+          isSuspicious: false,
+          date: new Date(session.startTime)
+        }
+      },
+      upsert: true
+    }
+  }));
+
+  if (ops.length > 0) {
+    await Attendance.bulkWrite(ops);
+  }
+
+  res.status(200).json(new ApiResponse(200, null, "Bulk attendance inserted successfully"));
+});

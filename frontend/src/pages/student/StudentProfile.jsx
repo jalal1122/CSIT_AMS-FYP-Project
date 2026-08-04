@@ -1,18 +1,26 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { ArrowLeft, User, Smartphone, ShieldCheck, Key, AlertTriangle } from "lucide-react";
+import { ArrowLeft, User, Smartphone, ShieldCheck, Key, AlertTriangle, Save, Loader2, BookOpen, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { updatePassword } from "../../store/slices/authSlice";
+import { updatePassword, updateProfile } from "../../store/slices/authSlice";
 import TwoFactorSettings from "../../components/shared/TwoFactorSettings";
 import { addToast } from "../../store/slices/toastSlice";
 
 export default function StudentProfile() {
-  const { user } = useSelector(state => state.auth);
+  const { user, isLoading } = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
+  // Password State
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Profile Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: user?.name || "",
+    email: user?.email || ""
+  });
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -32,43 +40,30 @@ export default function StudentProfile() {
     }
   };
 
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(updateProfile(editForm)).unwrap();
+      dispatch(addToast({ title: "Success", message: "Profile updated successfully.", type: "success" }));
+      setIsEditing(false);
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err || "Failed to update profile.", type: "error" }));
+    }
+  };
+
   return (
     <div className="flex flex-col">
       <div className="mb-6 flex items-center gap-4">
-        <Link to="/student/dashboard" className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg bg-white border border-slate-200 shadow-sm">
+        <Link to={`/${user?.role || 'student'}/dashboard`} className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg bg-white border border-slate-200 shadow-sm">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">My Profile</h1>
       </div>
 
-      <main className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
+      <main className="max-w-3xl mx-auto p-4 md:p-8 space-y-6 w-full">
         
         {/* Personal Info */}
         <div className="card p-8 shadow-sm">
-          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-100">
-            <div className="w-20 h-20 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-3xl border-2 border-sky-200 shadow-sm">
-              {(user?.name || "Student").charAt(0)}
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">{user?.name || "Student Name"}</h2>
-              <p className="text-slate-500 font-medium mt-1">{user?.email || "No email provided"}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <p className="text-sm font-semibold text-slate-400 mb-1">Username / ID</p>
-              <p className="font-bold text-slate-700">{user?.username || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-400 mb-1">Department</p>
-              <p className="font-bold text-slate-700">{user?.info?.departmentId?.name || "N/A"}</p>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-400 mb-1">Batch / Semester</p>
-              <p className="font-bold text-slate-700">{user?.info?.batchId?.name || "N/A"}</p>
-            </div>
-            <div>
               <p className="text-sm font-semibold text-slate-400 mb-1">Section</p>
               <p className="font-bold text-slate-700">Section {user?.info?.section || "N/A"}</p>
             </div>

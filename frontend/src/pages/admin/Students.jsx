@@ -8,12 +8,20 @@ import EmptyState from "../../components/shared/EmptyState";
 
 export default function Students() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   const dispatch = useDispatch();
   const { students, isLoading } = useSelector((state) => state.student);
 
   useEffect(() => {
     dispatch(fetchStudents());
   }, [dispatch]);
+
+  // Handle pagination reset on search
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleResetPassword = async (id) => {
     if (!window.confirm("Are you sure you want to reset this student's password?")) return;
@@ -111,9 +119,18 @@ export default function Students() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {students
-                  .filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((student) => (
+                {(() => {
+                  const filteredStudents = students.filter(s => 
+                    s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    s.username?.toLowerCase().includes(searchTerm.toLowerCase())
+                  );
+                  
+                  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+                  const startIndex = (currentPage - 1) * itemsPerPage;
+                  const currentStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+
+                  return currentStudents.map((student) => (
                   <tr key={student._id} className="hover:bg-slate-50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -165,11 +182,38 @@ export default function Students() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ));
+                })()}
               </tbody>
             </table>
           )}
         </div>
+        
+        {/* Pagination Controls */}
+        {!isLoading && students && students.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="text-sm text-slate-500">
+              Showing <span className="font-semibold text-slate-700">{((currentPage - 1) * 10) + 1}</span> to <span className="font-semibold text-slate-700">{Math.min(currentPage * 10, students.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase())).length)}</span> of <span className="font-semibold text-slate-700">{students.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase())).length}</span> results
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button 
+                onClick={() => setCurrentPage(p => p + 1)}
+                disabled={currentPage >= Math.ceil(students.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase())).length / 10)}
+                className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       </div>
     </div>
   );

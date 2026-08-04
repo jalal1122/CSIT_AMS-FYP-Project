@@ -212,6 +212,64 @@ export const getActiveSession = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, session, "Active session retrieved"));
 });
 
+// @desc    Get all active sessions for Admin Monitor
+// @route   GET /api/v2/session/active-all
+// @access  Admin
+export const getActiveSessionsForAdmin = asyncHandler(async (req, res) => {
+  const sessions = await Session.find({
+    active: true,
+  })
+    .populate("teacherId", "name info.designation")
+    .populate({
+      path: "allocationId",
+      select: "subjectId batchId semester",
+      populate: [
+        { path: "subjectId", select: "name code" },
+        { path: "batchId", select: "name" },
+      ],
+    })
+    .sort({ startTime: -1 })
+    .lean();
+
+  // Also fetch attendance counts for each session
+  const sessionIds = sessions.map((s) => s._id);
+  const attendanceCounts = await Attendance.aggregate([
+    { $match: { sessionId: { $in: sessionIds } } },
+    {
+      $group: {
+        _id: "$sessionId",
+        total: { $sum: 1 },
+        present: {
+          $sum: {
+            $cond: [
+              { $in: ["$status", ["Present", "Present (Manual)", "Late"]] },
+              1,
+              0,
+            ],
+          },
+        },
+        suspicious: {
+          $sum: {
+            $cond: [{ $eq: ["$isSuspicious", true] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  const statsMap = attendanceCounts.reduce((acc, curr) => {
+    acc[curr._id.toString()] = curr;
+    return acc;
+  }, {});
+
+  const data = sessions.map((s) => ({
+    ...s,
+    stats: statsMap[s._id.toString()] || { total: 0, present: 0, suspicious: 0 },
+  }));
+
+  res.status(200).json(new ApiResponse(200, data, "Active sessions retrieved"));
+});
+
 // @desc    Get live attendance for a specific session
 // @route   GET /api/v2/session/:id/live
 // @access  Teacher

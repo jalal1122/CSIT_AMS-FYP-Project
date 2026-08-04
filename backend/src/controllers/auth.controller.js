@@ -803,3 +803,28 @@ export const updatePassword = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, {}, "Password updated successfully"));
 });
+
+/**
+ * Update Profile
+ * PATCH /api/v1/auth/update-profile
+ */
+export const updateProfile = asyncHandler(async (req, res) => {
+  const { name, email } = req.body;
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw ApiError.notFound("User not found");
+  }
+
+  if (name) user.name = name;
+  if (email && email !== user.email) {
+    const existing = await User.findOne({ email });
+    if (existing && existing._id.toString() !== user._id.toString()) {
+      throw ApiError.badRequest("Email is already in use");
+    }
+    user.email = email;
+  }
+
+  await user.save();
+  res.status(200).json(new ApiResponse(200, sanitizeUser(user), "Profile updated successfully"));
+});
