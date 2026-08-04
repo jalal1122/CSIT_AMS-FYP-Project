@@ -82,6 +82,8 @@ attendanceSchema.index({ allocationId: 1, date: 1 });
 attendanceSchema.index({ studentId: 1, date: 1 });
 attendanceSchema.index({ allocationId: 1, weekNumber: 1 });
 attendanceSchema.index({ allocationId: 1, month: 1, year: 1 });
+attendanceSchema.index({ allocationId: 1, status: 1 });
+attendanceSchema.index({ allocationId: 1, isSuspicious: 1 });
 
 // Pre-save hook to calculate weekNumber, month, year from date
 attendanceSchema.pre("save", function (next) {

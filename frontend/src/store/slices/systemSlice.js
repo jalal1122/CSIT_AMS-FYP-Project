@@ -19,14 +19,25 @@ export const fetchSettings = createAsyncThunk("system/fetchSettings", async (_, 
   }
 });
 
-export const fetchDepartments = createAsyncThunk("system/fetchDepartments", async (_, { rejectWithValue }) => {
-  try {
-    const res = await api.get("/api/v2/system/departments");
-    return res.data.data;
-  } catch (err) {
-    return rejectWithValue(err.response?.data?.message || "Failed to fetch departments");
+export const fetchDepartments = createAsyncThunk(
+  "system/fetchDepartments", 
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/v2/system/departments");
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch departments");
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { system } = getState();
+      if (system.departments && system.departments.length > 0) {
+        return false;
+      }
+    }
   }
-});
+);
 
 export const createDepartment = createAsyncThunk("system/createDepartment", async (data, { rejectWithValue }) => {
   try {
@@ -55,14 +66,25 @@ export const createSubject = createAsyncThunk("system/createSubject", async (dat
   }
 });
 
-export const fetchDisciplines = createAsyncThunk("system/fetchDisciplines", async (_, { rejectWithValue }) => {
-  try {
-    const res = await api.get("/api/v2/system/disciplines");
-    return res.data.data;
-  } catch (err) {
-    return rejectWithValue(err.response?.data?.message || "Failed to fetch disciplines");
+export const fetchDisciplines = createAsyncThunk(
+  "system/fetchDisciplines", 
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/v2/system/disciplines");
+      return res.data.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch disciplines");
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { system } = getState();
+      if (system.disciplines && system.disciplines.length > 0) {
+        return false;
+      }
+    }
   }
-});
+);
 
 export const createDiscipline = createAsyncThunk("system/createDiscipline", async (data, { rejectWithValue }) => {
   try {

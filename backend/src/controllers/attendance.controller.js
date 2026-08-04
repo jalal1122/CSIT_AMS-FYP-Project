@@ -187,6 +187,13 @@ export const insertBulkAttendance = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized for this session");
   }
 
+  const sessionDate = new Date(session.startTime);
+  const startDate = new Date(sessionDate.getFullYear(), 0, 1);
+  const days = Math.floor((sessionDate - startDate) / (24 * 60 * 60 * 1000));
+  const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
+  const month = sessionDate.getMonth() + 1;
+  const year = sessionDate.getFullYear();
+
   // Create an array of operations for bulkWrite
   const ops = attendanceRecords.map(record => ({
     updateOne: {
@@ -198,7 +205,10 @@ export const insertBulkAttendance = asyncHandler(async (req, res) => {
           section: session.sectionName,
           verificationMethod: "Manual",
           isSuspicious: false,
-          date: new Date(session.startTime)
+          date: sessionDate,
+          weekNumber,
+          month,
+          year
         }
       },
       upsert: true

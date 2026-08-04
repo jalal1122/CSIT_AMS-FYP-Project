@@ -88,6 +88,8 @@ const sessionSchema = new mongoose.Schema(
 // Indexes for faster queries
 sessionSchema.index({ allocationId: 1, active: 1 });
 sessionSchema.index({ teacherId: 1, createdAt: -1 });
+sessionSchema.index({ teacherId: 1, active: 1 });
+sessionSchema.index({ active: 1 });
 
 const Session = mongoose.model("Session", sessionSchema);
 

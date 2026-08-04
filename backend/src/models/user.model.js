@@ -138,6 +138,12 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
+// Create index on geometry for geolocation if needed
+// userSchema.index({ "location": "2dsphere" });
+
+userSchema.index({ role: 1, accountStatus: 1 });
+userSchema.index({ "info.batchId": 1, "info.section": 1 });
+
 const User = mongoose.model("User", userSchema);
 
 export default User;

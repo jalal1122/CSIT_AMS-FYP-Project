@@ -68,7 +68,8 @@ const initialState = {
   systemUsagePeaks: [],
   timeOfDayAbsenteeism: [],
   reportData: null,
-  isReportLoading: false,
+  isReportLoading: false, // Legacy, can be kept for compatibility
+  targetLoading: {},
   loading: false,
   error: null,
 };
@@ -98,15 +99,19 @@ const analyticsSlice = createSlice({
       })
       
       // V2 Reports Generate
-      .addCase(fetchV2Reports.pending, (state) => {
+      .addCase(fetchV2Reports.pending, (state, action) => {
         state.loading = true;
-        state.isReportLoading = true;
+        const { target } = action.meta.arg;
+        if (!state.targetLoading) state.targetLoading = {};
+        state.targetLoading[target] = true;
         state.error = null;
       })
       .addCase(fetchV2Reports.fulfilled, (state, action) => {
         state.loading = false;
-        state.isReportLoading = false;
         const { target, data } = action.payload;
+        if (!state.targetLoading) state.targetLoading = {};
+        state.targetLoading[target] = false;
+        
         if (target === "defaulter-matrix") {
           state.defaulterMatrix = data;
         } else if (target === "teacher-utilization") {
@@ -137,7 +142,9 @@ const analyticsSlice = createSlice({
       })
       .addCase(fetchV2Reports.rejected, (state, action) => {
         state.loading = false;
-        state.isReportLoading = false;
+        const { target } = action.meta.arg;
+        if (!state.targetLoading) state.targetLoading = {};
+        state.targetLoading[target] = false;
         state.error = action.payload;
       })
 
