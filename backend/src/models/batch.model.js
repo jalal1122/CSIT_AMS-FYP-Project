@@ -40,7 +40,12 @@ const batchSchema = new mongoose.Schema({
   previousSemester: {
     type: Number,
     default: null,
-  }
+  },
+  sections: [
+    {
+      name: { type: String, required: true }
+    }
+  ]
 }, { timestamps: true });
 
 batchSchema.index({ disciplineId: 1, currentSemester: 1 });

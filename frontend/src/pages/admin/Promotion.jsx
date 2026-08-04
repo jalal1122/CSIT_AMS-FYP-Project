@@ -51,7 +51,7 @@ export default function Promotion() {
           <h4 className="font-bold text-rose-800">High Impact Action</h4>
           <p className="text-sm text-rose-700 mt-1.5 leading-relaxed">
             Promoting a batch permanently closes all current active allocations and live sessions for that batch. 
-            Students will be moved to the next semester in the syllabus. This action cannot be easily undone.
+            Students will be moved to the next semester in the syllabus. Sections and student enrollments will be preserved, but you will need to assign courses and teachers for the new semester. This action cannot be easily undone.
           </p>
         </div>
       </div>

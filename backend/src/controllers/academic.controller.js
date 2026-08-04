@@ -68,6 +68,7 @@ export const createBatch = asyncHandler(async (req, res) => {
     startingYear: new Date().getFullYear(),
     maxStudentsPerSection: capacity,
     currentSemester: 1,
+    sections: sectionLabels.map(label => ({ name: label })),
   });
 
   // 7. Build user documents for insertMany
@@ -160,8 +161,14 @@ export const allocateCourse = asyncHandler(async (req, res) => {
       throw new ApiError(400, `Subject ${subjectId} is not in the syllabus for semester ${currentSemester}`);
     }
 
+    // Check if sections provided by admin; if not, use batch sections
+    let currentSections = sections && sections.length > 0 ? sections : batch.sections;
+    if (!currentSections || currentSections.length === 0) {
+      throw new ApiError(400, "No sections provided and batch has no saved sections.");
+    }
+
     // Verify all teachers exist
-    const teacherIds = sections.map(s => s.teacherId);
+    const teacherIds = currentSections.map(s => s.teacherId).filter(Boolean);
     const teachers = await User.find({ _id: { $in: teacherIds }, role: "teacher", accountStatus: "Active" });
     if (teachers.length !== Array.from(new Set(teacherIds)).length) {
       throw new ApiError(400, "One or more teachers are invalid or inactive");
@@ -169,11 +176,15 @@ export const allocateCourse = asyncHandler(async (req, res) => {
 
     // Fetch students to populate the section's students array
     const populatedSections = [];
-    for (const sec of sections) {
+    for (const sec of currentSections) {
+      if (!sec.teacherId) {
+        throw new ApiError(400, `Teacher ID is required for section ${sec.name}`);
+      }
       const students = await User.find({ 
         "info.batchId": batch._id, 
         "info.section": sec.name,
-        role: "student"
+        role: "student",
+        accountStatus: "Active"
       }).select("_id");
 
       populatedSections.push({
@@ -216,9 +227,16 @@ export const promoteBatch = asyncHandler(async (req, res) => {
     { $set: { isActive: false } }
   );
 
-  // 2. Increment batch semester
+  // 2. Increment batch semester and snapshot sections if missing
   batch.previousSemester = oldSemester;
   batch.currentSemester = newSemester;
+  if (!batch.sections || batch.sections.length === 0) {
+    const students = await User.aggregate([
+      { $match: { role: "student", "info.batchId": batch._id, "info.section": { $exists: true } } },
+      { $group: { _id: "$info.section" } }
+    ]);
+    batch.sections = students.filter(s => s._id).map(s => ({ name: s._id }));
+  }
   await batch.save();
 
   // 3. Sync all student semester values to the batch's new semester
