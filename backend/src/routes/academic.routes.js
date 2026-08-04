@@ -6,7 +6,7 @@ import * as academic from "../controllers/academic.controller.js";
 
 const router = Router();
 const adminOnly = [verifyJWT, hasRole(["admin"])];
-const teacherOnly = [verifyJWT, hasRole(["teacher"])];
+const teacherOnly = [verifyJWT, hasRole(["teacher", "admin"])];
 const studentOnly = [verifyJWT, hasRole(["student"])];
 
 router.post("/batch/create", ...adminOnly, uploadExcel, academic.createBatch);

@@ -4,6 +4,7 @@ import {
   endSession,
   generateQRToken,
   getActiveSession,
+  getSessionById,
   getLiveAttendance,
   updateSessionSecurity,
   createRetroactiveSession,
@@ -13,16 +14,18 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { hasRole } from "../middlewares/role.middleware.js";
 
 const router = Router();
-const teacherOnly = [verifyJWT, hasRole(["teacher"])];
+const teacherOnly = [verifyJWT, hasRole(["teacher", "admin"])];
 const adminOnly = [verifyJWT, hasRole(["admin"])];
 
 router.get("/active-all", ...adminOnly, getActiveSessionsForAdmin);
+router.get("/active", ...teacherOnly, getActiveSession);
 router.post("/start", ...teacherOnly, startSession);
 router.post("/retroactive", ...teacherOnly, createRetroactiveSession);
+router.get("/:id", ...teacherOnly, getSessionById);
 router.post("/:id/end", ...teacherOnly, endSession);
 router.put("/:id/security", ...teacherOnly, updateSessionSecurity);
 router.get("/:id/qr", ...teacherOnly, generateQRToken);
-router.get("/active", ...teacherOnly, getActiveSession);
+router.get("/:id/live", ...teacherOnly, getLiveAttendance);
 router.get("/:id/live", ...teacherOnly, getLiveAttendance);
 
 export default router;

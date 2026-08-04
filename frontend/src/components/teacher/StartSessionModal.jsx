@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { X, MapPin, QrCode, PlayCircle, Settings, Crosshair } from "lucide-react";
-import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { addToast } from "../../store/slices/toastSlice";
 
 export default function StartSessionModal({ isOpen, onClose, onStart, className }) {
+  const dispatch = useDispatch();
   const [sessionType, setSessionType] = useState("Lecture");
   const [radius, setRadius] = useState(50);
   const [manualApproval, setManualApproval] = useState(false);
@@ -21,7 +23,7 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
     // Only fetch location if Geofencing is used (radius > 0)
     if (finalRadius > 0) {
       if (!navigator.geolocation) {
-        toast.error("Geolocation is not supported by your browser.");
+        dispatch(addToast({ title: "Error", message: "Geolocation is not supported by your browser.", type: "error" }));
         return;
       }
       
@@ -37,7 +39,7 @@ export default function StartSessionModal({ isOpen, onClose, onStart, className 
         },
         (error) => {
           setIsLocating(false);
-          toast.error("Unable to retrieve your location for geofencing. Please check permissions.");
+          dispatch(addToast({ title: "Error", message: "Unable to retrieve your location for geofencing. Please check permissions.", type: "error" }));
           console.error("Geolocation error:", error);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }

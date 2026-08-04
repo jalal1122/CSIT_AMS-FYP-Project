@@ -29,9 +29,9 @@ export default function AdminLiveMonitor() {
 
   const filteredSessions = sessions.filter(
     (s) =>
-      s.allocationId.subjectId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.teacherId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.allocationId.subjectId.code.toLowerCase().includes(searchTerm.toLowerCase())
+      s.allocationId?.subjectId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.teacherId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.allocationId?.subjectId?.code?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -51,7 +51,7 @@ export default function AdminLiveMonitor() {
           <input
             type="text"
             placeholder="Search subject or teacher..."
-            className="input-field pl-9"
+            className="input pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

@@ -68,9 +68,8 @@ const initialState = {
   systemUsagePeaks: [],
   timeOfDayAbsenteeism: [],
   reportData: null,
-  isReportLoading: false, // Legacy, can be kept for compatibility
   targetLoading: {},
-  loading: false,
+  isLoading: false,
   error: null,
 };
 
@@ -86,28 +85,28 @@ const analyticsSlice = createSlice({
     builder
       // Dashboard Stats
       .addCase(fetchDashboardStats.pending, (state) => {
-        state.loading = true;
+        state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchDashboardStats.fulfilled, (state, action) => {
-        state.loading = false;
+        state.isLoading = false;
         state.dashboardStats = action.payload;
       })
       .addCase(fetchDashboardStats.rejected, (state, action) => {
-        state.loading = false;
+        state.isLoading = false;
         state.error = action.payload;
       })
       
       // V2 Reports Generate
       .addCase(fetchV2Reports.pending, (state, action) => {
-        state.loading = true;
+        state.isLoading = true;
         const { target } = action.meta.arg;
         if (!state.targetLoading) state.targetLoading = {};
         state.targetLoading[target] = true;
         state.error = null;
       })
       .addCase(fetchV2Reports.fulfilled, (state, action) => {
-        state.loading = false;
+        state.isLoading = false;
         const { target, data } = action.payload;
         if (!state.targetLoading) state.targetLoading = {};
         state.targetLoading[target] = false;
@@ -141,7 +140,7 @@ const analyticsSlice = createSlice({
         }
       })
       .addCase(fetchV2Reports.rejected, (state, action) => {
-        state.loading = false;
+        state.isLoading = false;
         const { target } = action.meta.arg;
         if (!state.targetLoading) state.targetLoading = {};
         state.targetLoading[target] = false;
@@ -150,14 +149,14 @@ const analyticsSlice = createSlice({
 
       // V2 Reports Export
       .addCase(exportV2Report.pending, (state) => {
-        state.loading = true;
+        state.isLoading = true;
         state.error = null;
       })
       .addCase(exportV2Report.fulfilled, (state) => {
-        state.loading = false;
+        state.isLoading = false;
       })
       .addCase(exportV2Report.rejected, (state, action) => {
-        state.loading = false;
+        state.isLoading = false;
         state.error = action.payload;
       });
   },

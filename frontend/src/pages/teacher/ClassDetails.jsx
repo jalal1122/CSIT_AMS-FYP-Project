@@ -14,11 +14,6 @@ export default function ClassDetails() {
   const dispatch = useDispatch();
   const { classDetails, isLoading } = useSelector(state => state.teacher);
 
-  useEffect(() => {
-    dispatch(fetchClassDetails({ allocationId, sectionName }));
-    return () => dispatch(clearClassDetails());
-  }, [dispatch, allocationId, sectionName]);
-
   const [localSessions, setLocalSessions] = useState([]);
   const [skip, setSkip] = useState(10);
   const [hasMore, setHasMore] = useState(true);

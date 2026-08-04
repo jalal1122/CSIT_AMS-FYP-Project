@@ -212,6 +212,27 @@ export const getActiveSession = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, session, "Active session retrieved"));
 });
 
+// @desc    Get session details by ID
+// @route   GET /api/v2/session/:id
+// @access  Teacher, Admin
+export const getSessionById = asyncHandler(async (req, res) => {
+  const session = await Session.findById(req.params.id)
+    .populate({
+      path: "allocationId",
+      populate: [
+        { path: "subjectId", select: "name code" },
+        { path: "batchId", select: "name" }
+      ]
+    })
+    .lean();
+
+  if (!session) {
+    throw new ApiError(404, "Session not found");
+  }
+
+  res.status(200).json(new ApiResponse(200, session, "Session retrieved successfully"));
+});
+
 // @desc    Get all active sessions for Admin Monitor
 // @route   GET /api/v2/session/active-all
 // @access  Admin

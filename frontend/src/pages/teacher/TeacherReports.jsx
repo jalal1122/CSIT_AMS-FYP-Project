@@ -12,7 +12,13 @@ import { LayoutDashboard, FileSpreadsheet } from "lucide-react";
 
 export default function TeacherReports() {
   const dispatch = useDispatch();
-  const { reportData, isReportLoading } = useSelector(state => state.analytics);
+  const { 
+    dashboardStats, 
+    reportData, 
+    isLoading, // Standardized property name
+    targetLoading, 
+    error 
+  } = useSelector((state) => state.analytics);
   const { user } = useSelector(state => state.auth);
 
   const [hasSearched, setHasSearched] = useState(false);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { BookOpen, Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar, LayoutDashboard } from "lucide-react";
+import { Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
 import NotificationCenter from "../../components/layout/NotificationCenter";
@@ -28,8 +28,8 @@ export default function TeacherDashboard() {
   const [filterSection, setFilterSection] = useState("");
 
   const filteredPastClasses = pastClasses.filter(session => {
-    const matchesSearch = session.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          session.section.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = session.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          session.section?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesSubject = filterSubject ? session.subject === filterSubject : true;
     const matchesSection = filterSection ? session.section === filterSection : true;
     return matchesSearch && matchesSubject && matchesSection;
@@ -300,7 +300,10 @@ export default function TeacherDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link to={`/teacher/class/${session.allocationId || 'unknown'}/${session.section}?session=${session._id}`} className="text-sm text-sky-600 hover:text-sky-700 hover:underline font-semibold transition-colors">
+                          <Link 
+                            to={`/teacher/class/${session.allocationId}/${session.section}/history`}
+                            className="text-sm text-sky-600 hover:text-sky-700 hover:underline font-semibold transition-colors"
+                          >
                             View Details
                           </Link>
                         </td>

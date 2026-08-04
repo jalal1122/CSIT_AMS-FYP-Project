@@ -26,16 +26,32 @@ const NotificationCenter = () => {
     if (user) {
       dispatch(fetchNotifications());
       
-      // Join user specific room
-      socket.emit("join-user", user._id);
+      // Ensure socket is connected before emitting
+      if (!socket.connected) {
+        socket.connect();
+      }
+
+      const onConnect = () => {
+        socket.emit("join-user", user._id);
+      };
+
+      if (socket.connected) {
+        onConnect();
+      } else {
+        socket.on("connect", onConnect);
+      }
 
       socket.on("new_notification", (notification) => {
         dispatch(addNotification(notification));
       });
 
       return () => {
-        socket.emit("leave-user", user._id);
+        socket.off("connect", onConnect);
         socket.off("new_notification");
+        if (socket.connected) {
+          socket.emit("leave-user", user._id);
+          socket.disconnect();
+        }
       };
     }
   }, [dispatch, user]);

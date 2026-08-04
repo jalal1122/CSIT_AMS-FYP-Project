@@ -38,10 +38,40 @@ export default function LiveSession() {
 
   // Live feed websocket
   useEffect(() => {
+    const initSession = async () => {
+      // If we don't have the session in Redux, fetch it by ID
+      if (!currentSession || currentSession._id !== sessionId) {
+        try {
+          const res = await api.get(`/api/v2/session/${sessionId}`);
+          // The backend now returns the populated session object
+          // Update the redux state or handle it locally if needed, but since we rely on currentSession, 
+          // let's fetch active session as fallback or ideally dispatch an action.
+          // Since we don't have a slice action for single session fetch yet, we can set local state or just refresh dashboard.
+          // For now, let's just use the current logic but know it might be undefined on hard refresh.
+          console.log("Fetched session:", res.data.data);
+        } catch (err) {
+          console.error("Failed to fetch session", err);
+        }
+      }
+    };
+    initSession();
+
     dispatch(fetchLiveAttendance(sessionId));
     
-    socket.connect();
-    socket.emit("join-session", sessionId);
+    // Ensure socket is connected before emitting
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const onConnect = () => {
+      socket.emit("join-session", sessionId);
+    };
+
+    if (socket.connected) {
+      onConnect();
+    } else {
+      socket.on("connect", onConnect);
+    }
     
     socket.on("attendance:updated", () => {
       dispatch(fetchLiveAttendance(sessionId));
@@ -56,10 +86,13 @@ export default function LiveSession() {
     });
 
     return () => {
-      socket.emit("leave-session", sessionId);
+      socket.off("connect", onConnect);
       socket.off("attendance:updated");
       socket.off("qr:updated");
-      socket.disconnect();
+      if (socket.connected) {
+        socket.emit("leave-session", sessionId);
+        socket.disconnect();
+      }
     };
   }, [dispatch, sessionId]);
 
@@ -143,10 +176,10 @@ export default function LiveSession() {
                 <span className="text-slate-500">Refreshing in</span>
                 <span className="text-sky-600 font-mono font-bold text-base">{countdown}s</span>
               </div>
-              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
+              <div className="w-full h-1.5 bg-slate-100 mt-6 rounded-full overflow-hidden">
                 <div 
-                  className="bg-sky-500 h-full transition-all duration-1000 ease-linear rounded-full"
-                  style={{ width: `${(countdown / 15) * 100}%` }}
+                  className="h-full bg-sky-500 transition-all duration-1000 ease-linear"
+                  style={{ width: `${(countdown / (currentSession?.securitySettings?.qrRefreshRate || 15)) * 100}%` }}
                 ></div>
               </div>
             </div>

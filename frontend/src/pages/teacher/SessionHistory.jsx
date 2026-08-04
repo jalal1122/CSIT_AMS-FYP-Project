@@ -4,8 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock, Edit2, Info, Users, Trash2, History } from "lucide-react";
 import api from "../../services/api";
 import EmptyState from "../../components/shared/EmptyState";
-
-import toast from "react-hot-toast";
+import { addToast } from "../../store/slices/toastSlice";
 
 export default function SessionHistory() {
   const { allocationId, sectionName } = useParams();
@@ -23,7 +22,7 @@ export default function SessionHistory() {
       setSessions(res.data.data.sessions || res.data.data);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load session history");
+      dispatch(addToast({ title: "Error", message: "Failed to load session history", type: "error" }));
     } finally {
       setIsLoading(false);
     }
@@ -32,11 +31,12 @@ export default function SessionHistory() {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this session? This will remove attendance for all students in this session.")) return;
     try {
-      await api.delete(`/api/v2/sessions/${id}`);
-      toast.success("Session deleted successfully");
+      // Keep using the correct route here if it exists in backend, else it will 404. We will add a session delete route in Phase 3 if missing.
+      await api.delete(`/api/v2/session/${id}`);
+      dispatch(addToast({ title: "Success", message: "Session deleted successfully", type: "success" }));
       fetchSessions();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to delete session");
+      dispatch(addToast({ title: "Error", message: err.response?.data?.message || "Failed to delete session", type: "error" }));
     }
   };
 
