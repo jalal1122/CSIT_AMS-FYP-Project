@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, Clock, Edit2, Info, Users, Trash2, History } from 
 import api from "../../services/api";
 import EmptyState from "../../components/shared/EmptyState";
 import { addToast } from "../../store/slices/toastSlice";
+import { formatPKTDate, formatPKTTime } from "../../utils/dateUtils";
 
 export default function SessionHistory() {
   const { allocationId, sectionName } = useParams();
@@ -81,10 +82,10 @@ export default function SessionHistory() {
                           <Calendar className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800 text-sm">{new Date(session.startTime).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+                          <p className="font-bold text-slate-800 text-sm">{formatPKTDate(session.startTime, { month: 'short', day: '2-digit', year: 'numeric' })}</p>
                           <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
                             <Clock className="w-3.5 h-3.5" />
-                            {new Date(session.startTime).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })} - {session.endTime ? new Date(session.endTime).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Ongoing'}
+                            {formatPKTTime(session.startTime, { hour: '2-digit', minute: '2-digit', hour12: true })} - {session.endTime ? formatPKTTime(session.endTime, { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Ongoing'}
                           </div>
                         </div>
                       </div>

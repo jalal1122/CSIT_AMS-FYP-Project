@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Smartphone, ScanLine, AlertCircle, CheckCircle } from "lucide-react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import api from "../../services/api";
+import { formatPKTTime } from "../../utils/dateUtils";
 
 export default function ScanAttendance() {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ export default function ScanAttendance() {
         setSuccessData({
           subject: res.data.data.subjectName || "Subject",
           section: res.data.data.sectionName || res.data.data.section,
-          time: new Date().toLocaleTimeString()
+          time: formatPKTTime(new Date())
         });
         setStatus("success");
       } catch (error) {

@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { fetchClassDetails, clearClassDetails } from "../../store/slices/teacherSlice";
 import StudentReportModal from "../../components/teacher/StudentReportModal";
 import RetroactiveSessionModal from "../../components/teacher/RetroactiveSessionModal";
+import { formatPKTDate } from "../../utils/dateUtils";
 
 export default function ClassDetails() {
   const { allocationId, sectionName } = useParams();
@@ -60,7 +61,7 @@ export default function ClassDetails() {
     csvData += `Batch,${batch?.name}\n`;
     csvData += `Section,${section}\n`;
     csvData += `Semester,${semester}\n`;
-    csvData += `Export Date,${new Date().toLocaleDateString()}\n\n`;
+    csvData += `Export Date,${formatPKTDate(new Date())}\n\n`;
     
     csvData += "Roll No,Name,Present,Total,Percentage\n";
     const rows = students.map(s => {

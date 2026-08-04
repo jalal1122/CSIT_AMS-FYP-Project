@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Download, Shield, MapPin, Activity, Smartphone } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
+import { formatPKTDateTime } from "../../utils/dateUtils";
 import ReportFilterBar from "../../components/reports/ReportFilterBar";
 import { fetchV2Reports, exportV2Report } from "../../store/slices/analyticsSlice";
 import EmptyState from "../../components/shared/EmptyState";
@@ -145,7 +146,7 @@ export default function SecurityAnalytics() {
                     {deviceBindingAudit.slice(0, 10).map((record) => (
                       <tr key={record._id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
                         <td className="px-4 py-3 font-medium text-slate-700">
-                          {new Date(record.resetDate).toLocaleString("en-US", { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}
+                          {formatPKTDateTime(record.resetDate, { month: "short", day: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })}
                         </td>
                         <td className="px-4 py-3">{record.studentName} <span className="text-slate-400">({record.rollNo})</span></td>
                         <td className="px-4 py-3 text-slate-600">{record.reason}</td>

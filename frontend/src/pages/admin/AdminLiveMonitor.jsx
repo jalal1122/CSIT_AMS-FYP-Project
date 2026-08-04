@@ -3,6 +3,7 @@ import { PlayCircle, Users, Activity, Loader2, MapPin, Search } from "lucide-rea
 import api from "../../services/api";
 import { useDispatch } from "react-redux";
 import { addToast } from "../../store/slices/toastSlice";
+import { formatPKTTime } from "../../utils/dateUtils";
 
 export default function AdminLiveMonitor() {
   const [sessions, setSessions] = useState([]);
@@ -126,7 +127,7 @@ export default function AdminLiveMonitor() {
 
                 <div className="text-xs text-slate-400 flex items-center gap-1.5 mt-2">
                   <MapPin className="w-3.5 h-3.5" />
-                  Started at {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  Started at {formatPKTTime(session.startTime, { hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </div>

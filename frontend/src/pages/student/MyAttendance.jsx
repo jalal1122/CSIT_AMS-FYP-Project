@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Calendar, CheckCircle, XCircle, Clock, Info } from "lucide-react";
 import api from "../../services/api";
+import { formatPKTDate, formatPKTTime } from "../../utils/dateUtils";
 import EmptyState from "../../components/shared/EmptyState";
 
 
@@ -88,8 +89,8 @@ export default function MyAttendance() {
                           <Calendar className="w-5 h-5" />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800 text-sm">{new Date(session.date).toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-                          <p className="text-xs font-medium text-slate-500">{new Date(session.date).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                          <p className="font-bold text-slate-800 text-sm">{formatPKTDate(session.date, { month: 'short', day: '2-digit', year: 'numeric' })}</p>
+                          <p className="text-xs font-medium text-slate-500">{formatPKTTime(session.date, { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                         </div>
                       </div>
                     </td>
@@ -110,7 +111,7 @@ export default function MyAttendance() {
                     <td className="px-6 py-4 text-sm text-slate-500">
                       {session.markedAt ? (
                         <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" /> {new Date(session.markedAt).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          <Clock className="w-3.5 h-3.5" /> {formatPKTTime(session.markedAt, { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </div>
                       ) : "-"}
                     </td>
