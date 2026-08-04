@@ -116,20 +116,30 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
       $group: {
         _id: "$studentId",
         name: { $first: "$studentInfo.name" },
+        email: { $first: "$studentInfo.email" },
         rollNo: { $first: "$studentInfo.info.rollNo" },
-        discipline: { $first: "$studentInfo.info.discipline" },
+        batch: { $first: "$batchInfo.name" },
+        department: { $first: "$departmentInfo.name" },
+        discipline: { $first: "$disciplineInfo.name" },
         totalScans: { $sum: 1 },
-        presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
+        presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } },
+        absents: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } },
+        leaves: { $sum: { $cond: [{ $eq: ["$status", "Leave"] }, 1, 0] } }
       }
     },
     {
       $project: {
         _id: 1,
         name: 1,
+        email: 1,
         rollNo: 1,
+        batch: 1,
+        department: 1,
         discipline: 1,
         totalScans: 1,
         presents: 1,
+        absents: 1,
+        leaves: 1,
         attendancePercentage: {
           $cond: [
             { $gt: ["$totalScans", 0] },
@@ -153,7 +163,8 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
         subjectName: { $first: "$subjectInfo.name" },
         subjectCode: { $first: "$subjectInfo.code" },
         totalScans: { $sum: 1 },
-        presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
+        presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } },
+        absents: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } }
       }
     },
     {
@@ -163,6 +174,7 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
         subjectCode: 1,
         totalScans: 1,
         presents: 1,
+        absents: 1,
         attendancePercentage: {
           $cond: [
             { $gt: ["$totalScans", 0] },
@@ -208,6 +220,33 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
       }
     },
     { $unwind: { path: "$subjectInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "batches",
+        localField: "allocation.batchId",
+        foreignField: "_id",
+        as: "batchInfo",
+      }
+    },
+    { $unwind: { path: "$batchInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "departments",
+        localField: "batchInfo.departmentId",
+        foreignField: "_id",
+        as: "departmentInfo",
+      }
+    },
+    { $unwind: { path: "$departmentInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "disciplines",
+        localField: "batchInfo.disciplineId",
+        foreignField: "_id",
+        as: "disciplineInfo",
+      }
+    },
+    { $unwind: { path: "$disciplineInfo", preserveNullAndEmptyArrays: true } },
     {
       $facet: {
         // 1. Overall Attendance Summary

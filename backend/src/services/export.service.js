@@ -44,9 +44,14 @@ class ExportService {
     studentSheet.columns = [
       { header: "Roll No", key: "rollNo", width: 15 },
       { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Batch", key: "batch", width: 20 },
+      { header: "Department", key: "department", width: 20 },
       { header: "Discipline", key: "discipline", width: 15 },
       { header: "Total Scans", key: "totalScans", width: 15 },
       { header: "Presents", key: "presents", width: 15 },
+      { header: "Absents", key: "absents", width: 15 },
+      { header: "Leaves", key: "leaves", width: 15 },
       { header: "Attendance %", key: "attendancePercentage", width: 15 }
     ];
     studentSheet.getRow(1).font = { bold: true, color: { argb: ExportService.COLORS.headerText } };
@@ -56,9 +61,14 @@ class ExportService {
       const row = studentSheet.addRow({
         rollNo: s.rollNo,
         name: s.name,
+        email: s.email,
+        batch: s.batch,
+        department: s.department,
         discipline: s.discipline,
         totalScans: s.totalScans,
         presents: s.presents,
+        absents: s.absents,
+        leaves: s.leaves,
         attendancePercentage: s.attendancePercentage + "%"
       });
       // Highlight low attendance
@@ -75,6 +85,7 @@ class ExportService {
       { header: "Subject Name", key: "subjectName", width: 35 },
       { header: "Total Scans", key: "totalScans", width: 15 },
       { header: "Presents", key: "presents", width: 15 },
+      { header: "Absents", key: "absents", width: 15 },
       { header: "Attendance %", key: "attendancePercentage", width: 15 }
     ];
     subjectSheet.getRow(1).font = { bold: true, color: { argb: ExportService.COLORS.headerText } };
@@ -86,6 +97,30 @@ class ExportService {
         subjectName: s.subjectName,
         totalScans: s.totalScans,
         presents: s.presents,
+        absents: s.absents,
+        attendancePercentage: s.attendancePercentage + "%"
+      });
+    });
+
+    // 4. Defaulters Sheet (At-Risk Students < 75%)
+    const defaultersSheet = workbook.addWorksheet("Defaulters (<75%)");
+    defaultersSheet.columns = [
+      { header: "Roll No", key: "rollNo", width: 15 },
+      { header: "Name", key: "name", width: 25 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Batch", key: "batch", width: 20 },
+      { header: "Attendance %", key: "attendancePercentage", width: 15 }
+    ];
+    defaultersSheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+    defaultersSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: "FFDC2626" } }; // Red header
+
+    const defaulters = report.students.filter(s => s.attendancePercentage < 75);
+    defaulters.forEach(s => {
+      defaultersSheet.addRow({
+        rollNo: s.rollNo,
+        name: s.name,
+        email: s.email,
+        batch: s.batch,
         attendancePercentage: s.attendancePercentage + "%"
       });
     });

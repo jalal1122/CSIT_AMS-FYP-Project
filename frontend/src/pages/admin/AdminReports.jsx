@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import UniversalFilterSidebar from "../../components/reports/UniversalFilterSidebar";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchV2Reports } from "../../store/slices/analyticsSlice";
-import { AlertTriangle, Users, BookOpen, Fingerprint } from "lucide-react";
+import { fetchV2Reports, exportV2Report } from "../../store/slices/analyticsSlice";
+import { AlertTriangle, Users, BookOpen, Fingerprint, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 import EmptyState from "../../components/shared/EmptyState";
 
@@ -10,14 +10,26 @@ export default function AdminReports() {
   const dispatch = useDispatch();
   const { reportData, isReportLoading } = useSelector(state => state.analytics);
   const [hasSearched, setHasSearched] = useState(false);
+  const [currentPayload, setCurrentPayload] = useState(null);
 
   const handleFilterChange = (payload) => {
+    setCurrentPayload(payload);
     dispatch(fetchV2Reports({
       target: "universal",
       timeframe: payload.timeframe,
       filters: payload.filters
     }));
     setHasSearched(true);
+  };
+
+  const handleExport = () => {
+    if (!currentPayload) return;
+    dispatch(exportV2Report({
+      target: "universal",
+      timeframe: currentPayload.timeframe,
+      filters: currentPayload.filters,
+      format: "xlsx"
+    }));
   };
 
   const summary = reportData?.summary?.[0] || {};
@@ -36,6 +48,18 @@ export default function AdminReports() {
           <h2 className="text-2xl font-bold text-slate-800">Global Analytics & Reports</h2>
           <p className="text-slate-500 text-sm mt-1">Analyze multi-level attendance trends and defaulters.</p>
         </div>
+        <button 
+          onClick={handleExport}
+          disabled={!hasSearched || isReportLoading}
+          className="btn-outline flex items-center gap-2 px-4 py-2 disabled:opacity-50"
+        >
+          {isReportLoading ? (
+            <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          Export to Excel
+        </button>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
