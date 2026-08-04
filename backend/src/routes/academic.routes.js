@@ -12,6 +12,7 @@ const studentOnly = [verifyJWT, hasRole(["student"])];
 router.post("/batch/create", ...adminOnly, uploadExcel, academic.createBatch);
 router.get("/batches", ...adminOnly, academic.getBatches);
 router.get("/batch/:id", ...adminOnly, academic.getBatch);
+router.get("/batch/:id/sections", ...adminOnly, academic.getBatchSections);
 router.post("/batch/:id/promote", ...adminOnly, academic.promoteBatch);
 router.post("/batch/:id/rollback", ...adminOnly, academic.rollbackPromotion);
 

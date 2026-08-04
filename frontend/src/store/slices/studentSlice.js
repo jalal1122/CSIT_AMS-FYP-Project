@@ -3,6 +3,7 @@ import api from "../../services/api.js";
 
 const initialState = {
   students: [],
+  batchSections: [],
   dashboardData: null,
   historyData: null,
   isLoading: false,
@@ -79,6 +80,15 @@ export const fetchStudentHistory = createAsyncThunk("student/fetchHistory", asyn
   }
 });
 
+export const fetchBatchSections = createAsyncThunk("student/fetchBatchSections", async (batchId, { rejectWithValue }) => {
+  try {
+    const res = await api.get(`/api/v2/academic/batch/${batchId}/sections`);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to fetch batch sections");
+  }
+});
+
 const studentSlice = createSlice({
   name: "student",
   initialState,
@@ -101,6 +111,11 @@ const studentSlice = createSlice({
     builder.addCase(fetchStudentHistory.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchStudentHistory.fulfilled, (state, { payload }) => { state.isLoading = false; state.historyData = payload; });
     builder.addCase(fetchStudentHistory.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+
+    // Batch Sections
+    builder.addCase(fetchBatchSections.pending, (state) => { state.isLoading = true; });
+    builder.addCase(fetchBatchSections.fulfilled, (state, { payload }) => { state.isLoading = false; state.batchSections = payload; });
+    builder.addCase(fetchBatchSections.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
   },
 });
 

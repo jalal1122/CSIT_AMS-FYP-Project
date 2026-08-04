@@ -312,6 +312,17 @@ export const getBatches = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, batches, "Batches retrieved successfully"));
 });
 
+// @desc    Get sections of a batch
+// @route   GET /api/v2/academic/batch/:id/sections
+// @access  Admin
+export const getBatchSections = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+  
+  res.status(200).json(new ApiResponse(200, batch.sections || [], "Batch sections retrieved successfully"));
+});
+
 // @desc    Get batch details
 // @route   GET /api/v2/academic/batch/:id
 // @access  Admin
