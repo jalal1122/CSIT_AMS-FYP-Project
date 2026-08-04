@@ -66,9 +66,18 @@ export const fetchAllocations = createAsyncThunk("academic/fetchAllocations", as
 export const assignAllocations = createAsyncThunk("academic/assignAllocations", async (data, { rejectWithValue }) => {
   try {
     const res = await api.post("/api/v2/academic/allocation/assign", data);
-    return res.data.data;
+    return res.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to assign allocations");
+  }
+});
+
+export const toggleRetroactivePermission = createAsyncThunk("academic/toggleRetroactive", async ({ id, sectionName, allowRetroactiveSessions }, { rejectWithValue }) => {
+  try {
+    const res = await api.patch(`/api/v2/admin/allocation/${id}/retroactive`, { sectionName, allowRetroactiveSessions });
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to toggle permission");
   }
 });
 

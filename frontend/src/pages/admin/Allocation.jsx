@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBatches, fetchBatchDetails, fetchAllocations, assignAllocations } from "../../store/slices/academicSlice.js";
+import { fetchBatches, fetchBatchDetails, fetchAllocations, assignAllocations, toggleRetroactivePermission } from "../../store/slices/academicSlice.js";
 import { fetchTeachers } from "../../store/slices/facultySlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
 import { Check, ClipboardList, AlertTriangle, AlertCircle } from "lucide-react";
@@ -11,6 +11,8 @@ import Badge from "../../components/shared/Badge";
 export default function Allocation() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const [assignments, setAssignments] = useState({}); // { subjectId: { "A": teacherId } }
+  const [retroactive, setRetroactive] = useState({}); // { subjectId: { "A": boolean } }
+  const [allocationIds, setAllocationIds] = useState({}); // { subjectId: allocationId }
   
   const dispatch = useDispatch();
   const { batches, currentBatch, allocations, isLoading } = useSelector((state) => state.academic);
@@ -31,15 +33,25 @@ export default function Allocation() {
   useEffect(() => {
     if (allocations && allocations.length > 0) {
       const initialAssignments = {};
+      const initialRetroactive = {};
+      const allocIds = {};
       allocations.forEach(alloc => {
-        initialAssignments[alloc.subjectId?._id] = {};
+        const subId = alloc.subjectId?._id || alloc.subjectId;
+        initialAssignments[subId] = {};
+        initialRetroactive[subId] = {};
+        allocIds[subId] = alloc._id;
         alloc.sections.forEach(sec => {
-          initialAssignments[alloc.subjectId?._id][sec.name] = sec.teacherId?._id || sec.teacherId;
+          initialAssignments[subId][sec.name] = sec.teacherId?._id || sec.teacherId;
+          initialRetroactive[subId][sec.name] = sec.allowRetroactiveSessions || false;
         });
       });
       setAssignments(initialAssignments);
+      setRetroactive(initialRetroactive);
+      setAllocationIds(allocIds);
     } else {
       setAssignments({});
+      setRetroactive({});
+      setAllocationIds({});
     }
   }, [allocations]);
 
@@ -51,6 +63,30 @@ export default function Allocation() {
         [section]: teacherId
       }
     }));
+  };
+
+  const handleRetroToggle = async (subjectId, section, currentValue) => {
+    const allocationId = allocationIds[subjectId];
+    if (!allocationId) {
+      dispatch(addToast({ title: "Save Required", message: "Please save the teacher assignment first", type: "warning" }));
+      return;
+    }
+    
+    try {
+      // dynamic import of action if needed, or use the one we add to imports
+      // wait, we need to import it at the top
+      await dispatch(toggleRetroactivePermission({ id: allocationId, sectionName: section, allowRetroactiveSessions: !currentValue })).unwrap();
+      setRetroactive(prev => ({
+        ...prev,
+        [subjectId]: {
+          ...(prev[subjectId] || {}),
+          [section]: !currentValue
+        }
+      }));
+      dispatch(addToast({ title: "Success", message: "Retroactive permission updated", type: "success" }));
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: err || "Failed to update permission", type: "error" }));
+    }
   };
 
   const handleSaveAllocations = async () => {
@@ -189,6 +225,25 @@ export default function Allocation() {
                               })
                             }}
                           />
+                          
+                          <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                            <div>
+                              <span className="text-xs font-semibold text-slate-700 block">Retroactive Sessions</span>
+                              <span className="text-[10px] text-slate-500">Allow past attendance</span>
+                            </div>
+                            <button
+                              onClick={() => handleRetroToggle(subject._id, section, retroactive[subject._id]?.[section] || false)}
+                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                retroactive[subject._id]?.[section] ? "bg-emerald-500" : "bg-slate-300"
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                  retroactive[subject._id]?.[section] ? "translate-x-4.5" : "translate-x-1"
+                                }`}
+                              />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
