@@ -167,7 +167,7 @@ export const exportReport = asyncHandler(async (req, res) => {
       throw new ApiError(400, "Invalid export target");
   }
 
-  if (!data || data.length === 0) {
+  if (!data || data.length === 0 || (target === "universal" && data[0]?.students?.length === 0)) {
     throw new ApiError(404, "No data to export");
   }
 

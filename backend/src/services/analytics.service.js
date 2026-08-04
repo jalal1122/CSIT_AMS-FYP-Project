@@ -351,7 +351,7 @@ export const getInterDisciplineBenchmark = async (matchQuery) => {
         _id: "$batch.disciplineId",
         total: { $sum: 1 },
         present: {
-          $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] },
+          $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] },
         },
       }
     },
@@ -462,7 +462,7 @@ export const getRepeaterMatrix = async (matchQuery) => {
         rollNo: { $first: "$studentInfo.info.rollNo" },
         subjectId: { $first: "$allocation.subjectId" },
         total: { $sum: 1 },
-        present: { $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] } }
+        present: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } }
       }
     },
     {
