@@ -28,10 +28,15 @@ export default function RetroactiveSessionModal({ isOpen, onClose, allocationId,
       return;
     }
     
+    if (!students || students.length === 0) {
+      dispatch(addToast({ title: "Error", message: "No students enrolled in this section. Please add students first.", type: "error" }));
+      return;
+    }
+    
     // Set default attendance to Present for everyone
     const defaultAttendance = {};
     students.forEach(s => {
-      defaultAttendance[s.id] = "Present";
+      defaultAttendance[s.id || s._id] = "Present";
     });
     setAttendance(defaultAttendance);
     setStep(2);
@@ -61,6 +66,12 @@ export default function RetroactiveSessionModal({ isOpen, onClose, allocationId,
         studentId,
         status: status === "Present" ? "Present (Manual)" : "Absent"
       }));
+
+      if (attendanceRecords.length === 0) {
+        dispatch(addToast({ title: "Error", message: "No attendance records to save.", type: "error" }));
+        setIsSubmitting(false);
+        return;
+      }
 
       // 3. Bulk insert attendance
       await api.post("/api/v2/attendance/bulk", {
@@ -167,23 +178,26 @@ export default function RetroactiveSessionModal({ isOpen, onClose, allocationId,
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {students.map(student => (
-                  <div 
-                    key={student.id} 
-                    onClick={() => handleToggleAttendance(student.id)}
-                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${attendance[student.id] === 'Present' ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-slate-800 text-sm">{student.name}</p>
-                        <p className="text-xs text-slate-500 font-mono">{student.rollNo}</p>
-                      </div>
-                      <div className={`px-2 py-1 rounded-md text-xs font-bold ${attendance[student.id] === 'Present' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {attendance[student.id]}
+                {students.map(student => {
+                  const sid = student.id || student._id;
+                  return (
+                    <div 
+                      key={sid} 
+                      onClick={() => handleToggleAttendance(sid)}
+                      className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${attendance[sid] === 'Present' ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">{student.name}</p>
+                          <p className="text-xs text-slate-500 font-mono">{student.rollNo}</p>
+                        </div>
+                        <div className={`px-2 py-1 rounded-md text-xs font-bold ${attendance[sid] === 'Present' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                          {attendance[sid]}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
