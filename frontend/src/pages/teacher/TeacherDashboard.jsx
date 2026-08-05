@@ -330,14 +330,7 @@ export default function TeacherDashboard() {
                           </Link>
                         </td>
                       </tr>
-                    ))}
-                    {filteredPastClasses.length === 0 && (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-8 text-center text-slate-500">
-                          No past sessions found.
-                        </td>
-                      </tr>
-                    )}
+                    )))}
                   </tbody>
                 </table>
               </div>
