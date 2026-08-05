@@ -30,6 +30,7 @@ const Foundation = lazy(() => import("./pages/admin/Foundation.jsx"));
 const Curriculum = lazy(() => import("./pages/admin/Curriculum.jsx"));
 const Faculty = lazy(() => import("./pages/admin/Faculty.jsx"));
 const BatchCreate = lazy(() => import("./pages/admin/BatchCreate.jsx"));
+const Batch = lazy(() => import("./pages/admin/Batch.jsx"));
 const Allocation = lazy(() => import("./pages/admin/Allocation.jsx"));
 const Promotion = lazy(() => import("./pages/admin/Promotion.jsx"));
 const Students = lazy(() => import("./pages/admin/Students.jsx"));
@@ -118,6 +119,7 @@ function App() {
           <Route path="/admin/foundation" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Foundation /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/curriculum" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Curriculum /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/faculty" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Faculty /></AdminLayout></PrivateRoute>} />
+          <Route path="/admin/batch" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Batch /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/batch/create" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><BatchCreate /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/allocation" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Allocation /></AdminLayout></PrivateRoute>} />
           <Route path="/admin/promotion" element={<PrivateRoute allowedRoles={["admin"]}><AdminLayout><Promotion /></AdminLayout></PrivateRoute>} />

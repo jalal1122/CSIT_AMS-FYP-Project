@@ -54,6 +54,15 @@ export const rollbackBatch = createAsyncThunk("academic/rollbackBatch", async (i
   }
 });
 
+export const updateBatch = createAsyncThunk("academic/updateBatch", async ({ id, data }, { rejectWithValue }) => {
+  try {
+    const res = await api.patch(`/api/v2/academic/batch/${id}`, data);
+    return res.data.data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || "Failed to update batch");
+  }
+});
+
 export const fetchAllocations = createAsyncThunk("academic/fetchAllocations", async (params = {}, { rejectWithValue }) => {
   try {
     const res = await api.get("/api/v2/academic/allocations", { params });
@@ -94,6 +103,15 @@ const academicSlice = createSlice({
     builder.addCase(fetchBatches.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchBatches.fulfilled, (state, { payload }) => { state.isLoading = false; state.batches = payload; });
     builder.addCase(fetchBatches.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+
+    // Update Batch
+    builder.addCase(updateBatch.pending, (state) => { state.isLoading = true; });
+    builder.addCase(updateBatch.fulfilled, (state, { payload }) => {
+      state.isLoading = false;
+      const idx = state.batches.findIndex(b => b._id === payload._id);
+      if (idx !== -1) state.batches[idx] = payload;
+    });
+    builder.addCase(updateBatch.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
     
     // Batch Details
     builder.addCase(fetchBatchDetails.pending, (state) => { state.isLoading = true; });

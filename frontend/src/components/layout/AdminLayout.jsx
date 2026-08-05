@@ -36,7 +36,7 @@ export default function AdminLayout({ children }) {
     { name: "Foundation", href: "/admin/foundation", icon: Building2 },
     { name: "Curriculum", href: "/admin/curriculum", icon: BookOpen },
     { name: "Faculty", href: "/admin/faculty", icon: Users },
-    { name: "Batch Create", href: "/admin/batch/create", icon: GraduationCap },
+    { name: "Batch", href: "/admin/batch", icon: GraduationCap },
     { name: "Allocations", href: "/admin/allocation", icon: ClipboardList },
     { name: "Promotions", href: "/admin/promotion", icon: TrendingUp },
     { name: "Students", href: "/admin/students", icon: UserCheck },

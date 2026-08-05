@@ -312,6 +312,33 @@ export const getBatches = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, batches, "Batches retrieved successfully"));
 });
 
+// @desc    Update a batch (name, capacity)
+// @route   PATCH /api/v2/academic/batch/:id
+// @access  Admin
+export const updateBatch = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, maxStudentsPerSection } = req.body;
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+
+  if (name !== undefined && name.trim()) batch.name = name.trim();
+  if (maxStudentsPerSection !== undefined) {
+    const cap = parseInt(maxStudentsPerSection, 10);
+    if (isNaN(cap) || cap < 1) throw new ApiError(400, "Invalid capacity value");
+    batch.maxStudentsPerSection = cap;
+  }
+
+  await batch.save();
+
+  const updated = await Batch.findById(batch._id)
+    .populate("departmentId", "name code")
+    .populate("disciplineId", "name code")
+    .lean();
+
+  res.status(200).json(new ApiResponse(200, updated, "Batch updated successfully"));
+});
+
 // @desc    Get sections of a batch
 // @route   GET /api/v2/academic/batch/:id/sections
 // @access  Admin
