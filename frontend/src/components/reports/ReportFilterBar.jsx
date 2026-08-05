@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { Filter, Calendar } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllocations } from "../../store/slices/academicSlice";
+import { fetchAllocations, fetchBatches } from "../../store/slices/academicSlice";
 import { fetchDepartments, fetchDisciplines } from "../../store/slices/systemSlice";
+import { fetchTeachers } from "../../store/slices/facultySlice";
 
 const TIMEFRAMES = [
   { value: "Full Semester", label: "Full Semester" },
@@ -14,7 +15,8 @@ const TIMEFRAMES = [
 
 export default function ReportFilterBar({ onFilterChange, userRole }) {
   const dispatch = useDispatch();
-  const { allocations } = useSelector(state => state.academic);
+  const { allocations, batches } = useSelector(state => state.academic);
+  const { teachers } = useSelector(state => state.faculty);
 
   const [timeframe, setTimeframe] = useState(TIMEFRAMES[0]);
   const [startDate, setStartDate] = useState("");
@@ -28,14 +30,17 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
   const { departments, disciplines } = useSelector(state => state.system);
 
   useEffect(() => {
-    dispatch(fetchAllocations({ isActive: true }));
+    // Fetch all allocations (not just active) for full historical report coverage
+    dispatch(fetchAllocations({}));
+    dispatch(fetchBatches({}));
     if (userRole === "admin" || userRole === "hod") {
       dispatch(fetchDepartments());
       dispatch(fetchDisciplines());
+      dispatch(fetchTeachers());
     }
   }, [dispatch, userRole]);
 
-  // Extract unique subjects and batches from allocations for dropdowns
+  // Extract unique subjects from allocations
   const subjectOptions = Array.from(new Set(allocations.map(a => a.subjectId?._id)))
     .filter(Boolean)
     .map(id => {
@@ -43,12 +48,8 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
       return { value: id, label: subject?.name || "Unknown Subject" };
     });
 
-  const batchOptions = Array.from(new Set(allocations.map(a => a.batchId?._id)))
-    .filter(Boolean)
-    .map(id => {
-      const batch = allocations.find(a => a.batchId?._id === id)?.batchId;
-      return { value: id, label: batch?.name || "Unknown Batch" };
-    });
+  // Batch options from dedicated batches Redux state (reliable, not derived from allocations)
+  const batchOptions = batches.map(b => ({ value: b._id, label: b.name }));
 
   const departmentOptions = departments.map(d => ({ value: d._id, label: d.name }));
   const disciplineOptions = disciplines.map(d => ({ value: d._id, label: d.name }));
@@ -118,7 +119,7 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
           </div>
         )}
 
-        {/* Subjects - For Teachers and Admins */}
+        {/* Subjects */}
         {(userRole === "teacher" || userRole === "admin" || userRole === "student") && (
           <div>
             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Filter by Subject</label>
@@ -133,7 +134,7 @@ export default function ReportFilterBar({ onFilterChange, userRole }) {
           </div>
         )}
 
-        {/* Batches - For Teachers and Admins */}
+        {/* Batches - uses dedicated batches state now */}
         {(userRole === "teacher" || userRole === "admin") && (
           <div>
             <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Filter by Batch</label>

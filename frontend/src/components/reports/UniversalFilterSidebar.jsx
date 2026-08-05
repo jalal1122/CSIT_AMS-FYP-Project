@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { Filter, Calendar, Users, BookOpen, Layers } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllocations } from "../../store/slices/academicSlice";
+import { fetchAllocations, fetchBatches } from "../../store/slices/academicSlice";
 import { fetchDepartments, fetchDisciplines } from "../../store/slices/systemSlice";
+import { fetchTeachers } from "../../store/slices/facultySlice";
+import api from "../../services/api";
 
 const TIMEFRAMES = [
   { value: "Full Semester", label: "Full Semester" },
@@ -14,7 +16,8 @@ const TIMEFRAMES = [
 
 export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   const dispatch = useDispatch();
-  const { allocations } = useSelector(state => state.academic);
+  const { allocations, batches } = useSelector(state => state.academic);
+  const { teachers } = useSelector(state => state.faculty);
 
   const [timeframe, setTimeframe] = useState(TIMEFRAMES[0]);
   const [startDate, setStartDate] = useState("");
@@ -27,16 +30,29 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedDisciplines, setSelectedDisciplines] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState(null);
+  const [allStudents, setAllStudents] = useState([]);
 
   const { departments, disciplines } = useSelector(state => state.system);
 
   useEffect(() => {
-    dispatch(fetchAllocations({ isActive: true }));
+    // Fetch all allocations (not just active) for historical report filtering
+    dispatch(fetchAllocations({}));
+    dispatch(fetchBatches({}));
     if (userRole === "admin" || userRole === "hod") {
       dispatch(fetchDepartments());
       dispatch(fetchDisciplines());
+      dispatch(fetchTeachers());
     }
   }, [dispatch, userRole]);
+
+  // Fetch students separately for admin
+  useEffect(() => {
+    if (userRole === "admin" || userRole === "teacher") {
+      api.get("/api/v2/admin/users?role=student")
+        .then(res => setAllStudents(res.data.data || []))
+        .catch(() => setAllStudents([]));
+    }
+  }, [userRole]);
 
   // Derive Options dynamically from allocations
   const subjectOptions = Array.from(new Set(allocations.map(a => a.subjectId?._id)))
@@ -46,12 +62,8 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
       return { value: id, label: subject?.name || "Unknown Subject" };
     });
 
-  const batchOptions = Array.from(new Set(allocations.map(a => a.batchId?._id)))
-    .filter(Boolean)
-    .map(id => {
-      const batch = allocations.find(a => a.batchId?._id === id)?.batchId;
-      return { value: id, label: batch?.name || "Unknown Batch" };
-    });
+  // Batch options from dedicated batches state (much more reliable than derived from allocations)
+  const batchOptions = batches.map(b => ({ value: b._id, label: b.name }));
 
   // Extract Sections across all allocations
   const sectionSet = new Set();
@@ -62,29 +74,14 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   });
   const sectionOptions = Array.from(sectionSet).sort().map(name => ({ value: name, label: `Section ${name}` }));
 
-  // Extract Teachers across all sections
-  const teacherSet = new Map();
-  allocations.forEach(a => {
-    a.sections?.forEach(s => {
-      if (s.teacherId && !teacherSet.has(s.teacherId._id)) {
-        teacherSet.set(s.teacherId._id, s.teacherId.name);
-      }
-    });
-  });
-  const teacherOptions = Array.from(teacherSet.entries()).map(([id, name]) => ({ value: id, label: name }));
+  // Teacher options from dedicated teachers state
+  const teacherOptions = (teachers || []).map(t => ({ value: t._id, label: t.name }));
 
-  // Extract Students across all sections
-  const studentSet = new Map();
-  allocations.forEach(a => {
-    a.sections?.forEach(s => {
-      s.students?.forEach(student => {
-        if (!studentSet.has(student._id)) {
-          studentSet.set(student._id, `${student.name} (${student.info?.rollNo || "No Roll"})`);
-        }
-      });
-    });
-  });
-  const studentOptions = Array.from(studentSet.entries()).map(([id, name]) => ({ value: id, label: name }));
+  // Student options from dedicated students fetch
+  const studentOptions = allStudents.map(s => ({
+    value: s._id,
+    label: `${s.name} (${s.info?.rollNo || s.username || "No Roll"})`
+  }));
 
   const departmentOptions = departments.map(d => ({ value: d._id, label: d.name }));
   const disciplineOptions = disciplines.map(d => ({ value: d._id, label: d.name }));
@@ -268,8 +265,8 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
           </div>
         )}
 
-        {/* Teachers - For Students and Admins */}
-        {(userRole === "student" || userRole === "admin") && (
+        {/* Teachers - For Admins (was incorrectly "student || admin" before) */}
+        {(userRole === "teacher" || userRole === "admin") && (
           <div>
             <label className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-2">
               <Users className="w-3.5 h-3.5" /> Teachers
