@@ -46,7 +46,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSuccess }) {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await api.patch(`/api/v2/admin/users/${user._id}`, formData);
+      await api.put(`/api/v2/admin/users/${user._id}`, formData);
       toast.success("User updated successfully!");
       onSuccess();
       onClose();
