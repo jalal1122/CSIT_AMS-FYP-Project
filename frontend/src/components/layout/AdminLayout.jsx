@@ -147,9 +147,15 @@ export default function AdminLayout({ children }) {
                 <div className="text-sm font-semibold text-slate-700">{user?.name || "Admin User"}</div>
                 <div className="text-xs text-slate-500">{user?.email || "admin@csit-ams.com"}</div>
               </div>
-              <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-sm border border-sky-200">
-                {getInitials(user?.name)}
-              </div>
+              <Link
+                to="/admin/profile"
+                title="My Profile"
+                className="group flex items-center"
+              >
+                <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-sm border border-sky-200 group-hover:bg-sky-200 group-hover:border-sky-400 transition-all cursor-pointer">
+                  {getInitials(user?.name)}
+                </div>
+              </Link>
             </div>
           </div>
         </header>

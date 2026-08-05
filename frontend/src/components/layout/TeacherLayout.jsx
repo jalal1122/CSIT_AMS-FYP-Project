@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { LayoutDashboard, FileSpreadsheet } from "lucide-react";
+import { LayoutDashboard, FileSpreadsheet, User } from "lucide-react";
 import { logoutUser } from "../../store/slices/authSlice";
 import NotificationCenter from "./NotificationCenter";
 
@@ -40,9 +40,16 @@ export default function TeacherLayout({ children }) {
             
             <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
               <NotificationCenter />
-              <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200">
-                {user?.name?.charAt(0) || "T"}
-              </div>
+              <Link
+                to="/teacher/profile"
+                className="flex items-center gap-2 hover:bg-sky-50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-sky-200 group"
+                title="My Profile"
+              >
+                <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-bold border border-sky-200 group-hover:bg-sky-200 transition-colors">
+                  {user?.name?.charAt(0) || "T"}
+                </div>
+                <span className="text-sm font-medium text-slate-600 group-hover:text-sky-600 transition-colors">{user?.name?.split(' ')[0] || 'Profile'}</span>
+              </Link>
               <button 
                 className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-3 py-1.5 rounded transition-colors"
                 onClick={() => dispatch(logoutUser())}
