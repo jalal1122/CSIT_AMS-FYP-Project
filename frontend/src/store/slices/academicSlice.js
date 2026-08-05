@@ -104,6 +104,18 @@ const academicSlice = createSlice({
     builder.addCase(fetchAllocations.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchAllocations.fulfilled, (state, { payload }) => { state.isLoading = false; state.allocations = payload; });
     builder.addCase(fetchAllocations.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
+
+    // Toggle Retroactive Permission
+    builder.addCase(toggleRetroactivePermission.pending, (state) => { state.isLoading = true; });
+    builder.addCase(toggleRetroactivePermission.fulfilled, (state, { payload }) => {
+      state.isLoading = false;
+      // Update the matching allocation in the list with the new section data
+      const idx = state.allocations.findIndex(a => a._id === payload._id);
+      if (idx !== -1) {
+        state.allocations[idx] = { ...state.allocations[idx], sections: payload.sections };
+      }
+    });
+    builder.addCase(toggleRetroactivePermission.rejected, (state, { payload }) => { state.isLoading = false; state.error = payload; });
   },
 });
 
