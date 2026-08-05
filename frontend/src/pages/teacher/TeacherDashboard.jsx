@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
 import Badge from "../../components/shared/Badge";
+import EmptyState from "../../components/shared/EmptyState";
 import NotificationCenter from "../../components/layout/NotificationCenter";
 import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/teacherSlice";
 import { startLiveSession, refreshQrToken } from "../../store/slices/sessionSlice";
@@ -123,44 +124,54 @@ export default function TeacherDashboard() {
         </div>
 
         {activeTab === "active" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeAllocations.map(alloc => (
-              <div key={`${alloc._id}-${alloc.section}`} className="card p-6 group relative overflow-hidden flex flex-col h-full border-slate-200 hover:border-sky-300 hover:shadow-md transition-all">
-                <div className="absolute -right-12 -top-12 w-32 h-32 bg-sky-100/50 blur-3xl rounded-full pointer-events-none group-hover:bg-sky-200/50 transition-colors"></div>
-                
-                <div className="flex justify-between items-start mb-6">
-                  <span className="font-mono text-xs font-bold text-sky-700 bg-sky-100 border border-sky-200 px-2.5 py-1 rounded">
-                    {alloc.subjectCode}
-                  </span>
-                  <Badge variant="neutral">Sem {alloc.semester}</Badge>
-                </div>
-                
-                <h3 className="text-xl font-bold text-slate-800 mb-1">{alloc.subjectName}</h3>
-                <p className="text-sm font-medium text-slate-500 mb-6">{alloc.batch} • Section {alloc.section}</p>
-                
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
-                    <Users className="w-4 h-4 text-slate-400" /> {alloc.students}
+          activeAllocations.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeAllocations.map(alloc => (
+                <div key={`${alloc._id}-${alloc.section}`} className="card p-6 group relative overflow-hidden flex flex-col h-full border-slate-200 hover:border-sky-300 hover:shadow-md transition-all">
+                  <div className="absolute -right-12 -top-12 w-32 h-32 bg-sky-100/50 blur-3xl rounded-full pointer-events-none group-hover:bg-sky-200/50 transition-colors"></div>
+                  
+                  <div className="flex justify-between items-start mb-6">
+                    <span className="font-mono text-xs font-bold text-sky-700 bg-sky-100 border border-sky-200 px-2.5 py-1 rounded">
+                      {alloc.subjectCode}
+                    </span>
+                    <Badge variant="neutral">Sem {alloc.semester}</Badge>
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
-                    <Clock className="w-4 h-4 text-slate-400" /> 3 Cr
+                  
+                  <h3 className="text-xl font-bold text-slate-800 mb-1">{alloc.subjectName}</h3>
+                  <p className="text-sm font-medium text-slate-500 mb-6">{alloc.batch} • Section {alloc.section}</p>
+                  
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+                      <Users className="w-4 h-4 text-slate-400" /> {alloc.students}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
+                      <Clock className="w-4 h-4 text-slate-400" /> 3 Cr
+                    </div>
                   </div>
-                </div>
 
-                <div className="mt-auto">
-                  <button 
-                    onClick={() => handleOpenModal(alloc)}
-                    className="w-full btn-success py-3 flex items-center justify-center gap-2"
-                  >
-                    Start Live Session <PlayCircle className="w-5 h-5" />
-                  </button>
-                  <Link to={`/teacher/class/${alloc._id}/${alloc.section}`} className="block text-center mt-4 text-sm font-semibold text-sky-600 hover:text-sky-700 transition-colors">
-                    View Roster & Stats
-                  </Link>
+                  <div className="mt-auto">
+                    <button 
+                      onClick={() => handleOpenModal(alloc)}
+                      className="w-full btn-success py-3 flex items-center justify-center gap-2"
+                    >
+                      Start Live Session <PlayCircle className="w-5 h-5" />
+                    </button>
+                    <Link to={`/teacher/class/${alloc._id}/${alloc.section}`} className="block text-center mt-4 text-sm font-semibold text-sky-600 hover:text-sky-700 transition-colors">
+                      View Roster & Stats
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card p-0">
+              <EmptyState 
+                icon={PlayCircle} 
+                title="No Active Classes" 
+                subtitle="You currently have no classes assigned for the active semester." 
+              />
+            </div>
+          )
         )}
 
         {activeTab === "past" && (
@@ -280,13 +291,24 @@ export default function TeacherDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {filteredPastClasses.map((session) => (
-                      <tr key={session._id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 text-slate-700 text-sm font-medium">{session.date}</td>
-                        <td className="px-6 py-4">
-                          <div className="text-slate-800 font-semibold text-sm">{session.subject}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">Section {session.section}</div>
+                    {filteredPastClasses.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="p-0">
+                          <EmptyState 
+                            icon={History} 
+                            title="No Past Classes" 
+                            subtitle={searchQuery || filterSubject || filterSection ? "No history matches your filters." : "You have no recorded class history yet."} 
+                          />
                         </td>
+                      </tr>
+                    ) : (
+                      filteredPastClasses.map((session) => (
+                        <tr key={session._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4 text-slate-700 text-sm font-medium">{session.date}</td>
+                          <td className="px-6 py-4">
+                            <div className="text-slate-800 font-semibold text-sm">{session.subject}</div>
+                            <div className="text-xs text-slate-500 mt-0.5">Section {session.section}</div>
+                          </td>
                         <td className="px-6 py-4 text-sm text-slate-600 font-medium">{session.type}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 text-sm">

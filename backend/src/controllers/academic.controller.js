@@ -522,9 +522,9 @@ export const getTeacherDashboard = asyncHandler(async (req, res) => {
       .map(sec => ({
         _id: alloc._id,
         sectionName: sec.name, // To distinguish in UI
-        subjectName: alloc.subjectId.name,
-        subjectCode: alloc.subjectId.code,
-        batch: alloc.batchId.name,
+        subjectName: alloc.subjectId?.name || "Unknown Subject",
+        subjectCode: alloc.subjectId?.code || "---",
+        batch: alloc.batchId?.name || "Unknown Batch",
         section: sec.name,
         semester: alloc.semester,
         students: sec.students.length
