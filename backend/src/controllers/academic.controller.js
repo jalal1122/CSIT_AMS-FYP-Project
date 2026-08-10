@@ -421,32 +421,50 @@ export const getStudentDashboard = asyncHandler(async (req, res) => {
     .populate("sections.teacherId", "name");
 
   // Calculate attendance for each subject
-  const currentSubjects = await Promise.all(allocations.map(async (alloc) => {
+  // Single aggregation: count all present records grouped by allocationId
+  const attendanceCounts = await Attendance.aggregate([
+    {
+      $match: {
+        studentId: req.user._id,
+        allocationId: { $in: allocations.map(a => a._id) },
+        section: section,
+        status: { $in: ["Present", "Present (Manual)", "Late"] }
+      }
+    },
+    { $group: { _id: "$allocationId", presentCount: { $sum: 1 } } }
+  ]);
+
+  // Single aggregation: count all sessions grouped by allocationId
+  const sessionCounts = await Session.aggregate([
+    {
+      $match: {
+        allocationId: { $in: allocations.map(a => a._id) },
+        sectionName: section
+      }
+    },
+    { $group: { _id: "$allocationId", totalSessions: { $sum: 1 } } }
+  ]);
+
+  const attendanceMap = {};
+  attendanceCounts.forEach(a => { attendanceMap[a._id.toString()] = a.presentCount; });
+  const sessionMap = {};
+  sessionCounts.forEach(s => { sessionMap[s._id.toString()] = s.totalSessions; });
+
+  const currentSubjects = allocations.map(alloc => {
     const sec = alloc.sections.find(s => s.name === section);
-    
-    // total sessions for this allocation + section
-    const totalSessions = await Session.countDocuments({
-      allocationId: alloc._id,
-      sectionName: section
-    });
-
-    const presentCount = await Attendance.countDocuments({
-      studentId: req.user._id,
-      allocationId: alloc._id,
-      section: section,
-      status: { $in: ["Present", "Present (Manual)", "Late"] }
-    });
-
+    const presentCount = attendanceMap[alloc._id.toString()] || 0;
+    const totalSessions = sessionMap[alloc._id.toString()] || 0;
     return {
-      id: alloc._id, // allocation ID serves as unique subject identifier for student
+      id: alloc._id,
       subjectId: alloc.subjectId._id,
       name: alloc.subjectId.name,
       code: alloc.subjectId.code,
+      creditHours: alloc.subjectId.creditHours,
       teacher: sec?.teacherId?.name || "Unknown",
       present: presentCount,
       total: totalSessions
     };
-  }));
+  });
 
   res.status(200).json(new ApiResponse(200, { currentSubjects }, "Student dashboard retrieved"));
 });
@@ -559,19 +577,28 @@ export const getTeacherHistory = asyncHandler(async (req, res) => {
     .sort({ endTime: -1 })
     .lean();
 
-  const pastClasses = await Promise.all(sessions.map(async (sess) => {
-    const presentCount = await Attendance.countDocuments({
-      sessionId: sess._id,
-      status: { $in: ["Present", "Present (Manual)", "Late"] }
-    });
-    
-    // Find total students in that section from allocation
+  const sessionIds = sessions.map(s => s._id);
+
+  // Get present counts for all sessions in one query
+  const presentCounts = await Attendance.aggregate([
+    {
+      $match: {
+        sessionId: { $in: sessionIds },
+        status: { $in: ["Present", "Present (Manual)", "Late"] }
+      }
+    },
+    { $group: { _id: "$sessionId", count: { $sum: 1 } } }
+  ]);
+
+  const countMap = {};
+  presentCounts.forEach(pc => { countMap[pc._id.toString()] = pc.count; });
+
+  const pastClasses = sessions.map(sess => {
     let total = 0;
     if (sess.allocationId) {
-       const sec = sess.allocationId.sections.find(s => s.name === sess.sectionName);
-       if (sec) total = sec.students.length;
+      const sec = sess.allocationId.sections?.find(s => s.name === sess.sectionName);
+      if (sec) total = sec.students.length;
     }
-
     return {
       _id: sess._id,
       allocationId: sess.allocationId?._id || sess.allocationId,
@@ -579,10 +606,10 @@ export const getTeacherHistory = asyncHandler(async (req, res) => {
       section: sess.sectionName,
       date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
       type: sess.type,
-      present: presentCount,
+      present: countMap[sess._id.toString()] || 0,
       total
     };
-  }));
+  });
 
   res.status(200).json(new ApiResponse(200, { pastClasses }, "Teacher history retrieved"));
 });
@@ -622,35 +649,50 @@ export const getClassDetails = asyncHandler(async (req, res) => {
     active: false
   }).sort({ endTime: -1 }).limit(10).lean();
 
-  const sessions = await Promise.all(rawSessions.map(async (sess) => {
-    const presentCount = await Attendance.countDocuments({
-      sessionId: sess._id,
-      status: { $in: ["Present", "Present (Manual)", "Late"] }
-    });
-    return {
-      _id: sess._id,
-      date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
-      type: sess.type || "Lecture",
-      present: presentCount,
-      total: section.students.length
-    };
+  const sessionIds = rawSessions.map(s => s._id);
+  const sessionPresentCounts = await Attendance.aggregate([
+    {
+      $match: {
+        sessionId: { $in: sessionIds },
+        status: { $in: ["Present", "Present (Manual)", "Late"] }
+      }
+    },
+    { $group: { _id: "$sessionId", count: { $sum: 1 } } }
+  ]);
+  const sessionCountMap = {};
+  sessionPresentCounts.forEach(pc => { sessionCountMap[pc._id.toString()] = pc.count; });
+
+  const sessions = rawSessions.map((sess) => ({
+    _id: sess._id,
+    date: new Date(sess.startTime).toLocaleDateString('en-US', { timeZone: 'Asia/Karachi', month: 'short', day: 'numeric', year: 'numeric' }),
+    type: sess.type || "Lecture",
+    present: sessionCountMap[sess._id.toString()] || 0,
+    total: section.students.length
   }));
 
-  const students = await Promise.all(section.students.map(async (student) => {
-    const presentCount = await Attendance.countDocuments({
-      studentId: student._id,
-      allocationId,
-      section: sectionName,
-      status: { $in: ["Present", "Present (Manual)", "Late"] }
-    });
+  // Get present counts for ALL students in one query
+  const studentIds = section.students.map(s => s._id);
+  const presentCounts = await Attendance.aggregate([
+    {
+      $match: {
+        allocationId: new mongoose.Types.ObjectId(allocationId),
+        section: sectionName,
+        studentId: { $in: studentIds },
+        status: { $in: ["Present", "Present (Manual)", "Late"] }
+      }
+    },
+    { $group: { _id: "$studentId", count: { $sum: 1 } } }
+  ]);
 
-    return {
-      id: student._id,
-      name: student.name,
-      rollNo: student.info?.rollNo,
-      present: presentCount,
-      total: totalSessions
-    };
+  const countMap = {};
+  presentCounts.forEach(pc => { countMap[pc._id.toString()] = pc.count; });
+
+  const students = section.students.map(student => ({
+    id: student._id,
+    name: student.name,
+    rollNo: student.info?.rollNo,
+    present: countMap[student._id.toString()] || 0,
+    total: totalSessions
   }));
 
   res.status(200).json(new ApiResponse(200, {
