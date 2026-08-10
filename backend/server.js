@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import mongoSanitize from "express-mongo-sanitize";
 import compression from "compression";
 import connectDB from "./config/db.js";
 
@@ -40,6 +41,7 @@ app.use(compression());
 app.use(express.json({ limit: process.env.BODY_SIZE_LIMIT || "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: process.env.BODY_SIZE_LIMIT || "10mb" }));
 app.use(cookieParser());
+app.use(mongoSanitize()); // Strips $ and . from user input to prevent NoSQL injection
 
 // Base Routes
 app.get("/", (req, res) => {

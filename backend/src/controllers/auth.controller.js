@@ -557,6 +557,11 @@ export const validate2FALogin = asyncHandler(async (req, res) => {
     throw ApiError.unauthorized("Invalid or expired temporary token");
   }
 
+  // Ensure this token was specifically issued for 2FA step-up
+  if (!decoded.temp2FA) {
+    throw ApiError.unauthorized("Invalid token type. Use the temporary token from the initial login step.");
+  }
+
   const user = await User.findById(decoded._id);
 
   if (!user || !user.isTwoFactorEnabled) {
@@ -598,7 +603,6 @@ export const validate2FALogin = asyncHandler(async (req, res) => {
         {
           user: loggedInUser,
           accessToken,
-          refreshToken,
         },
         "Login successful",
       ),
@@ -618,8 +622,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   // Check if user exists
   const user = await User.findOne({ email: email.toLowerCase() });
+  
+  // Always return success to prevent user enumeration attacks
   if (!user) {
-    throw ApiError.notFound("No account found with this email address");
+    return res.status(200).json(
+      new ApiResponse(200, { email: email.toLowerCase() }, "If this email is registered, an OTP has been sent.")
+    );
   }
 
   // Generate 6-digit OTP
