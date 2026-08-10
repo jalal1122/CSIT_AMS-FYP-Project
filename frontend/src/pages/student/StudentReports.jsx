@@ -12,7 +12,7 @@ import { Download } from "lucide-react";
 
 export default function StudentReports() {
   const dispatch = useDispatch();
-  const { reportData, isLoading } = useSelector(state => state.analytics);
+  const { reportData, isLoading, error } = useSelector(state => state.analytics);
   const { user } = useSelector(state => state.auth);
   const [hasSearched, setHasSearched] = useState(false);
   const [currentPayload, setCurrentPayload] = useState(null);

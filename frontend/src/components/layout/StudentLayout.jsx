@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { LayoutDashboard, Settings, LogOut } from "lucide-react";
 import { logoutUser } from "../../store/slices/authSlice";
-import NotificationCenter from "./NotificationCenter";
+import ProfileDropdown from "./ProfileDropdown";
 
 export default function StudentLayout({ children }) {
   const dispatch = useDispatch();
@@ -50,22 +50,7 @@ export default function StudentLayout({ children }) {
             </Link>
             
             <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
-              <NotificationCenter />
-              <button className="p-2 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-full transition-colors">
-                <Settings className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => dispatch(logoutUser())}
-                className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-colors"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-              <Link to="/student/profile" className="flex items-center gap-3 hover:bg-slate-50 p-1.5 pr-3 rounded-full transition-colors border border-transparent hover:border-slate-200 group">
-                <div className="w-8 h-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold border border-sky-200 group-hover:bg-sky-200 transition-colors">
-                  {(user?.name || "S").charAt(0)}
-                </div>
-              </Link>
+              <ProfileDropdown />
             </div>
           </nav>
         </div>
