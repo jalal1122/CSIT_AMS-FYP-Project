@@ -696,17 +696,40 @@ export const getClassDetails = asyncHandler(async (req, res) => {
     },
     { $group: { _id: "$studentId", count: { $sum: 1 } } }
   ]);
+  // Get ALL attendance records for this class to build the matrix
+  const allAttendance = await Attendance.find({
+    allocationId: new mongoose.Types.ObjectId(allocationId),
+    section: sectionName,
+    studentId: { $in: studentIds }
+  }).lean();
+
+  const attendanceMap = new Map();
+  allAttendance.forEach(att => {
+    const key = `${att.studentId.toString()}_${att.sessionId.toString()}`;
+    attendanceMap.set(key, att);
+  });
 
   const countMap = {};
   presentCounts.forEach(pc => { countMap[pc._id.toString()] = pc.count; });
 
-  const students = section.students.map(student => ({
-    id: student._id,
-    name: student.name,
-    rollNo: student.info?.rollNo,
-    present: countMap[student._id.toString()] || 0,
-    total: totalSessions
-  }));
+  const students = section.students.map(student => {
+    const studentSessionRecords = rawSessions.map(sess => {
+      const att = attendanceMap.get(`${student._id.toString()}_${sess._id.toString()}`);
+      return {
+        date: sess.startTime,
+        status: att ? att.status : (sess.active ? "Not Scanned" : "Absent")
+      };
+    });
+
+    return {
+      id: student._id,
+      name: student.name,
+      rollNo: student.info?.rollNo,
+      present: countMap[student._id.toString()] || 0,
+      total: totalSessions,
+      sessionRecords: studentSessionRecords
+    };
+  });
 
   res.status(200).json(new ApiResponse(200, {
     subject: allocation.subjectId,

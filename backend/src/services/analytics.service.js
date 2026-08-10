@@ -5,13 +5,15 @@ import Session from "../models/session.model.js";
 import User from "../models/user.model.js";
 import DeviceResetLog from "../models/deviceResetLog.model.js";
 import SystemTrafficLog from "../models/systemTrafficLog.model.js";
+import { getSystemSetting } from "../utils/settings.js";
 
-const TIMEZONE = "Asia/Karachi";
+export const getTimezone = async () => await getSystemSetting("timezone", "Asia/Karachi");
 
 /**
  * Merges security match, filters, and timeframe into a single query object.
  */
 export const buildDynamicMatch = async (securityMatch, filters, timeframe, prefix = "") => {
+  const TIMEZONE = await getTimezone();
   const query = { ...securityMatch };
   const p = prefix ? `${prefix}.` : "";
 
@@ -128,7 +130,13 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
         totalScans: { $sum: 1 },
         presents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } },
         absents: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } },
-        leaves: { $sum: { $cond: [{ $eq: ["$status", "Leave"] }, 1, 0] } }
+        leaves: { $sum: { $cond: [{ $eq: ["$status", "Leave"] }, 1, 0] } },
+        sessionRecords: {
+          $push: {
+            date: "$sessionInfo.startTime",
+            status: "$status"
+          }
+        }
       }
     },
     {
@@ -144,6 +152,7 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
         presents: 1,
         absents: 1,
         leaves: 1,
+        sessionRecords: 1,
         attendancePercentage: {
           $cond: [
             { $gt: ["$totalScans", 0] },
@@ -304,7 +313,8 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
   ]);
 };
 
-export const getExamEligibilityMatrix = async (matchQuery, threshold = 75) => {
+export const getExamEligibilityMatrix = async (matchQuery) => {
+  const threshold = await getSystemSetting("attendanceThreshold", 75);
   return await Attendance.aggregate([
     {
       $lookup: {
@@ -350,7 +360,7 @@ export const getExamEligibilityMatrix = async (matchQuery, threshold = 75) => {
         total: 1,
         present: 1,
         status: {
-          $cond: [{ $gte: ["$percentage", Number(threshold)] }, "Eligible", "Detained"]
+          $cond: [{ $gte: ["$percentage", threshold] }, "Eligible", "Detained"]
         }
       },
     },
@@ -670,6 +680,7 @@ export const getSystemUsagePeaks = async () => {
 };
 
 export const getTimeOfDayAbsenteeism = async (matchQuery) => {
+  const TIMEZONE = await getTimezone();
   return await Attendance.aggregate([
     {
       $lookup: {
@@ -725,6 +736,7 @@ export const getTimeOfDayAbsenteeism = async (matchQuery) => {
 };
 
 export const getDefaulterMatrix = async (matchQuery) => {
+  const threshold = await getSystemSetting("attendanceThreshold", 75);
   return await Attendance.aggregate([
     {
       $lookup: {
@@ -752,7 +764,7 @@ export const getDefaulterMatrix = async (matchQuery) => {
         },
       },
     },
-    { $match: { percentage: { $lt: 75 } } },
+    { $match: { percentage: { $lt: threshold } } },
     {
       $lookup: {
         from: "users",

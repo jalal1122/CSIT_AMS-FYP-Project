@@ -42,24 +42,54 @@ class ExportService {
 
     // 2. Students Sheet
     const studentSheet = workbook.addWorksheet("Students Matrix");
-    studentSheet.columns = [
+    
+    // Extract unique session dates from all students to build dynamic columns
+    const uniqueDatesSet = new Set();
+    report.students.forEach(s => {
+      if (s.sessionRecords) {
+        s.sessionRecords.forEach(r => {
+          if (r.date) {
+            uniqueDatesSet.add(moment(r.date).format("YYYY-MM-DD"));
+          }
+        });
+      }
+    });
+    
+    // Sort dates chronologically
+    const sortedDates = Array.from(uniqueDatesSet).sort();
+    
+    // Build dynamic columns
+    const baseColumns = [
       { header: "Roll No", key: "rollNo", width: 15 },
       { header: "Name", key: "name", width: 25 },
       { header: "Email", key: "email", width: 30 },
       { header: "Batch", key: "batch", width: 20 },
       { header: "Department", key: "department", width: 20 },
       { header: "Discipline", key: "discipline", width: 15 },
+    ];
+    
+    const dateColumns = sortedDates.map(date => ({
+      header: date,
+      key: `date_${date}`,
+      width: 12
+    }));
+    
+    const metricColumns = [
       { header: "Total Scans", key: "totalScans", width: 15 },
       { header: "Presents", key: "presents", width: 15 },
       { header: "Absents", key: "absents", width: 15 },
       { header: "Leaves", key: "leaves", width: 15 },
       { header: "Attendance %", key: "attendancePercentage", width: 15 }
     ];
+    
+    studentSheet.columns = [...baseColumns, ...dateColumns, ...metricColumns];
+    
     studentSheet.getRow(1).font = { bold: true, color: { argb: ExportService.COLORS.headerText } };
     studentSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ExportService.COLORS.headerBg } };
 
     report.students.forEach(s => {
-      const row = studentSheet.addRow({
+      // Build row data
+      const rowData = {
         rollNo: s.rollNo,
         name: s.name,
         email: s.email,
@@ -71,7 +101,26 @@ class ExportService {
         absents: s.absents,
         leaves: s.leaves,
         attendancePercentage: s.attendancePercentage + "%"
-      });
+      };
+      
+      // Fill in date statuses
+      if (s.sessionRecords) {
+        s.sessionRecords.forEach(r => {
+          if (r.date) {
+            const dateStr = moment(r.date).format("YYYY-MM-DD");
+            // Determine status marker
+            let statusMarker = "A"; // Absent
+            if (["Present", "Present (Manual)", "Late"].includes(r.status)) statusMarker = "P";
+            else if (r.status === "Leave") statusMarker = "L";
+            
+            // If there's already a value for this date, maybe append or handle duplicates? 
+            // We just override for now (assumes 1 session per day per student in this simple view, or last takes precedence)
+            rowData[`date_${dateStr}`] = statusMarker;
+          }
+        });
+      }
+      
+      const row = studentSheet.addRow(rowData);
       // Highlight low attendance
       if (s.attendancePercentage < 75) {
         row.getCell('attendancePercentage').font = { color: { argb: ExportService.COLORS.absentText }, bold: true };

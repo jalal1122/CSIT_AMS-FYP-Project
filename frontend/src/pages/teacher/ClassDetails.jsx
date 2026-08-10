@@ -80,17 +80,42 @@ export default function ClassDetails() {
     csvData += `Semester,${semester}\n`;
     csvData += `Export Date,${formatPKTDate(new Date())}\n\n`;
     
-    csvData += "Roll No,Name,Present,Total,Percentage\n";
+    // Extract unique dates from the sessions
+    const uniqueDates = [];
+    if (sessions && sessions.length > 0) {
+      sessions.forEach(sess => {
+        if (sess.date) {
+          uniqueDates.push(sess.date);
+        }
+      });
+    }
+
+    // Header row
+    const baseHeaders = ["Roll No", "Name", "Present", "Total", "Percentage"];
+    csvData += [...baseHeaders, ...uniqueDates].join(",") + "\n";
+    
     const rows = students.map(s => {
       const percentage = s.total > 0 ? Math.round((s.present / s.total) * 100) : 0;
-      return `${s.rollNo},${s.name},${s.present},${s.total},${percentage}%`;
+      let rowArray = [s.rollNo, s.name, s.present, s.total, `${percentage}%`];
+      
+      // If we have sessionRecords, match them by index (since uniqueDates maps to the same sessions array order)
+      if (s.sessionRecords && s.sessionRecords.length > 0) {
+        // sessions are sorted by descending time, but uniqueDates are in that exact order
+        s.sessionRecords.forEach(record => {
+          let marker = "A";
+          if (["Present", "Present (Manual)", "Late"].includes(record.status)) marker = "P";
+          else if (record.status === "Leave") marker = "L";
+          rowArray.push(marker);
+        });
+      }
+      
+      return rowArray.join(",");
     });
     
     csvData += rows.join("\n");
-    const csvContent = "data:text/csv;charset=utf-8," + csvData;
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "data:text/csv;charset=utf-8," + encodeURI(csvData);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", csvContent);
     link.setAttribute("download", `${subject?.code}_${batch?.name}_Sec${section}_Roster.csv`);
     document.body.appendChild(link);
     link.click();
