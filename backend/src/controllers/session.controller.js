@@ -48,6 +48,16 @@ export const startSession = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, existingActiveSession, "Active session resumed"));
   }
 
+  // Check 2: Prevent teacher from running multiple concurrent sessions
+  const teacherActiveSession = await Session.findOne({
+    teacherId: req.user._id,
+    active: true,
+  }).select("_id sectionName allocationId").populate("allocationId", "subjectId").lean();
+
+  if (teacherActiveSession) {
+    throw new ApiError(409, `You already have an active session running. Please end it before starting a new one.`);
+  }
+
   const teacherIP = getClientIP(req);
 
   const location = {};
