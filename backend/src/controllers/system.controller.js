@@ -26,20 +26,7 @@ export const createDepartment = asyncHandler(async (req, res) => {
 
   const department = await Department.create({
     name,
-export const createDepartment = asyncHandler(async (req, res) => {
-  const { name, code } = req.body;
 
-  if (!name || !code) {
-    throw new ApiError(400, "Department name and code are required");
-  }
-
-  const existingDept = await Department.findOne({ code: code.toUpperCase() });
-  if (existingDept) {
-    throw new ApiError(409, "Department with this code already exists");
-  }
-
-  const department = await Department.create({
-    name,
     code: code.toUpperCase(),
   });
 
