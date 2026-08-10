@@ -27,6 +27,7 @@ export default function LiveSession() {
 
   // QR token refresh timer
   useEffect(() => {
+    setCountdown(qrRefreshRate || 15);
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {

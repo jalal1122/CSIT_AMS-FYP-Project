@@ -127,6 +127,7 @@ const sessionSlice = createSlice({
         state.isLoading = false;
         state.currentSession = payload;
         state.qrToken = null;
+        state.qrRefreshRate = payload?.securityConfig?.qrRefreshRate || 15;
       })
       .addCase(startLiveSession.rejected, (state, { payload }) => {
         state.isLoading = false;
@@ -143,6 +144,7 @@ const sessionSlice = createSlice({
       .addCase(fetchActiveSession.fulfilled, (state, { payload }) => {
         state.isLoading = false;
         state.currentSession = payload; // Can be null if no session
+        if (payload) state.qrRefreshRate = payload.securityConfig?.qrRefreshRate || 15;
       })
       .addCase(fetchActiveSession.rejected, (state, { payload }) => {
         state.isLoading = false;
@@ -162,9 +164,11 @@ const sessionSlice = createSlice({
         if (state.currentSession) {
           state.currentSession.securityConfig = action.payload.securityConfig;
         }
+        state.qrRefreshRate = action.payload.securityConfig?.qrRefreshRate || 15;
       })
       .addCase(fetchSessionDetails.fulfilled, (state, action) => {
         state.currentSession = action.payload;
+        if (action.payload) state.qrRefreshRate = action.payload.securityConfig?.qrRefreshRate || 15;
       });
   },
 });
