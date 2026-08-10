@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock, Edit2, Info, Users, Trash2, History } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Info, Users, History, X, Eye } from "lucide-react";
 import api from "../../services/api";
 import EmptyState from "../../components/shared/EmptyState";
 import { addToast } from "../../store/slices/toastSlice";
@@ -12,6 +12,12 @@ export default function SessionHistory() {
   const [sessions, setSessions] = useState([]);
   const [meta, setMeta] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Details Modal State
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [sessionDetails, setSessionDetails] = useState([]);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  
   const dispatch = useDispatch();
 
   const fetchSessions = async () => {
@@ -38,22 +44,28 @@ export default function SessionHistory() {
     fetchSessions();
   }, [allocationId, sectionName]);
 
-
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this session? This will remove attendance for all students in this session.")) return;
+  const handleViewDetails = async (session) => {
+    setSelectedSession(session);
+    setSessionDetails([]);
+    setIsDetailsLoading(true);
     try {
-      // Keep using the correct route here if it exists in backend, else it will 404. We will add a session delete route in Phase 3 if missing.
-      await api.delete(`/api/v2/session/${id}`);
-      dispatch(addToast({ title: "Success", message: "Session deleted successfully", type: "success" }));
-      fetchSessions();
+      // The live attendance endpoint returns all attendance records for a session
+      const res = await api.get(`/api/v2/session/${session._id}/live`);
+      setSessionDetails(res.data.data.liveFeed || res.data.data || []);
     } catch (err) {
-      dispatch(addToast({ title: "Error", message: err.response?.data?.message || "Failed to delete session", type: "error" }));
+      dispatch(addToast({ title: "Error", message: "Failed to load session details", type: "error" }));
+    } finally {
+      setIsDetailsLoading(false);
     }
   };
 
+  const closeModal = () => {
+    setSelectedSession(null);
+    setSessionDetails([]);
+  };
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col relative">
       <main className="max-w-6xl mx-auto w-full p-4 md:p-8 flex-1 space-y-6">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -61,12 +73,14 @@ export default function SessionHistory() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">
-                {meta ? meta.subject?.name : 'Session History'}
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+                Session History
               </h1>
-              <p className="text-sm font-medium text-slate-500 mt-0.5">
-                {meta ? `${meta.batch?.name} - Section ${sectionName} | Teacher: ${meta.teacher?.name}` : `Section ${sectionName}`}
-              </p>
+              {meta && (
+                <p className="text-slate-500 mt-1 flex items-center gap-2">
+                  {meta.subject?.name} <span className="text-slate-300">•</span> {sectionName}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -112,19 +126,13 @@ export default function SessionHistory() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-slate-600">
                         <Users className="w-4 h-4" />
-                        <span className="font-semibold">{session.attendanceRecords?.length || 0}</span>
+                        <span className="font-semibold">{session.attendanceRecords?.length || session.present || 0}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        {/* 
-                          TODO: Implement session editing route (to manually modify student attendance in a past session)
-                        */}
-                        <button className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Edit Session">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => handleDelete(session._id)} className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors" title="Delete Session">
-                          <Trash2 className="w-4 h-4" />
+                        <button onClick={() => handleViewDetails(session)} className="px-3 py-1.5 text-xs font-semibold text-sky-600 bg-sky-50 hover:bg-sky-100 rounded-md transition-colors flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5" /> View Details
                         </button>
                       </div>
                     </td>
@@ -135,6 +143,64 @@ export default function SessionHistory() {
           )}
         </div>
       </main>
+
+      {/* Details Modal */}
+      {selectedSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeModal}></div>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-sky-500" />
+                <h3 className="font-bold text-slate-800 text-lg">Session Attendance Details</h3>
+              </div>
+              <button onClick={closeModal} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+              {isDetailsLoading ? (
+                <div className="py-12 text-center text-slate-500 flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-4 border-slate-200 border-t-sky-500 rounded-full animate-spin"></div>
+                  Loading attendance records...
+                </div>
+              ) : sessionDetails.length === 0 ? (
+                <div className="py-12 text-center text-slate-500">
+                  <Info className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p>No attendance records found for this session.</p>
+                </div>
+              ) : (
+                <div className="space-y-1 border border-slate-100 rounded-xl overflow-hidden">
+                  <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center text-xs font-semibold uppercase text-slate-500">
+                    <div className="flex-1">Student</div>
+                    <div className="w-24 text-right">Status</div>
+                  </div>
+                  <div className="divide-y divide-slate-50">
+                    {sessionDetails.map((record) => (
+                      <div key={record.id || record._id} className="flex items-center px-4 py-3 hover:bg-slate-50/50">
+                        <div className="flex-1">
+                          <p className="font-bold text-slate-800 text-sm">{record.name}</p>
+                          <p className="text-xs text-slate-500 font-mono mt-0.5">{record.rollNo}</p>
+                        </div>
+                        <div className="w-24 text-right">
+                          <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${
+                            ['Present', 'Present (Manual)', 'Late'].includes(record.status) 
+                              ? 'bg-emerald-50 text-emerald-600'
+                              : 'bg-rose-50 text-rose-600'
+                          }`}>
+                            {record.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
