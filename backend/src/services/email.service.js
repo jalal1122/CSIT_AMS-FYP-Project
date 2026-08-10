@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import moment from "moment";
 
 /**
  * Email Service with Beautiful HTML Templates
@@ -27,7 +26,7 @@ class EmailService {
 
       // Verify connection
       await this.transporter.verify();
-      ("✅ Email service ready");
+      console.log("✅ Email service ready");
       return this.transporter;
     } catch (error) {
       console.error("❌ Email service error:", error);
@@ -394,7 +393,11 @@ class EmailService {
     </div>
     <div class="info-row">
       <span class="info-label">Time:</span>
-      <span class="info-value">${moment().format("MMMM DD, YYYY [at] HH:mm")}</span>
+      <span class="info-value">${new Date().toLocaleString("en-US", {
+        month: "long", day: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: "Asia/Karachi"
+      })}</span>
     </div>
   </div>
 
@@ -503,7 +506,7 @@ class EmailService {
       }
 
       const info = await transporter.sendMail(mailOptions);
-      ("✅ Email sent:", info.messageId);
+      console.log("✅ Email sent:", info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
       console.error("❌ Email error:", error);

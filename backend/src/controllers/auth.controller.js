@@ -777,8 +777,7 @@ export const createAdmin = asyncHandler(async (req, res) => {
     info: {},
   });
 
-  // Remove password from response
-  const createdAdmin = sanitizeUser(admin);
+  // Removed unused variable
 
   res
     .status(201)
