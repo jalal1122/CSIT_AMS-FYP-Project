@@ -145,7 +145,7 @@ export default function TeacherDashboard() {
                       <Users className="w-4 h-4 text-slate-400" /> {alloc.students}
                     </div>
                     <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600">
-                      <Clock className="w-4 h-4 text-slate-400" /> 3 Cr
+                      <Clock className="w-4 h-4 text-slate-400" /> {alloc.creditHours || 3} Cr
                     </div>
                   </div>
 

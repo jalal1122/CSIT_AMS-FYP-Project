@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import User from "../models/user.model.js";
 import OTP from "../models/otp.model.js";
 import jwt from "jsonwebtoken";
+import { getSystemSetting } from "../utils/settings.js";
 import { uploadToCloudinary } from "../../config/cloudinary.js";
 import sendEmail from "../utils/sendEmail.js";
 import fs from "fs";
@@ -430,7 +431,8 @@ export const enable2FA = asyncHandler(async (req, res) => {
   const secret = authenticator.generateSecret();
 
   // Generate OTP Auth URL for QR Code
-  const otpauth = authenticator.keyuri(user.email, "CSIT Attendance System", secret);
+  const appName = await getSystemSetting("appName", "CSIT AMS");
+  const otpauth = authenticator.keyuri(user.email, appName, secret);
 
   // Generate QR Code as Data URL
   const qrCodeDataUrl = await QRCode.toDataURL(otpauth);

@@ -23,6 +23,7 @@ export default function LiveSession() {
   const { currentSession, liveFeed, qrToken, qrRefreshRate } = useSelector(state => state.session);
   const [countdown, setCountdown] = useState(qrRefreshRate || 15);
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isEndConfirmOpen, setIsEndConfirmOpen] = useState(false);
 
   // QR token refresh timer
   useEffect(() => {
@@ -87,12 +88,15 @@ export default function LiveSession() {
     };
   }, [dispatch, sessionId]);
 
-  const handleEndSession = async () => {
-    if(window.confirm("Are you sure you want to end this live session? All unscanned students will be marked Absent.")) {
-      await dispatch(endLiveSession(sessionId));
-      dispatch(resetSession());
-      navigate("/teacher/dashboard");
-    }
+  const handleEndSession = () => {
+    setIsEndConfirmOpen(true);
+  };
+
+  const handleConfirmEnd = async () => {
+    setIsEndConfirmOpen(false);
+    await dispatch(endLiveSession(sessionId));
+    dispatch(resetSession());
+    navigate("/teacher/dashboard");
   };
 
   const handleStatusUpdate = async (attendanceId, status) => {
@@ -170,7 +174,7 @@ export default function LiveSession() {
               <div className="w-full h-1.5 bg-slate-100 mt-6 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-sky-500 transition-all duration-1000 ease-linear"
-                  style={{ width: `${(countdown / (currentSession?.securitySettings?.qrRefreshRate || 15)) * 100}%` }}
+                  style={{ width: `${(countdown / (qrRefreshRate || currentSession?.securityConfig?.qrRefreshRate || 15)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -267,6 +271,31 @@ export default function LiveSession() {
         sessionId={sessionId}
         currentConfig={currentSession?.securityConfig}
       />
+
+      {isEndConfirmOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-xl border border-rose-100">
+            <h3 className="text-xl font-bold text-slate-800 mb-2">End Live Session?</h3>
+            <p className="text-slate-500 mb-6">
+              All students who have not scanned will be automatically marked <span className="font-bold text-rose-600">Absent</span>. This cannot be undone without creating a retroactive session.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsEndConfirmOpen(false)}
+                className="flex-1 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEnd}
+                className="flex-1 py-2.5 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-600 transition-colors"
+              >
+                Yes, End Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

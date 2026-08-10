@@ -7,6 +7,7 @@ import Discipline from "../models/discipline.model.js";
 import User from "../models/user.model.js";
 import EmailService from "../services/email.service.js";
 import crypto from "crypto";
+import { getSystemSetting } from "../utils/settings.js";
 
 // @desc    Create a new department
 // @route   POST /api/v2/system/department
@@ -321,7 +322,8 @@ export const createTeacher = asyncHandler(async (req, res) => {
 
   // Create a placeholder email based on username if email is missing (assuming required by schema)
   // The user will change it on first login setup
-  const email = `${username.toLowerCase()}@csit-ams.edu`;
+  const emailDomain = await getSystemSetting("institutionEmailDomain", "csit-ams.edu");
+  const email = `${username.toLowerCase()}@${emailDomain}`;
 
   const teacher = await User.create({
     name,

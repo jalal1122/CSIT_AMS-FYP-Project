@@ -533,7 +533,7 @@ export const getTeacherDashboard = asyncHandler(async (req, res) => {
     "sections.teacherId": req.user._id,
     isActive: true
   })
-    .populate("subjectId", "name code")
+    .populate("subjectId", "name code creditHours")
     .populate("batchId", "name startingYear")
     .lean();
 
@@ -548,6 +548,7 @@ export const getTeacherDashboard = asyncHandler(async (req, res) => {
         sectionName: sec.name, // To distinguish in UI
         subjectName: alloc.subjectId?.name || "Unknown Subject",
         subjectCode: alloc.subjectId?.code || "---",
+        creditHours: alloc.subjectId?.creditHours || null,
         batch: alloc.batchId?.name || "Unknown Batch",
         section: sec.name,
         semester: alloc.semester,

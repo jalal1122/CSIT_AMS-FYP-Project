@@ -4,13 +4,26 @@ import { ArrowLeft, MapPin, Smartphone, ScanLine, AlertCircle, CheckCircle } fro
 import { Html5QrcodeScanner } from "html5-qrcode";
 import api from "../../services/api";
 import { formatPKTTime } from "../../utils/dateUtils";
+import socket from "../../services/socket";
 
 export default function ScanAttendance() {
   const navigate = useNavigate();
   const [status, setStatus] = useState("scanning"); // scanning | processing | success | error
   const [errorMessage, setErrorMessage] = useState("");
   const [successData, setSuccessData] = useState(null);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const scannerRef = useRef(null);
+
+  useEffect(() => {
+    socket.on("session:ended", () => {
+      setSessionEnded(true);
+      setStatus("error");
+      setErrorMessage("The session has been ended by the teacher. You can no longer mark attendance.");
+    });
+    return () => {
+      socket.off("session:ended");
+    };
+  }, []);
   useEffect(() => {
     if (status === "scanning") {
       scannerRef.current = new Html5QrcodeScanner(
