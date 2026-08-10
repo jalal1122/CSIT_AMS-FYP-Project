@@ -268,8 +268,11 @@ export const rollbackPromotion = asyncHandler(async (req, res) => {
   const currentSem = batch.currentSemester;
   const previousSem = batch.currentSemester - 1;
 
-  // 1. Delete allocations for the rolled-back semester
-  await CourseAllocation.deleteMany({ batchId: id, semester: currentSem });
+  // 1. Soft-delete: mark as inactive instead of hard-deleting to preserve attendance history
+  await CourseAllocation.updateMany(
+    { batchId: id, semester: currentSem },
+    { $set: { isActive: false } }
+  );
 
   // 2. Reactivate allocations for the previous semester
   await CourseAllocation.updateMany(
