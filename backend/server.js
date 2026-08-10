@@ -91,9 +91,12 @@ app.use((err, req, res, next) => {
 // Connect to Database and start server
 const PORT = process.env.PORT || 5001;
 
+import { seedSystemSettings } from "./src/utils/seedSettings.js";
+
 if (process.env.NODE_ENV !== "test") {
   connectDB()
-    .then(() => {
+    .then(async () => {
+      await seedSystemSettings();
       const server = app.listen(PORT, () => {
         console.log(`🚀 CSIT AMS v2 Server running on port ${PORT}`);
         initSocket(server);

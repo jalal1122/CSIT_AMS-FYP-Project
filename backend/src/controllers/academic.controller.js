@@ -9,6 +9,8 @@ import Subject from "../models/subject.model.js";
 import CourseAllocation from "../models/courseAllocation.model.js";
 import Attendance from "../models/attendance.model.js";
 import Session from "../models/session.model.js";
+import mongoose from "mongoose";
+import { getSystemSetting } from "../utils/settings.js";
 import xlsx from "xlsx";
 import bcrypt from "bcryptjs";
 
@@ -488,8 +490,9 @@ export const getStudentHistory = asyncHandler(async (req, res) => {
 
     const percentage = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
     
-    // Status based on 75% attendance rule
-    let status = percentage >= 75 ? "Cleared" : "Barred";
+    const threshold = await getSystemSetting("attendanceThreshold", 75);
+    // Status based on dynamic attendance rule
+    let status = percentage >= threshold ? "Cleared" : "Barred";
 
     pastSemestersMap[alloc.semester].subjects.push({
       id: alloc._id,

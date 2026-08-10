@@ -328,7 +328,7 @@ class EmailService {
     </div>
     <div class="info-row">
       <span class="info-label">Required:</span>
-      <span class="info-value">75%</span>
+      <span class="info-value">${threshold}%</span>
     </div>
     <div class="info-row">
       <span class="info-label">Status:</span>
@@ -337,7 +337,7 @@ class EmailService {
   </div>
 
   <p class="message">
-    Your attendance is currently <span class="warning-text">${(75 - attendancePercentage).toFixed(2)}%</span> below the required 75% threshold. Please ensure you attend upcoming sessions regularly.
+    Your attendance is currently <span class="warning-text">${(threshold - attendancePercentage).toFixed(2)}%</span> below the required ${threshold}% threshold. Please ensure you attend upcoming sessions regularly.
   </p>
 
   <div class="info-box">
@@ -534,7 +534,7 @@ class EmailService {
     });
   }
 
-  static async sendDefaulterAlert(student, subject, percentage) {
+  static async sendDefaulterAlert(student, subject, percentage, threshold = 75) {
     const content = `
       <div class="greeting">Attendance Warning</div>
       <p class="message">Dear ${student.name},</p>
@@ -549,7 +549,7 @@ class EmailService {
           <span class="info-value" style="color: #ef4444; font-weight: bold;">${percentage}%</span>
         </div>
       </div>
-      <p class="message">Your attendance has fallen below the required 75% threshold. Please ensure you attend the upcoming classes to avoid any academic penalties.</p>
+      <p class="message">Your attendance has fallen below the required ${threshold}% threshold. Please ensure you attend the upcoming classes to avoid any academic penalties.</p>
     `;
     return this.sendEmail({
       to: student.email,

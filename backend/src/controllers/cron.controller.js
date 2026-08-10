@@ -6,6 +6,8 @@ import Attendance from "../models/attendance.model.js";
 import User from "../models/user.model.js";
 import EmailService from "../services/email.service.js"; // Note: services might not exist yet, will be created later
 
+import { getSystemSetting } from "../utils/settings.js";
+
 /**
  * ─────────────────────────────────────────────────────────────────────────────
  * SHARED DEFAULTER LOGIC
@@ -13,13 +15,15 @@ import EmailService from "../services/email.service.js"; // Note: services might
  *
  * 1. Finds all active CourseAllocations.
  * 2. Per section, aggregates attendance percentages.
- * 3. Emails any student whose percentage < 75%.
+ * 3. Emails any student whose percentage < threshold.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export const runDefaulterCheck = async () => {
   console.log("[CRON] ⏰ Starting defaulter check...");
   let emailsSent = 0;
   let errors = 0;
+
+  const threshold = await getSystemSetting("attendanceThreshold", 75);
 
   // Step 1: Fetch all active course allocations with populated refs
   const activeAllocations = await CourseAllocation.find({ isActive: true })
@@ -55,8 +59,8 @@ export const runDefaulterCheck = async () => {
             },
           },
         },
-        // Step 3: Filter only defaulters (< 75%)
-        { $match: { percentage: { $lt: 75 } } },
+        // Step 3: Filter only defaulters (< threshold)
+        { $match: { percentage: { $lt: threshold } } },
       ]);
 
       // Step 4: Email each defaulter (skip students with no email set yet)
