@@ -65,8 +65,8 @@ export const updateBatch = createAsyncThunk("academic/updateBatch", async ({ id,
 
 export const fetchAllocations = createAsyncThunk("academic/fetchAllocations", async (params = {}, { rejectWithValue }) => {
   try {
-    const res = await api.get("/api/v2/academic/allocations", { params });
-    return res.data.data;
+    const res = await api.get("/api/v2/academic/allocations", { params: { ...params, limit: 1000 } });
+    return res.data.data.allocations || res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch allocations");
   }
