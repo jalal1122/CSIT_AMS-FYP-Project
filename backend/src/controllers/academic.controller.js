@@ -795,21 +795,22 @@ export const transferStudent = asyncHandler(async (req, res) => {
     // Remove from old section
     for (const sec of alloc.sections) {
       if (sec.name === currentSection) {
-        sec.students = sec.students.filter(
-          (studentId) => studentId.toString() !== id.toString()
-        );
+        sec.students.pull(id);
       }
     }
 
     // Add to new section
     for (const sec of alloc.sections) {
       if (sec.name === newSection) {
-        sec.students.push(id);
+        if (!sec.students.includes(id)) {
+          sec.students.push(id);
+        }
         studentMoved = true;
       }
     }
 
     if (studentMoved) {
+      alloc.markModified("sections");
       await alloc.save();
     }
   }

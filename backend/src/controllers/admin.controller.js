@@ -101,7 +101,12 @@ export const transferStudent = asyncHandler(async (req, res) => {
     );
   }
 
-  res.status(200).json(new ApiResponse(200, user, "Student transferred successfully"));
+  const userResponse = user.toObject();
+  delete userResponse.password;
+  delete userResponse.refreshToken;
+  delete userResponse.twoFactorSecret;
+
+  res.status(200).json(new ApiResponse(200, userResponse, "Student transferred successfully"));
 });
 
 // @desc    Deactivate teacher account and return active allocations requiring reassignment
@@ -189,7 +194,8 @@ export const archiveSubject = asyncHandler(async (req, res) => {
 // @route   GET /api/v2/admin/users
 // @access  Admin
 export const getUsers = asyncHandler(async (req, res) => {
-  const { role, batchId, section, search, accountStatus, deviceStatus } = req.query;
+  const { role, batchId, section, search, accountStatus, deviceStatus, page = 1, limit = 50 } = req.query;
+  const skip = (page - 1) * limit;
 
   const query = {};
   if (role) query.role = role;
@@ -214,9 +220,19 @@ export const getUsers = asyncHandler(async (req, res) => {
     .populate("info.departmentId", "name code")
     .populate("info.batchId", "name currentSemester")
     .sort({ name: 1 })
+    .skip(skip)
+    .limit(Number(limit))
     .lean();
 
-  res.status(200).json(new ApiResponse(200, users, "Users retrieved successfully"));
+  const total = await User.countDocuments(query);
+
+  res.status(200).json(new ApiResponse(200, {
+    users,
+    total,
+    page: Number(page),
+    limit: Number(limit),
+    totalPages: Math.ceil(total / limit)
+  }, "Users retrieved successfully"));
 });
 
 // @desc    Update user status
@@ -241,7 +257,12 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(id, { $unset: { refreshToken: 1 } });
   }
 
-  res.status(200).json(new ApiResponse(200, user, `User status updated to ${accountStatus}`));
+  const userResponse = user.toObject();
+  delete userResponse.password;
+  delete userResponse.refreshToken;
+  delete userResponse.twoFactorSecret;
+
+  res.status(200).json(new ApiResponse(200, userResponse, `User status updated to ${accountStatus}`));
 });
 
 // @desc    Create a new user manually
@@ -299,9 +320,37 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   if (name) user.name = name;
   if (role) user.role = role;
-  if (info) user.info = { ...user.info, ...info };
+  if (info?.section !== undefined || info?.batchId !== undefined) {
+    const oldBatchId = user.info.batchId;
+    const oldSection = user.info.section;
 
-  await user.save({ validateBeforeSave: false });
+    // Apply new info
+    if (info) user.info = { ...user.info, ...info };
+    await user.save({ validateBeforeSave: false });
+
+    const newBatchId = user.info.batchId;
+    const newSection = user.info.section;
+
+    // Remove from old section in all allocations
+    if (oldBatchId && oldSection && (oldSection !== newSection || oldBatchId.toString() !== newBatchId?.toString())) {
+      await CourseAllocation.updateMany(
+        { batchId: oldBatchId, "sections.name": oldSection },
+        { $pull: { "sections.$[sec].students": id } },
+        { arrayFilters: [{ "sec.name": oldSection }] }
+      );
+      // Add to new section in all allocations
+      if (newBatchId && newSection) {
+        await CourseAllocation.updateMany(
+          { batchId: newBatchId, isActive: true, "sections.name": newSection },
+          { $addToSet: { "sections.$[sec].students": id } },
+          { arrayFilters: [{ "sec.name": newSection }] }
+        );
+      }
+    }
+  } else {
+    if (info) user.info = { ...user.info, ...info };
+    await user.save({ validateBeforeSave: false });
+  }
 
   const updatedUser = await User.findById(user._id).select("-password -twoFactorSecret -refreshToken");
   res.status(200).json(new ApiResponse(200, updatedUser, "User updated successfully"));
