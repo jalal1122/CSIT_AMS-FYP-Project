@@ -9,8 +9,8 @@ const initialState = {
 
 export const fetchTeachers = createAsyncThunk("faculty/fetchTeachers", async (_, { rejectWithValue }) => {
   try {
-    const res = await api.get("/api/v2/admin/users?role=teacher");
-    return res.data.data;
+    const res = await api.get("/api/v2/admin/users?role=teacher&limit=1000");
+    return res.data.data.users || res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch teachers");
   }

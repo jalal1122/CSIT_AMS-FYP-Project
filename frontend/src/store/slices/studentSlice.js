@@ -18,9 +18,10 @@ export const fetchStudents = createAsyncThunk("student/fetchStudents", async (fi
     if (filters.section) params.append("section", filters.section);
     if (filters.accountStatus) params.append("accountStatus", filters.accountStatus);
     if (filters.deviceStatus) params.append("deviceStatus", filters.deviceStatus);
+    params.append("limit", "1000");
     
     const res = await api.get(`/api/v2/admin/users?${params.toString()}`);
-    return res.data.data;
+    return res.data.data.users || res.data.data;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || "Failed to fetch students");
   }
