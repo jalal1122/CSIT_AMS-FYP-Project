@@ -282,8 +282,17 @@ export const getUniversalMatrix = async (matchQuery, isExport = false) => {
               totalPresents: { $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] } },
               totalAbsents: { $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] } },
               totalLeaves: { $sum: { $cond: [{ $eq: ["$status", "Leave"] }, 1, 0] } },
-              manualOverrides: { $sum: { $cond: [{ $eq: ["$status", "Present (Manual)"] }, 1, 0] } }
+              manualOverrides: { $sum: { $cond: [{ $eq: ["$status", "Present (Manual)"] }, 1, 0] } },
+              uniqueStudents: { $addToSet: "$studentId" }
             }
+          },
+          {
+            $addFields: {
+              totalUniqueStudents: { $size: "$uniqueStudents" }
+            }
+          },
+          {
+            $project: { uniqueStudents: 0 }
           }
         ],
         // 2. Student-Level Aggregation (For Teacher "At-Risk Radar" & "Comparison Matrix")
@@ -559,7 +568,7 @@ export const getGeofenceDrift = async (matchQuery) => {
     },
     { $unwind: "$allocation" },
     { $match: matchQuery },
-    { $match: { "metadata.location.latitude": { $exists: true } } },
+    { $match: { "metadata.distanceFromTeacher": { $exists: true, $ne: null } } },
     {
       $lookup: {
         from: "users",
@@ -578,7 +587,7 @@ export const getGeofenceDrift = async (matchQuery) => {
         driftIncidents: {
           $sum: {
             $cond: [
-              { $gt: [{ $toDouble: "$metadata.location.accuracy" }, 50] },
+              { $gt: ["$metadata.distanceFromTeacher", 50] },
               1, 0
             ]
           }
@@ -661,7 +670,16 @@ export const getSystemUsagePeaks = async () => {
 };
 
 export const getTimeOfDayAbsenteeism = async (matchQuery) => {
-  return await Session.aggregate([
+  return await Attendance.aggregate([
+    {
+      $lookup: {
+        from: "sessions",
+        localField: "sessionId",
+        foreignField: "_id",
+        as: "sessionInfo",
+      },
+    },
+    { $unwind: "$sessionInfo" },
     {
       $lookup: {
         from: "courseallocations",
@@ -675,22 +693,28 @@ export const getTimeOfDayAbsenteeism = async (matchQuery) => {
     {
       $group: {
         _id: {
-          hour: { $hour: { date: "$startTime", timezone: TIMEZONE } }
+          hour: { $hour: { date: "$sessionInfo.startTime", timezone: TIMEZONE } }
         },
-        totalSessions: { $sum: 1 },
-        totalAbsents: { $sum: "$stats.absent" },
-        totalPresents: { $sum: "$stats.present" }
+        totalRecords: { $sum: 1 },
+        totalAbsents: {
+          $sum: { $cond: [{ $eq: ["$status", "Absent"] }, 1, 0] }
+        },
+        totalPresents: {
+          $sum: {
+            $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0]
+          }
+        }
       }
     },
     {
       $project: {
         _id: 0,
         hour: "$_id.hour",
-        totalSessions: 1,
+        totalRecords: 1,
         absentRate: {
           $cond: [
-            { $gt: [{ $add: ["$totalPresents", "$totalAbsents"] }, 0] },
-            { $multiply: [{ $divide: ["$totalAbsents", { $add: ["$totalPresents", "$totalAbsents"] }] }, 100] },
+            { $gt: ["$totalRecords", 0] },
+            { $multiply: [{ $divide: ["$totalAbsents", "$totalRecords"] }, 100] },
             0
           ]
         }
