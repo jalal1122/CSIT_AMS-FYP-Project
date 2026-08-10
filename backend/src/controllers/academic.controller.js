@@ -389,17 +389,29 @@ export const getAllocations = asyncHandler(async (req, res) => {
   if (semester) query.semester = semester;
   if (isActive !== undefined) query.isActive = isActive === "true" || isActive === true;
 
-  const allocations = await CourseAllocation.find(query)
-    .populate("subjectId", "name code creditHours")
-    .populate("batchId", "name semester academicYear")
-    .populate("sections.teacherId", "name username")
-    .populate({
-      path: "sections.students",
-      select: "name info.rollNo"
-    })
-    .lean();
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 20;
+  const skip = (page - 1) * limit;
 
-  res.status(200).json(new ApiResponse(200, allocations, "Allocations retrieved successfully"));
+  const [allocations, total] = await Promise.all([
+    CourseAllocation.find(query)
+      .populate("subjectId", "name code creditHours")
+      .populate("batchId", "name semester academicYear")
+      .populate("sections.teacherId", "name username")
+      .populate({
+        path: "sections.students",
+        select: "name info.rollNo"
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    CourseAllocation.countDocuments(query)
+  ]);
+
+  res.status(200).json(new ApiResponse(200, {
+    allocations,
+    pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+  }, "Allocations retrieved successfully"));
 });
 
 // @desc    Get student dashboard stats
