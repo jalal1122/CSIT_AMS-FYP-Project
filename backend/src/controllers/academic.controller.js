@@ -429,7 +429,7 @@ export const getStudentDashboard = asyncHandler(async (req, res) => {
       studentId: req.user._id,
       allocationId: alloc._id,
       section: section,
-      status: "Present"
+      status: { $in: ["Present", "Present (Manual)", "Late"] }
     });
 
     return {
@@ -480,7 +480,7 @@ export const getStudentHistory = asyncHandler(async (req, res) => {
       studentId: req.user._id,
       allocationId: alloc._id,
       section: section,
-      status: "Present"
+      status: { $in: ["Present", "Present (Manual)", "Late"] }
     });
 
     const percentage = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
@@ -556,7 +556,7 @@ export const getTeacherHistory = asyncHandler(async (req, res) => {
   const pastClasses = await Promise.all(sessions.map(async (sess) => {
     const presentCount = await Attendance.countDocuments({
       sessionId: sess._id,
-      status: "Present"
+      status: { $in: ["Present", "Present (Manual)", "Late"] }
     });
     
     // Find total students in that section from allocation
@@ -619,7 +619,7 @@ export const getClassDetails = asyncHandler(async (req, res) => {
   const sessions = await Promise.all(rawSessions.map(async (sess) => {
     const presentCount = await Attendance.countDocuments({
       sessionId: sess._id,
-      status: "Present"
+      status: { $in: ["Present", "Present (Manual)", "Late"] }
     });
     return {
       _id: sess._id,
@@ -635,7 +635,7 @@ export const getClassDetails = asyncHandler(async (req, res) => {
       studentId: student._id,
       allocationId,
       section: sectionName,
-      status: "Present"
+      status: { $in: ["Present", "Present (Manual)", "Late"] }
     });
 
     return {
@@ -687,7 +687,7 @@ export const getClassSessions = asyncHandler(async (req, res) => {
   const sessions = await Promise.all(rawSessions.map(async (sess) => {
     const presentCount = await Attendance.countDocuments({
       sessionId: sess._id,
-      status: "Present"
+      status: { $in: ["Present", "Present (Manual)", "Late"] }
     });
     return {
       _id: sess._id,
@@ -745,7 +745,7 @@ export const getStudentClassReport = asyncHandler(async (req, res) => {
     status: attendanceMap[sess._id.toString()] || "Absent"
   }));
 
-  const presentCount = report.filter(r => r.status === "Present").length;
+  const presentCount = report.filter(r => ["Present", "Present (Manual)", "Late"].includes(r.status)).length;
   const total = report.length;
 
   res.status(200).json(new ApiResponse(200, {

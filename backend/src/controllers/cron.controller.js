@@ -44,7 +44,7 @@ export const runDefaulterCheck = async () => {
             _id: "$studentId",
             total: { $sum: 1 },
             present: {
-              $sum: { $cond: [{ $eq: ["$status", "Present"] }, 1, 0] },
+              $sum: { $cond: [{ $in: ["$status", ["Present", "Present (Manual)", "Late"]] }, 1, 0] },
             },
           },
         },

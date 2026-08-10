@@ -132,6 +132,43 @@ export const endSession = asyncHandler(async (req, res) => {
   session.endTime = new Date();
   await session.save();
 
+  // Auto-mark absent for students who didn't mark attendance
+  const allocation = await CourseAllocation.findById(session.allocationId);
+  if (allocation) {
+    const section = allocation.sections.find(s => s.name === session.sectionName);
+    const enrolledStudents = section ? section.students : [];
+    
+    if (enrolledStudents.length > 0) {
+      const existingAttendances = await Attendance.find({ sessionId: session._id }).select("studentId").lean();
+      const attendedStudentIds = existingAttendances.map(a => a.studentId.toString());
+      
+      const absentStudents = enrolledStudents.filter(id => !attendedStudentIds.includes(id.toString()));
+      
+      if (absentStudents.length > 0) {
+        const sessionDate = new Date(session.startTime);
+        const startDate = new Date(sessionDate.getFullYear(), 0, 1);
+        const days = Math.floor((sessionDate - startDate) / (24 * 60 * 60 * 1000));
+        const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
+        const month = sessionDate.getMonth() + 1;
+        const year = sessionDate.getFullYear();
+    
+        const absentRecords = absentStudents.map(studentId => ({
+          sessionId: session._id,
+          studentId,
+          allocationId: session.allocationId,
+          section: session.sectionName,
+          status: "Absent",
+          verificationMethod: "System",
+          date: sessionDate,
+          weekNumber,
+          month,
+          year
+        }));
+        await Attendance.insertMany(absentRecords);
+      }
+    }
+  }
+
   emitToSession(session._id.toString(), "session:ended", { sessionId: session._id });
 
   res.status(200).json(new ApiResponse(200, session, "Session ended successfully"));

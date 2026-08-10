@@ -200,8 +200,14 @@ export const insertBulkAttendance = asyncHandler(async (req, res) => {
   const month = sessionDate.getMonth() + 1;
   const year = sessionDate.getFullYear();
 
+  const validStatuses = ["Present", "Present (Manual)", "Absent", "Late", "Leave", "Pending"];
+
   // Create an array of operations for bulkWrite
-  const ops = attendanceRecords.map(record => ({
+  const ops = attendanceRecords.map(record => {
+    if (!validStatuses.includes(record.status)) {
+      throw new ApiError(400, `Invalid status: ${record.status}`);
+    }
+    return {
     updateOne: {
       filter: { sessionId: session._id, studentId: record.studentId },
       update: {
@@ -219,7 +225,8 @@ export const insertBulkAttendance = asyncHandler(async (req, res) => {
       },
       upsert: true
     }
-  }));
+  };
+});
 
   if (ops.length > 0) {
     await Attendance.bulkWrite(ops);
