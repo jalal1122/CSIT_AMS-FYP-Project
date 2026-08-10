@@ -30,18 +30,20 @@ export default function TeacherLayout({ children }) {
             </div>
           </div>
           
-          <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
-            <Link to="/teacher/dashboard" className={`px-3 py-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname === "/teacher/dashboard" ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </Link>
-            <Link to="/teacher/reports" className={`px-3 py-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname.startsWith("/teacher/reports") ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
-               <FileSpreadsheet className="w-4 h-4" /> Reports
-            </Link>
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+            <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
+              <Link to="/teacher/dashboard" className={`px-3 py-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname === "/teacher/dashboard" ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
+                <LayoutDashboard className="w-4 h-4" /> Dashboard
+              </Link>
+              <Link to="/teacher/reports" className={`px-3 py-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname.startsWith("/teacher/reports") ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
+                 <FileSpreadsheet className="w-4 h-4" /> Reports
+              </Link>
+            </nav>
             
-            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-slate-200 ml-2">
+            <div className="hidden sm:flex items-center gap-3 pl-2 sm:pl-4 border-l border-slate-200 shrink-0">
               <ProfileDropdown />
             </div>
-          </nav>
+          </div>
         </div>
       </header>
 
