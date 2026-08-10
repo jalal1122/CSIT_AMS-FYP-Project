@@ -6,6 +6,7 @@ import {
   getActiveSession,
   getSessionById,
   getLiveAttendance,
+  getSessionDetails,
   updateSessionSecurity,
   createRetroactiveSession,
   getActiveSessionsForAdmin,
@@ -26,5 +27,6 @@ router.post("/:id/end", ...teacherOnly, endSession);
 router.put("/:id/security", ...teacherOnly, updateSessionSecurity);
 router.get("/:id/qr", ...teacherOnly, generateQRToken);
 router.get("/:id/live", ...teacherOnly, getLiveAttendance);
+router.get("/:id/details", ...teacherOnly, getSessionDetails);
 
 export default router;

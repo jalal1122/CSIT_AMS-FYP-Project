@@ -383,6 +383,69 @@ export const getLiveAttendance = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, { liveFeed }, "Live attendance retrieved"));
 });
 
+// @desc    Get complete session details (including all students and absent ones)
+// @route   GET /api/v2/session/:id/details
+// @access  Teacher
+export const getSessionDetails = asyncHandler(async (req, res) => {
+  const session = await Session.findOne({
+    _id: req.params.id,
+    teacherId: req.user._id,
+  }).populate({
+    path: "allocationId",
+    populate: { path: "sections.students", select: "name info.rollNo" }
+  });
+
+  if (!session) {
+    throw new ApiError(404, "Session not found or you are not authorized");
+  }
+
+  const section = session.allocationId?.sections?.find(s => s.name === session.sectionName);
+  const allStudents = section?.students || [];
+
+  const attendance = await Attendance.find({ sessionId: session._id })
+    .populate("studentId", "name info.rollNo")
+    .lean();
+
+  const attendanceMap = new Map();
+  attendance.forEach(att => {
+    if (att.studentId) {
+      attendanceMap.set(att.studentId._id.toString(), att);
+    }
+  });
+
+  const fullDetails = allStudents.map(student => {
+    const att = attendanceMap.get(student._id.toString());
+    if (att) {
+      return {
+        id: att._id,
+        studentId: student._id,
+        name: student.name,
+        rollNo: student.info?.rollNo,
+        status: att.status,
+        time: new Date(att.date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        isSuspicious: att.isSuspicious,
+        flagReason: att.metadata?.flagReason || "",
+      };
+    } else {
+      return {
+        id: student._id, // fallback ID
+        studentId: student._id,
+        name: student.name,
+        rollNo: student.info?.rollNo,
+        status: session.active ? "Not Scanned" : "Absent",
+        time: "-",
+        isSuspicious: false,
+        flagReason: "",
+      };
+    }
+  });
+
+  // Sort by Name
+  fullDetails.sort((a, b) => a.name.localeCompare(b.name));
+
+  res.status(200).json(new ApiResponse(200, { details: fullDetails }, "Session details retrieved"));
+});
+
 // @desc    Create a past (retroactive) session
 // @route   POST /api/v2/session/retroactive
 // @access  Teacher

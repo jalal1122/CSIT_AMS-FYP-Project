@@ -31,6 +31,7 @@ class ExportService {
 
     const sum = report.summary[0] || { totalScans: 0, totalPresents: 0, totalAbsents: 0, totalLeaves: 0, manualOverrides: 0 };
     summarySheet.addRows([
+      { metric: "Export Date", value: moment().format("MMMM Do YYYY, h:mm a") },
       { metric: "Total Attendance Records", value: sum.totalScans },
       { metric: "Total Presents", value: sum.totalPresents },
       { metric: "Total Absents", value: sum.totalAbsents },
@@ -139,19 +140,27 @@ class ExportService {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Report Data");
     
+    // Add Export Date at the top
+    sheet.addRow(["Export Date", moment().format("MMMM Do YYYY, h:mm a")]);
+    sheet.addRow([]); // empty row for spacing
+    
     // Extract headers from first object
     const headers = Object.keys(data[0]);
     
-    sheet.columns = headers.map(h => ({
+    const columns = headers.map(h => ({
       header: h.charAt(0).toUpperCase() + h.slice(1),
       key: h,
       width: 20
     }));
     
-    sheet.getRow(1).font = { bold: true };
+    // Set headers on row 3
+    const headerRow = sheet.addRow(columns.map(c => c.header));
+    headerRow.font = { bold: true };
     
-    data.forEach(row => {
-      sheet.addRow(row);
+    // Map keys to columns for the rest of the rows manually
+    data.forEach(rowObj => {
+      const rowData = headers.map(h => rowObj[h]);
+      sheet.addRow(rowData);
     });
     
     return await workbook.xlsx.writeBuffer();

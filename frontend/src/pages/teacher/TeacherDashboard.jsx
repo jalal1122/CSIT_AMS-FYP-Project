@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar } from "lucide-react";
+import { Users, Clock, PlayCircle, History, Filter, Download, FileSpreadsheet, Calendar, Eye } from "lucide-react";
 import StartSessionModal from "../../components/teacher/StartSessionModal";
+import SessionDetailsModal from "../../components/teacher/SessionDetailsModal";
 import Badge from "../../components/shared/Badge";
 import EmptyState from "../../components/shared/EmptyState";
 import NotificationCenter from "../../components/layout/NotificationCenter";
@@ -10,6 +11,7 @@ import { fetchTeacherDashboard, fetchTeacherHistory } from "../../store/slices/t
 import { startLiveSession, refreshQrToken } from "../../store/slices/sessionSlice";
 import { exportV2Report } from "../../store/slices/analyticsSlice";
 import { addToast } from "../../store/slices/toastSlice";
+import api from "../../services/api";
 
 export default function TeacherDashboard() {
   const dispatch = useDispatch();
@@ -19,6 +21,11 @@ export default function TeacherDashboard() {
   const [activeTab, setActiveTab] = useState("active");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAllocation, setSelectedAllocation] = useState(null);
+  
+  // Details Modal State
+  const [selectedHistorySession, setSelectedHistorySession] = useState(null);
+  const [sessionDetails, setSessionDetails] = useState([]);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
   const [reportAllocationId, setReportAllocationId] = useState("");
   const [reportStartDate, setReportStartDate] = useState("");
@@ -40,6 +47,25 @@ export default function TeacherDashboard() {
     dispatch(fetchTeacherDashboard());
     dispatch(fetchTeacherHistory());
   }, [dispatch]);
+
+  const handleViewDetails = async (session) => {
+    setSelectedHistorySession(session);
+    setSessionDetails([]);
+    setIsDetailsLoading(true);
+    try {
+      const res = await api.get(`/api/v2/session/${session._id}/details`);
+      setSessionDetails(res.data.data.details || res.data.data || []);
+    } catch (err) {
+      dispatch(addToast({ title: "Error", message: "Failed to load session details", type: "error" }));
+    } finally {
+      setIsDetailsLoading(false);
+    }
+  };
+
+  const closeDetailsModal = () => {
+    setSelectedHistorySession(null);
+    setSessionDetails([]);
+  };
 
   const handleOpenModal = (alloc) => {
     setSelectedAllocation(alloc);
@@ -224,13 +250,6 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => handleExport("pdf")}
-                    className="btn-secondary py-2.5 flex-1 flex justify-center items-center gap-2 border-slate-300"
-                    title="Export PDF"
-                  >
-                    <Download className="w-4 h-4" /> PDF
-                  </button>
-                  <button 
                     onClick={() => handleExport("xlsx")}
                     className="btn-primary py-2.5 flex-1 flex justify-center items-center gap-2"
                     title="Export Excel"
@@ -322,12 +341,21 @@ export default function TeacherDashboard() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link 
-                            to={`/teacher/class/${session.allocationId}/${session.section}/history`}
-                            className="text-sm text-sky-600 hover:text-sky-700 hover:underline font-semibold transition-colors"
-                          >
-                            View Details
-                          </Link>
+                          <div className="flex justify-end gap-3 items-center">
+                            <button 
+                              onClick={() => handleViewDetails(session)}
+                              className="px-3 py-1.5 text-xs font-semibold text-sky-600 bg-sky-50 hover:bg-sky-100 rounded-md transition-colors flex items-center gap-1.5"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> View Details
+                            </button>
+                            <Link 
+                              to={`/teacher/class/${session.allocationId}/${session.section}/history`}
+                              className="text-xs text-slate-400 hover:text-slate-600 font-semibold transition-colors flex items-center gap-1"
+                              title="Full Class History"
+                            >
+                              <History className="w-3.5 h-3.5" /> All
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     )))}
@@ -344,6 +372,13 @@ export default function TeacherDashboard() {
         onClose={() => setIsModalOpen(false)}
         onStart={handleStartSession}
         className={selectedAllocation ? `${selectedAllocation.subjectCode} - ${selectedAllocation.subjectName}` : ""}
+      />
+
+      <SessionDetailsModal 
+        isOpen={!!selectedHistorySession} 
+        onClose={closeDetailsModal} 
+        isLoading={isDetailsLoading} 
+        sessionDetails={sessionDetails} 
       />
     </div>
   );
