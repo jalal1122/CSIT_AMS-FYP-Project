@@ -54,7 +54,29 @@ export default function ScanAttendance() {
     // Generate or get persistent device fingerprint
     let deviceId = localStorage.getItem("csit_ams_device_id");
     if (!deviceId) {
-      deviceId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+      try {
+        // Use FingerprintJS for a more stable fingerprint
+        const FingerprintJS = await import("@fingerprintjs/fingerprintjs");
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        deviceId = result.visitorId;
+      } catch {
+        // Fallback: combine multiple stable signals
+        const signals = [
+          navigator.userAgent,
+          navigator.language,
+          screen.width,
+          screen.height,
+          screen.colorDepth,
+          Intl.DateTimeFormat().resolvedOptions().timeZone
+        ].join("|");
+        // Hash the signals
+        const encoder = new TextEncoder();
+        const data = encoder.encode(signals);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        deviceId = hashArray.map(b => b.toString(16).padStart(2, "0")).join("").substring(0, 32);
+      }
       localStorage.setItem("csit_ams_device_id", deviceId);
     }
 

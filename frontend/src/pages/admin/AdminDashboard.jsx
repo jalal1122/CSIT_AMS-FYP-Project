@@ -202,13 +202,22 @@ export default function AdminDashboard() {
                 </div>
                 
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-600 font-medium">Server Uptime</span>
-                    <span className="text-slate-800 font-bold">100%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-sky-500 rounded-full" style={{ width: `100%` }}></div>
-                  </div>
+                  {(() => {
+                    const uptime = dashboardStats?.systemHealth?.uptimeSeconds || 0;
+                    const maxUptime = 2592000; // 30 days in seconds
+                    const percentage = Math.min((uptime / maxUptime) * 100, 100).toFixed(2);
+                    return (
+                      <>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-slate-600 font-medium">Server Uptime (30d)</span>
+                          <span className="text-slate-800 font-bold">{percentage}%</span>
+                        </div>
+                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-sky-500 rounded-full" style={{ width: `${percentage}%` }}></div>
+                        </div>
+                      </>
+                    );
+                  })()}
                   <p className="text-xs text-right text-slate-400 mt-2">{formatUptime(dashboardStats?.systemHealth?.uptimeSeconds)}</p>
                 </div>
               </div>
