@@ -48,8 +48,8 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   // Fetch students separately for admin
   useEffect(() => {
     if (userRole === "admin" || userRole === "teacher") {
-      api.get("/api/v2/admin/users?role=student")
-        .then(res => setAllStudents(res.data.data || []))
+      api.get("/api/v2/admin/users?role=student&limit=1000")
+        .then(res => setAllStudents(res.data.data.users || res.data.data || []))
         .catch(() => setAllStudents([]));
     }
   }, [userRole]);
