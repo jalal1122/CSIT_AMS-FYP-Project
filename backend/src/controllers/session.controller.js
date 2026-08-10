@@ -201,12 +201,15 @@ export const updateSessionSecurity = asyncHandler(async (req, res) => {
   }
 
   // Update only the provided fields
-  if (radius !== undefined) session.securityConfig.radius = Math.max(10, Math.min(500, radius));
+  if (radius !== undefined) {
+    session.securityConfig.radius = radius === 0 ? 0 : Math.max(10, Math.min(500, radius));
+  }
   if (ipMatchEnabled !== undefined) session.securityConfig.ipMatchEnabled = ipMatchEnabled;
   if (deviceLockEnabled !== undefined) session.securityConfig.deviceLockEnabled = deviceLockEnabled;
   if (qrRefreshRate !== undefined) session.securityConfig.qrRefreshRate = Math.max(5, Math.min(60, qrRefreshRate));
   if (manualApproval !== undefined) session.securityConfig.manualApproval = manualApproval;
 
+  session.markModified('securityConfig');
   await session.save();
 
   res.status(200).json(new ApiResponse(200, session, "Session security settings updated"));
