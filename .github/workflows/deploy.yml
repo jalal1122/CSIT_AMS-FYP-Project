@@ -43,12 +43,14 @@ jobs:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
           username: ${{ secrets.CPANEL_FTP_USERNAME }}
           password: ${{ secrets.CPANEL_FTP_PASSWORD }}
-          server-dir: ${{ secrets.CPANEL_FRONTEND_DIR || '/public_html/csitattendance/' }}
+          server-dir: ${{ secrets.CPANEL_FRONTEND_DIR || '/csitattendance.csitfmcs.com.pk/' }}
           local-dir: ./frontend/dist/
 
   deploy-backend:
     name: ⚡ Deploy Backend API & Reload Passenger
     runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ${{ secrets.CPANEL_SSH_HOST }}
     steps:
       - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
@@ -67,11 +69,12 @@ jobs:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
           username: ${{ secrets.CPANEL_FTP_USERNAME }}
           password: ${{ secrets.CPANEL_FTP_PASSWORD }}
-          server-dir: ${{ secrets.CPANEL_BACKEND_DIR || '/csitattendanceapi.csitfmcs.com.pk/' }}
+          server-dir: ${{ secrets.CPANEL_BACKEND_DIR || '/backend-csitattendance/' }}
           local-dir: ./deploy-backend/
 
       - name: 🔄 SSH Passenger App Restart & Dependency Update (Optional)
-        if: ${{ secrets.CPANEL_SSH_HOST != '' }}
+        if: env.SSH_HOST != ''
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.CPANEL_SSH_HOST }}
@@ -80,6 +83,14 @@ jobs:
           passphrase: ${{ secrets.CPANEL_SSH_PASSPHRASE }}
           port: ${{ secrets.CPANEL_SSH_PORT || 22 }}
           script: |
-            cd ${{ secrets.CPANEL_BACKEND_DIR || 'csitattendanceapi.csitfmcs.com.pk' }}
+            TARGET_DIR="${{ secrets.CPANEL_BACKEND_DIR }}"
+            CLEAN_DIR=$(echo "$TARGET_DIR" | sed 's|^/||;s|/$||')
+            if [ -n "$CLEAN_DIR" ] && [ -d "$HOME/$CLEAN_DIR" ]; then
+              cd "$HOME/$CLEAN_DIR"
+            elif [ -d "$HOME/backend-csitattendance" ]; then
+              cd "$HOME/backend-csitattendance"
+            elif [ -d "$HOME/csitattendanceapi.csitfmcs.com.pk" ]; then
+              cd "$HOME/csitattendanceapi.csitfmcs.com.pk"
+            fi
             npm install --omit=dev
             mkdir -p tmp && touch tmp/restart.txt
