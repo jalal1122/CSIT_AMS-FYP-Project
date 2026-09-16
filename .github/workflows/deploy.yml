@@ -1,37 +1,43 @@
-name: Deploy AttendX to cPanel
+name: Deploy CSIT_AMS to cPanel
 
+# Strictly triggers on pushes to the main branch
+# Pushes to 'dev', feature branches, or pull requests will NOT trigger deployment
 on:
   push:
     branches:
       - main
-      # You can change this to your deployment branch, e.g. dev, production, etc.
+
+# Prevent concurrent deployments that could clash over FTP uploads
+concurrency:
+  group: production-cpanel-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy-frontend:
-    name: Build & Deploy Frontend
+    name: 🌐 Build & Deploy Frontend
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: ⚙️ Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install Frontend Dependencies
+      - name: 📦 Install Frontend Dependencies
         working-directory: ./frontend
         run: npm ci
 
-      - name: Build Frontend for Production
+      - name: 🔨 Compile Production Bundle
         working-directory: ./frontend
         env:
           VITE_API_URL: https://csitattendanceapi.csitfmcs.com.pk
         run: npm run build
 
-      - name: Deploy Frontend via FTP to cPanel
+      - name: 🚀 Upload Frontend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
@@ -41,18 +47,21 @@ jobs:
           local-dir: ./frontend/dist/
 
   deploy-backend:
-    name: Deploy Backend & Restart Passenger
+    name: ⚡ Deploy Backend API & Reload Passenger
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Prepare Backend Files (Exclude dev & test files)
+      - name: 📦 Package Backend Files
         run: |
           mkdir deploy-backend
           rsync -av --exclude='node_modules' --exclude='src/tests' --exclude='.env' ./backend/ deploy-backend/
+          # Ensure tmp/restart.txt is created so Phusion Passenger automatically reloads on file sync
+          mkdir -p deploy-backend/tmp
+          touch deploy-backend/tmp/restart.txt
 
-      - name: Deploy Backend Files via FTP to cPanel
+      - name: 🚀 Upload Backend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
@@ -61,12 +70,9 @@ jobs:
           server-dir: ${{ secrets.CPANEL_BACKEND_DIR || '/csitattendanceapi.csitfmcs.com.pk/' }}
           local-dir: ./deploy-backend/
 
-      - name: Restart Phusion Passenger App (via SSH or restart file)
-        # If you have SSH access configured, this restarts the Node.js app automatically
-        if: ${{ env.HAS_SSH == 'true' }}
+      - name: 🔄 SSH Passenger App Restart & Dependency Update (Optional)
+        if: ${{ secrets.CPANEL_SSH_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
-        env:
-          HAS_SSH: ${{ secrets.CPANEL_SSH_HOST != '' }}
         with:
           host: ${{ secrets.CPANEL_SSH_HOST }}
           username: ${{ secrets.CPANEL_SSH_USERNAME }}
