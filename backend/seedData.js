@@ -139,7 +139,6 @@ async function seedData() {
 
     // 5. Create Teachers
     console.log("\nSeeding Teachers...");
-    const teacherPasswordHash = await bcrypt.hash("Teacher123!", 10);
     const teachersData = [
       {
         name: "Dr. Kamran Ali",
@@ -179,10 +178,12 @@ async function seedData() {
           name: t.name,
           email: t.email,
           username: t.username,
-          password: teacherPasswordHash,
+          password: "Teacher123!",
           role: "teacher",
           accountStatus: "Active",
           mustChangePassword: false,
+          loginAttempts: 0,
+          lockUntil: null,
           info: {
             designation: t.designation,
             phone: t.phone,
@@ -192,7 +193,14 @@ async function seedData() {
         });
         console.log(`  + Created Teacher: ${t.name} (${t.username}) - ${t.designation}`);
       } else {
-        console.log(`  • Teacher exists: ${t.name}`);
+        // Fix password and ensure account is unlocked
+        teacher.password = "Teacher123!";
+        teacher.loginAttempts = 0;
+        teacher.lockUntil = null;
+        teacher.accountStatus = "Active";
+        teacher.mustChangePassword = false;
+        await teacher.save();
+        console.log(`  • Updated & Unlocked Teacher: ${t.name} (${t.username}) [password reset to Teacher123!]`);
       }
       teacherDocs[t.username] = teacher;
     }
