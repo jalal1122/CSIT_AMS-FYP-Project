@@ -97,31 +97,32 @@ export default function Students() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Student Management</h2>
-          <p className="text-slate-500 text-sm mt-1">View, manage, and transfer students</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Student Management</h2>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">View, manage, and transfer students</p>
         </div>
-        <button onClick={() => setAddModalOpen(true)} className="btn-primary">
+        <button onClick={() => setAddModalOpen(true)} className="btn-primary w-full sm:w-auto text-sm justify-center">
           Add Student
         </button>
       </div>
 
-      <div className="card p-4 flex flex-col md:flex-row gap-4 justify-between items-center bg-white border-b-0 rounded-b-none shadow-none">
-        <div className="relative w-full md:w-96">
+      <div className="card p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5 sm:gap-4 justify-between items-stretch sm:items-center bg-white border-b-0 rounded-b-none shadow-none">
+        <div className="relative w-full sm:w-80 md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
             type="text" 
             placeholder="Search by name, roll no, or username..." 
-            className="input w-full pl-9 pr-4 py-2"
+            className="input w-full pl-9 pr-4 py-2 text-xs sm:text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full sm:w-auto">
           <button 
             onClick={() => setShowFilters(!showFilters)} 
-            className={`btn-secondary flex items-center justify-center gap-2 ${showFilters ? 'bg-slate-100' : ''}`}
+            className={`btn-secondary w-full sm:w-auto flex items-center justify-center gap-2 text-xs sm:text-sm py-2 px-3.5 ${showFilters ? 'bg-slate-100' : ''}`}
           >
             <Filter className="w-4 h-4" /> Filters
           </button>
@@ -129,11 +130,11 @@ export default function Students() {
       </div>
 
       {showFilters && (
-        <div className="bg-slate-50 p-4 border-x border-slate-200 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-slate-50 p-3 sm:p-4 border-x border-slate-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">Batch</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Batch</label>
             <select 
-              className="input w-full py-2" 
+              className="input w-full py-1.5 sm:py-2 text-xs sm:text-sm" 
               value={filters.batchId} 
               onChange={(e) => setFilters({...filters, batchId: e.target.value})}
             >
@@ -212,41 +213,42 @@ export default function Students() {
 
                   return currentStudents.map((student) => (
                   <tr key={student._id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs border border-emerald-200 shrink-0">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs border border-emerald-200 shrink-0">
                           {student.name.charAt(0)}
                         </div>
-                        <div>
-                          <div className="text-slate-800 font-semibold text-sm">{student.name}</div>
-                          <div className="text-xs text-slate-500 font-mono mt-0.5">{student.username}</div>
+                        <div className="min-w-0">
+                          <div className="text-slate-800 font-semibold text-xs sm:text-sm truncate">{student.name}</div>
+                          <div className="text-[11px] sm:text-xs text-slate-500 font-mono mt-0.5 truncate">{student.username}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 font-mono text-sm">{student.info?.rollNo || "-"}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-slate-700 text-sm font-medium">{student.info?.batchId?.name || "-"}</div>
-                      <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-slate-600 font-mono text-xs sm:text-sm">{student.info?.rollNo || "-"}</td>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <div className="text-slate-700 text-xs sm:text-sm font-medium">{student.info?.batchId?.name || "-"}</div>
+                      <div className="text-[11px] sm:text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
                         <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Sem {student.info?.semester || student.info?.batchId?.currentSemester || "-"}</span>
-                        <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Sec {student.info?.section || "-"}</span>
+                        <span>Sec {student.info?.section || "-"}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      {student.deviceId ? (
-                        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full w-fit border border-emerald-200">
-                          <Smartphone className="w-3.5 h-3.5" /> Bound
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      {student.deviceBinding?.deviceId ? (
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full w-fit border border-emerald-200 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Bound
                         </span>
                       ) : (
                         <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full w-fit border border-slate-200">Unbound</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <Badge variant={student.accountStatus === "Active" ? "success" : "neutral"}>
                         {student.accountStatus}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                      <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleToggleStatus(student._id, student.accountStatus)} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors" title={student.accountStatus === "Active" ? "Deactivate" : "Activate"}>
                           {student.accountStatus === "Active" ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
                         </button>
@@ -281,22 +283,22 @@ export default function Students() {
         
         {/* Pagination Controls */}
         {!isLoading && students && students.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
-            <div className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4 border-t border-slate-200 bg-slate-50">
+            <div className="text-xs sm:text-sm text-slate-500 text-center sm:text-left">
               Showing <span className="font-semibold text-slate-700">{((currentPage - 1) * 10) + 1}</span> to <span className="font-semibold text-slate-700">{Math.min(currentPage * 10, students.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase())).length)}</span> of <span className="font-semibold text-slate-700">{students.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase())).length}</span> results
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
               <button 
                 onClick={() => setCurrentPage(p => p + 1)}
                 disabled={currentPage >= Math.ceil(students.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase()) || s.info?.rollNo?.toLowerCase().includes(searchTerm.toLowerCase()) || s.username?.toLowerCase().includes(searchTerm.toLowerCase())).length / 10)}
-                className="px-3 py-1.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 sm:flex-initial px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

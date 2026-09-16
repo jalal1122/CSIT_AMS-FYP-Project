@@ -54,25 +54,18 @@ export default function TeacherReports() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Header aligned with TeacherDashboard */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">Classroom Command Center</h1>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">Reporting & Analytics</p>
-            </div>
-          </div>
-        </div>
-      </header>
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8">
+    <div className="flex flex-col flex-1">
+      <main className="flex-1 max-w-7xl mx-auto w-full p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-6">
         
-        <div className="flex justify-end">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-800">Classroom Analytics & Reports</h2>
+            <p className="text-xs sm:text-sm font-medium text-slate-500">Universal reporting across all student attendances</p>
+          </div>
           <button 
             onClick={handleExport}
             disabled={!hasSearched || isLoading}
-            className="btn-outline flex items-center gap-2 px-4 py-2 disabled:opacity-50"
+            className="w-full sm:w-auto btn-outline flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm disabled:opacity-50"
           >
             {isLoading ? (
               <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-transparent animate-spin" />
@@ -83,14 +76,14 @@ export default function TeacherReports() {
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Sidebar */}
           <div className="w-full lg:w-80 flex-shrink-0">
             <UniversalFilterSidebar onFilterChange={handleFilterChange} userRole="teacher" />
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-4 sm:space-y-6 min-w-0">
             {!hasSearched ? (
               <EmptyState 
                 icon={BookOpen} 
@@ -116,59 +109,59 @@ export default function TeacherReports() {
             ) : (
               <>
                 {/* Top KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="card bg-white p-5 border-slate-200 flex items-center justify-between">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="card bg-white p-3.5 sm:p-5 border-slate-200 flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-500 font-medium">Total Scans</p>
-                      <h3 className="text-2xl font-bold text-slate-800">{summary.totalScans || 0}</h3>
+                      <p className="text-xs sm:text-sm text-slate-500 font-medium">Total Scans</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-800">{summary.totalScans || 0}</h3>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
                       <Fingerprint className="w-5 h-5" />
                     </div>
                   </div>
 
-                  <div className="card bg-white p-5 border-slate-200 flex items-center justify-between">
+                  <div className="card bg-white p-3.5 sm:p-5 border-slate-200 flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-500 font-medium">Manual Override Rate</p>
-                      <h3 className="text-2xl font-bold text-slate-800">{manualOverrideRate}%</h3>
+                      <p className="text-xs sm:text-sm text-slate-500 font-medium">Manual Override Rate</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-800">{manualOverrideRate}%</h3>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                   </div>
 
-                  <div className="card bg-white p-5 border-slate-200 flex items-center justify-between">
+                  <div className="card bg-white p-3.5 sm:p-5 border-slate-200 flex items-center justify-between sm:col-span-2 md:col-span-1">
                     <div>
-                      <p className="text-sm text-slate-500 font-medium">At-Risk Students</p>
-                      <h3 className="text-2xl font-bold text-red-600">{atRiskStudents.length}</h3>
+                      <p className="text-xs sm:text-sm text-slate-500 font-medium">At-Risk Students</p>
+                      <h3 className="text-xl sm:text-2xl font-bold text-red-600">{atRiskStudents.length}</h3>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 shrink-0">
                       <Users className="w-5 h-5" />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {/* At-Risk Radar */}
-                  <div className="card bg-white p-5 border-slate-200">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-red-500" /> At-Risk Radar (&lt; 75%)
+                  <div className="card bg-white p-3.5 sm:p-5 border-slate-200">
+                    <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                      <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" /> At-Risk Radar (&lt; 75%)
                     </h3>
                     {atRiskStudents.length === 0 ? (
                       <div className="text-center py-10 text-slate-500 text-sm">
                         No students are currently at risk in this scope. Great job!
                       </div>
                     ) : (
-                      <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                      <div className="space-y-2.5 sm:space-y-3 max-h-80 overflow-y-auto pr-1">
                         {atRiskStudents.map(student => (
-                          <div key={student._id} className="flex justify-between items-center p-3 bg-red-50/50 border border-red-100 rounded-lg">
-                            <div>
-                              <p className="font-semibold text-slate-800 text-sm">{student.name}</p>
-                              <p className="text-xs text-slate-500">{student.rollNo}</p>
+                          <div key={student._id} className="flex justify-between items-center p-2.5 sm:p-3 bg-red-50/50 border border-red-100 rounded-lg gap-2">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-slate-800 text-xs sm:text-sm truncate">{student.name}</p>
+                              <p className="text-[11px] sm:text-xs text-slate-500">{student.rollNo}</p>
                             </div>
-                            <div className="text-right">
-                              <p className="font-bold text-red-600">{student.attendancePercentage}%</p>
-                              <p className="text-xs text-slate-500">{student.totalScans} Total Classes</p>
+                            <div className="text-right shrink-0">
+                              <p className="font-bold text-red-600 text-xs sm:text-sm">{student.attendancePercentage}%</p>
+                              <p className="text-[10px] sm:text-xs text-slate-500">{student.totalScans} Total Classes</p>
                             </div>
                           </div>
                         ))}
@@ -177,8 +170,8 @@ export default function TeacherReports() {
                   </div>
 
                   {/* Student Comparison Matrix (Radar Chart) */}
-                  <div className="card bg-white p-5 border-slate-200">
-                    <h3 className="font-bold text-slate-800 mb-4">Student Comparison Matrix</h3>
+                  <div className="card bg-white p-3.5 sm:p-5 border-slate-200">
+                    <h3 className="font-bold text-slate-800 mb-3 sm:mb-4 text-sm sm:text-base">Student Comparison Matrix</h3>
                     {students.length === 0 ? (
                       <div className="text-center py-10 text-slate-500 text-sm">
                         No students found for this filter.

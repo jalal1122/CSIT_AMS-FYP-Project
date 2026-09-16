@@ -88,7 +88,7 @@ export default function ProfileDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50 transform origin-top-right transition-all">
+        <div className="absolute right-0 mt-2 w-[280px] sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50 transform origin-top-right transition-all">
           {!showNotifications ? (
             <>
               <div className="p-4 border-b border-slate-100 bg-slate-50">
@@ -209,7 +209,7 @@ export default function ProfileDropdown() {
                         </div>
                         <button 
                           onClick={(e) => { e.stopPropagation(); dispatch(deleteNotification(notification._id)); }}
-                          className="text-slate-300 hover:text-rose-500 transition-colors p-1.5 h-fit opacity-0 group-hover:opacity-100 rounded hover:bg-rose-50"
+                          className="text-slate-300 hover:text-rose-500 transition-colors p-1.5 h-fit opacity-100 sm:opacity-0 sm:group-hover:opacity-100 rounded hover:bg-rose-50"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

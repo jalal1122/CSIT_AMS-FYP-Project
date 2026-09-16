@@ -135,39 +135,39 @@ export default function Foundation() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Foundation</h2>
-          <p className="text-slate-500 text-sm mt-1">Manage Departments, Disciplines, and Subjects</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Foundation</h2>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Manage Departments, Disciplines, and Subjects</p>
         </div>
         {activeTab === "departments" && (
-          <button onClick={() => setIsDeptModalOpen(true)} className="btn-primary flex items-center gap-2">
+          <button onClick={() => setIsDeptModalOpen(true)} className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2 text-sm">
             <Plus className="w-4 h-4" /> New Department
           </button>
         )}
         {activeTab === "disciplines" && (
-          <button onClick={() => setIsDiscModalOpen(true)} className="btn-primary flex items-center gap-2">
+          <button onClick={() => setIsDiscModalOpen(true)} className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2 text-sm">
             <Plus className="w-4 h-4" /> New Discipline
           </button>
         )}
         {activeTab === "subjects" && (
-          <button onClick={() => setIsSubjModalOpen(true)} className="btn-primary flex items-center gap-2">
+          <button onClick={() => setIsSubjModalOpen(true)} className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2 text-sm">
             <Plus className="w-4 h-4" /> New Subject
           </button>
         )}
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 text-sm">
+        <div className="p-3 sm:p-4 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 text-xs sm:text-sm">
           {error}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex space-x-2 border-b border-slate-200 mb-6">
+      <div className="flex space-x-1 sm:space-x-2 border-b border-slate-200 mb-4 sm:mb-6 overflow-x-auto hide-scrollbar">
         <button
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
             activeTab === "departments"
               ? "border-sky-500 text-sky-600"
               : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
@@ -178,7 +178,7 @@ export default function Foundation() {
           Departments
         </button>
         <button
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
             activeTab === "disciplines"
               ? "border-emerald-500 text-emerald-600"
               : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
@@ -189,7 +189,7 @@ export default function Foundation() {
           Disciplines
         </button>
         <button
-          className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
             activeTab === "subjects"
               ? "border-indigo-500 text-indigo-600"
               : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
@@ -206,18 +206,18 @@ export default function Foundation() {
         {isLoading && <div className="p-12 text-center text-slate-500">Loading...</div>}
         
         {!isLoading && activeTab === "departments" && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             {departments.length === 0 ? (
               <EmptyState icon={Building2} title="No departments found" subtitle="Get started by creating a new department." actionLabel="New Department" onAction={() => setIsDeptModalOpen(true)} />
             ) : (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[520px]">
                 <thead>
                   <tr className="bg-sky-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                    <th className="px-6 py-4">Code</th>
-                    <th className="px-6 py-4">Name</th>
-                    <th className="px-6 py-4">Disciplines</th>
-                    <th className="px-6 py-4">Batches</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Code</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Name</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Disciplines</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Batches</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -226,12 +226,12 @@ export default function Foundation() {
                     const deptBatches = (batches || []).filter(b => deptDisciplines.some(d => d._id === (b.disciplineId?._id || b.disciplineId)));
                     return (
                     <tr key={dept._id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4 text-sm font-mono text-sky-600 font-medium bg-sky-50/30">{dept.code}</td>
-                      <td className="px-6 py-4 text-sm text-slate-800 font-medium">{dept.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{deptDisciplines.length}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{deptBatches.length}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-mono text-sky-600 font-medium bg-sky-50/30">{dept.code}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-800 font-medium">{dept.name}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{deptDisciplines.length}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{deptBatches.length}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                        <div className="flex justify-end gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => setEditingDept(dept)} className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors" title="Edit Department">
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -250,29 +250,29 @@ export default function Foundation() {
         )}
 
         {!isLoading && activeTab === "disciplines" && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             {(!disciplines || disciplines.length === 0) ? (
               <EmptyState icon={GraduationCap} title="No disciplines found" subtitle="Get started by creating a new discipline." actionLabel="New Discipline" onAction={() => setIsDiscModalOpen(true)} />
             ) : (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr className="bg-emerald-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                    <th className="px-6 py-4">Code</th>
-                    <th className="px-6 py-4">Name</th>
-                    <th className="px-6 py-4">Department</th>
-                    <th className="px-6 py-4">Semesters</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Code</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Name</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Department</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Semesters</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {disciplines.map((disc) => (
                     <tr key={disc._id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4 text-sm font-mono text-emerald-600 font-medium bg-emerald-50/30">{disc.code}</td>
-                      <td className="px-6 py-4 text-sm text-slate-800 font-medium">{disc.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{disc.departmentId?.name || '-'}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{disc.totalSemesters}</td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-mono text-emerald-600 font-medium bg-emerald-50/30">{disc.code}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-800 font-medium">{disc.name}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{disc.departmentId?.name || '-'}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{disc.totalSemesters}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                        <div className="flex justify-end gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => setEditingDisc(disc)} className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-md transition-colors" title="Edit Discipline">
                             <Pencil className="w-4 h-4" />
                           </button>
@@ -290,33 +290,33 @@ export default function Foundation() {
         )}
 
         {!isLoading && activeTab === "subjects" && (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             {subjects.length === 0 ? (
               <EmptyState icon={Book} title="No subjects found" subtitle="Get started by creating a new subject." actionLabel="New Subject" onAction={() => setIsSubjModalOpen(true)} />
             ) : (
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr className="bg-sky-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                    <th className="px-6 py-4">Code</th>
-                    <th className="px-6 py-4">Name</th>
-                    <th className="px-6 py-4">Credits</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Code</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Name</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Credits</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4">Status</th>
+                    <th className="px-3 sm:px-6 py-3 sm:py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {subjects.map((sub) => (
                     <tr key={sub._id} className="hover:bg-slate-50 transition-colors group">
-                      <td className="px-6 py-4 text-sm font-mono text-emerald-600 font-medium bg-emerald-50/30">{sub.code}</td>
-                      <td className="px-6 py-4 text-sm text-slate-800 font-medium">{sub.name}</td>
-                      <td className="px-6 py-4 text-sm text-slate-500">{sub.creditHours}</td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-mono text-emerald-600 font-medium bg-emerald-50/30">{sub.code}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-800 font-medium">{sub.name}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{sub.creditHours}</td>
+                      <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <Badge variant={sub.isArchived ? 'neutral' : 'success'}>
                           {sub.isArchived ? 'Archived' : 'Active'}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="px-3 sm:px-6 py-3 sm:py-4 text-right">
+                        <div className="flex justify-end gap-1 sm:gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => setEditingSubj(sub)} className="p-1.5 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-md transition-colors" title="Edit Subject">
                             <Pencil className="w-4 h-4" />
                           </button>

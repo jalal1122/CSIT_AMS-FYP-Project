@@ -106,16 +106,16 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
   };
 
   return (
-    <div className="card bg-white border-slate-200 shadow-sm p-5 h-full">
-      <div className="flex items-center gap-2 mb-6 border-b pb-4">
-        <Filter className="w-5 h-5 text-indigo-500" />
-        <h2 className="font-bold text-slate-800 text-lg">Universal Filters</h2>
+    <div className="card bg-white border-slate-200 shadow-sm p-3.5 sm:p-5 h-full">
+      <div className="flex items-center gap-2 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
+        <Filter className="w-5 h-5 text-indigo-500 shrink-0" />
+        <h2 className="font-bold text-slate-800 text-base sm:text-lg">Universal Filters</h2>
       </div>
       
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Timeframe */}
         <div>
-          <label className="text-xs font-bold uppercase text-slate-500 mb-2 flex items-center gap-2">
+          <label className="text-xs font-bold uppercase text-slate-500 mb-1.5 sm:mb-2 flex items-center gap-2">
             <Calendar className="w-3.5 h-3.5" /> Timeframe
           </label>
           <Select 
@@ -128,9 +128,9 @@ export default function UniversalFilterSidebar({ onFilterChange, userRole }) {
 
         {/* Custom Date Range */}
         {timeframe.value === "Custom Date Range" && (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label className="text-xs font-semibold text-slate-500 mb-1.5 block">Start</label>
+              <label className="text-xs font-semibold text-slate-500 mb-1 block">Start</label>
               <input 
                 type="date" 
                 className="input px-2 py-1.5 w-full text-xs"

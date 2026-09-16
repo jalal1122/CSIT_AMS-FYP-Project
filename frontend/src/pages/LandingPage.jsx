@@ -32,22 +32,22 @@ export default function LandingPage() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo & Heading */}
-            <Link to="/" className="flex items-center gap-3 sm:gap-3.5 group">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white p-1 shadow-sm border border-slate-200/90 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 group min-w-0 flex-1 sm:flex-initial">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-white p-1 shadow-sm border border-slate-200/90 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
                 <img
                   src={logo}
                   alt="The University of Agriculture Peshawar Logo"
                   className="w-full h-full object-contain rounded-full"
                 />
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-sm sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug group-hover:text-sky-600 transition-colors">
+              <div className="flex flex-col text-left min-w-0">
+                <span className="text-xs sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug group-hover:text-sky-600 transition-colors truncate">
                   Institute of Computer Science &amp; IT
                 </span>
-                <span className="text-[10px] sm:text-xs font-semibold text-slate-500 tracking-normal leading-tight">
+                <span className="text-[9px] sm:text-xs font-semibold text-slate-500 tracking-normal leading-tight truncate">
                   The University of Agriculture, Peshawar
                 </span>
               </div>
@@ -74,10 +74,10 @@ export default function LandingPage() {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
+            <div className="md:hidden flex items-center shrink-0">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-slate-600 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-600 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
                 aria-label="Toggle Menu"
               >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -114,61 +114,61 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-16 pb-28 lg:pt-24 lg:pb-36">
+      <section className="relative overflow-hidden pt-10 pb-16 sm:pt-16 sm:pb-28 lg:pt-24 lg:pb-36">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-sky-50 to-transparent -z-10"></div>
         <div className="absolute top-1/4 left-0 w-72 h-72 bg-sky-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
         <div className="absolute top-1/3 right-0 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100/80 border border-sky-200 text-sky-800 text-xs sm:text-sm font-bold mb-8 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-sky-100/80 border border-sky-200 text-sky-800 text-[11px] sm:text-sm font-bold mb-6 sm:mb-8 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-sky-600 animate-pulse"></span>
             ICS/IT • Automated Attendance Management System
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 mb-8 max-w-4xl mx-auto leading-tight">
+          <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 mb-4 sm:mb-8 max-w-4xl mx-auto leading-tight">
             The Future of <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-indigo-600">Smart Attendance</span> in Education
           </h1>
-          <p className="mt-4 text-lg sm:text-xl md:text-2xl text-slate-600 max-w-3xl mx-auto mb-10 font-medium">
+          <p className="mt-2 sm:mt-4 text-sm sm:text-lg md:text-xl text-slate-600 max-w-3xl mx-auto mb-6 sm:mb-10 font-medium">
             Seamlessly track, manage, and analyze student attendance with cutting-edge QR technology and real-time analytics designed for modern universities.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6">
             <button
               onClick={() => navigate('/login')}
-              className="px-8 py-4 rounded-full text-lg font-bold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 shadow-xl shadow-sky-500/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              className="px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-lg font-bold text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 shadow-xl shadow-sky-500/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
             >
-              Enter Portal <ArrowRight className="w-5 h-5" />
+              Enter Portal <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={scrollToFeatures}
-              className="group px-8 py-4 rounded-full text-lg font-bold text-slate-700 bg-white border-2 border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 hover:text-sky-700 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="group px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-lg font-bold text-slate-700 bg-white border-2 border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 hover:text-sky-700 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Explore Features</span>
-              <ArrowDown className="w-5 h-5 text-slate-400 group-hover:text-sky-600 group-hover:translate-y-1 transition-all" />
+              <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 group-hover:text-sky-600 group-hover:translate-y-1 transition-all" />
             </button>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="bg-sky-900 text-white py-16">
+      <section className="bg-sky-900 text-white py-10 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-sky-800/50">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center sm:divide-x sm:divide-sky-800/50">
             <div>
-              <p className="text-4xl font-black text-sky-400 mb-2">99%</p>
-              <p className="text-sm font-medium text-sky-100 uppercase tracking-wider">Accuracy Rate</p>
+              <p className="text-2xl sm:text-4xl font-black text-sky-400 mb-1 sm:mb-2">99%</p>
+              <p className="text-xs sm:text-sm font-medium text-sky-100 uppercase tracking-wider">Accuracy Rate</p>
             </div>
             <div>
-              <p className="text-4xl font-black text-sky-400 mb-2">&lt; 3s</p>
-              <p className="text-sm font-medium text-sky-100 uppercase tracking-wider">Scan Time</p>
+              <p className="text-2xl sm:text-4xl font-black text-sky-400 mb-1 sm:mb-2">&lt; 3s</p>
+              <p className="text-xs sm:text-sm font-medium text-sky-100 uppercase tracking-wider">Scan Time</p>
             </div>
             <div>
-              <p className="text-4xl font-black text-sky-400 mb-2">10k+</p>
-              <p className="text-sm font-medium text-sky-100 uppercase tracking-wider">Students Tracked</p>
+              <p className="text-2xl sm:text-4xl font-black text-sky-400 mb-1 sm:mb-2">10k+</p>
+              <p className="text-xs sm:text-sm font-medium text-sky-100 uppercase tracking-wider">Students Tracked</p>
             </div>
             <div>
-              <p className="text-4xl font-black text-sky-400 mb-2">0</p>
-              <p className="text-sm font-medium text-sky-100 uppercase tracking-wider">Paper Waste</p>
+              <p className="text-2xl sm:text-4xl font-black text-sky-400 mb-1 sm:mb-2">0</p>
+              <p className="text-xs sm:text-sm font-medium text-sky-100 uppercase tracking-wider">Paper Waste</p>
             </div>
           </div>
         </div>

@@ -150,26 +150,26 @@ export default function Allocation() {
     : (currentBatch?.studentCount ? Array.from({ length: Math.ceil(currentBatch.studentCount / 40) }, (_, i) => String.fromCharCode(65 + i)) : ["A"]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Course Allocations</h2>
-          <p className="text-slate-500 text-sm mt-1">Assign teachers to specific sections for the active semester</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Course Allocations</h2>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Assign teachers to specific sections for the active semester</p>
         </div>
-        <button onClick={handleSaveAllocations} className="btn-primary flex items-center gap-2 whitespace-nowrap">
+        <button onClick={handleSaveAllocations} className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm">
           <Check className="w-4 h-4" /> Save Allocations
         </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 sm:gap-6 items-start">
         
         {/* Panel 1: Batch Selector */}
-        <div className="xl:col-span-1 card p-6 sticky top-6">
-          <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <div className="xl:col-span-1 card p-3.5 sm:p-6 xl:sticky xl:top-6">
+          <h3 className="text-xs sm:text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 sm:mb-4 flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-sky-500" /> Target Batch
           </h3>
           <select 
-            className="input w-full cursor-pointer shadow-sm"
+            className="input w-full cursor-pointer shadow-sm text-xs sm:text-sm"
             value={selectedBatch}
             onChange={e => setSelectedBatch(e.target.value)}
           >
@@ -178,9 +178,9 @@ export default function Allocation() {
           </select>
           
           {selectedBatch && currentBatch && (
-            <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-xl space-y-3">
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-sky-50 border border-sky-100 rounded-xl space-y-2.5 sm:space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sky-800 font-semibold text-sm">Semester {currentBatch.currentSemester}</span>
+                <span className="text-sky-800 font-semibold text-xs sm:text-sm">Semester {currentBatch.currentSemester}</span>
                 <Badge variant={currentBatch.isActive ? "info" : "neutral"}>
                   {currentBatch.isActive ? "Active" : "Inactive"}
                 </Badge>
@@ -188,7 +188,7 @@ export default function Allocation() {
 
               {batchSubjects?.source && (
                 <div className="flex items-center gap-1.5">
-                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                  <span className={`text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded-full ${
                     batchSubjects.source === "batch"
                       ? "bg-violet-100 text-violet-700"
                       : "bg-amber-100 text-amber-700"
@@ -214,9 +214,9 @@ export default function Allocation() {
         </div>
 
         {/* Panel 2 & 3: Subjects & Sections */}
-        <div className="xl:col-span-3 card p-0 overflow-hidden min-h-[500px]">
+        <div className="xl:col-span-3 card p-0 overflow-hidden min-h-[350px]">
           {!selectedBatch ? (
-            <div className="h-[500px] flex items-center justify-center">
+            <div className="h-[350px] sm:h-[500px] flex items-center justify-center p-4">
               <EmptyState 
                 icon={ClipboardList} 
                 title="No Batch Selected" 
@@ -224,21 +224,21 @@ export default function Allocation() {
               />
             </div>
           ) : (
-            <div className="p-6 space-y-8 bg-slate-50/50">
+            <div className="p-3 sm:p-6 space-y-4 sm:space-y-8 bg-slate-50/50">
               {currentSubjects.map(subject => (
                 <div key={subject._id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                  <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-slate-800 text-lg">{subject.name || `Subject ${subject._id}`}</h4>
-                      {subject.code && <p className="text-sm text-slate-500 font-mono mt-0.5"><span className="text-sky-600 font-semibold">{subject.code}</span> • {subject.creditHours} Credit Hours</p>}
+                  <div className="px-3.5 sm:px-6 py-3 sm:py-4 bg-slate-50/80 border-b border-slate-100 flex justify-between items-center">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-slate-800 text-base sm:text-lg truncate">{subject.name || `Subject ${subject._id}`}</h4>
+                      {subject.code && <p className="text-xs sm:text-sm text-slate-500 font-mono mt-0.5"><span className="text-sky-600 font-semibold">{subject.code}</span> • {subject.creditHours} Credit Hours</p>}
                     </div>
                   </div>
                   
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-3.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
                     {sectionsList.map(section => (
-                      <div key={`${subject._id}-${section}`} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm relative group">
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="font-bold text-slate-800 text-lg">Section {section}</span>
+                      <div key={`${subject._id}-${section}`} className="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm relative group">
+                        <div className="flex justify-between items-center mb-3 sm:mb-4">
+                          <span className="font-bold text-slate-800 text-base sm:text-lg">Section {section}</span>
                         </div>
                         <div className="relative">
                           <Select

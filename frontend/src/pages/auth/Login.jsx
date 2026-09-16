@@ -62,36 +62,36 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-slate-50 flex items-center justify-center p-2.5 sm:p-4 relative overflow-hidden">
       {/* Decorative background blobs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-sky-200/40 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
-      <div className="card w-full max-w-md p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
+      <div className="card w-full max-w-md p-4 sm:p-8 md:p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
         
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-sky-600 tracking-tight mb-2">CSIT AMS</h1>
-          <p className="text-slate-500 font-medium">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-sky-600 tracking-tight mb-1 sm:mb-2">CSIT AMS</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
             {require2FA ? "Two-Factor Authentication" : "Sign in to your account"}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-semibold text-center shadow-sm">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs sm:text-sm font-semibold text-center shadow-sm">
             {error}
           </div>
         )}
 
         {!require2FA ? (
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-4 sm:space-y-6">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+              <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
                 Username or Email
               </label>
               <input
                 type="text"
                 required
-                className="input py-3"
+                className="input py-2.5 sm:py-3 text-xs sm:text-sm"
                 placeholder="Enter your ID"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
@@ -99,14 +99,14 @@ export default function Login() {
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-bold text-slate-700">
+              <div className="flex justify-between items-center mb-1.5 sm:mb-2 flex-wrap gap-1">
+                <label className="block text-xs sm:text-sm font-bold text-slate-700">
                   Password
                 </label>
                 <button 
                   type="button" 
                   onClick={() => navigate("/forgot-password")}
-                  className="text-sm font-semibold text-sky-600 hover:text-sky-700 transition-colors"
+                  className="text-xs sm:text-sm font-semibold text-sky-600 hover:text-sky-700 transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -114,7 +114,7 @@ export default function Login() {
               <input
                 type="password"
                 required
-                className="input py-3"
+                className="input py-2.5 sm:py-3 text-xs sm:text-sm"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -124,13 +124,13 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary py-3.5 text-base shadow-lg shadow-sky-500/30 font-bold"
+              className="w-full btn-primary py-3 sm:py-3.5 text-sm sm:text-base shadow-lg shadow-sky-500/30 font-bold"
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </button>
 
-            <div className="text-center pt-4 border-t border-slate-100 mt-6">
-              <p className="text-sm font-medium text-slate-500">
+            <div className="text-center pt-3 sm:pt-4 border-t border-slate-100 mt-4 sm:mt-6">
+              <p className="text-xs sm:text-sm font-medium text-slate-500">
                 Don't have an account? <span className="text-slate-400">Contact Administrator</span>
               </p>
             </div>

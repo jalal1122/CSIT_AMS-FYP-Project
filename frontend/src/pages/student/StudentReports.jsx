@@ -63,7 +63,7 @@ export default function StudentReports() {
 
   return (
     <div className="flex flex-col">
-      <div className="container mx-auto px-4 py-8 max-w-7xl flex-1 space-y-8">
+      <div className="container mx-auto px-2.5 sm:px-4 py-4 sm:py-8 max-w-7xl flex-1 space-y-4 sm:space-y-8">
         
         <div className="flex justify-end">
           <button 
@@ -199,7 +199,7 @@ export default function StudentReports() {
                   )}
                 </div>
                 {/* Per-Subject Breakdown Table */}
-                <div className="card bg-white p-6 border-slate-200 shadow-sm mt-6">
+                <div className="card bg-white p-3.5 sm:p-6 border-slate-200 shadow-sm mt-6">
                   <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-sky-600" />
                     Subject Breakdown

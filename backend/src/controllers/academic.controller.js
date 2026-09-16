@@ -1248,7 +1248,7 @@ export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
     };
   });
 
-  const presentCount = sessionList.filter(s => s.status === "Present" || s.status === "Present (Manual)").length;
+  const presentCount = sessionList.filter(s => ["Present", "Present (Manual)", "Late"].includes(s.status)).length;
 
   res.status(200).json(new ApiResponse(200, {
     subject: {

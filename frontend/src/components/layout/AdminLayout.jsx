@@ -107,7 +107,7 @@ export default function AdminLayout({ children }) {
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
-          <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex flex-col z-50 transform transition-transform duration-300">
+          <div className="fixed inset-y-0 left-0 w-[260px] max-w-[85vw] bg-white shadow-xl flex flex-col z-50 transform transition-transform duration-300">
             <div className="absolute top-4 right-4">
               <button onClick={() => setMobileMenuOpen(false)} className="text-slate-500">
                 <X className="w-6 h-6" />
@@ -121,15 +121,15 @@ export default function AdminLayout({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 z-10 shrink-0">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 sm:px-6 z-10 shrink-0">
           <div className="flex items-center flex-1">
-            <button className="md:hidden mr-4 text-slate-500" onClick={() => setMobileMenuOpen(true)}>
+            <button className="md:hidden mr-3 text-slate-500" onClick={() => setMobileMenuOpen(true)}>
               <Menu className="w-6 h-6" />
             </button>
           </div>
 
           {/* Right Header Items */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-3">
               <ProfileDropdown />
             </div>
@@ -137,7 +137,7 @@ export default function AdminLayout({ children }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto bg-slate-50 p-2.5 sm:p-4 md:p-6">
           <div className="max-w-7xl mx-auto h-full pb-10">
             {children}
           </div>

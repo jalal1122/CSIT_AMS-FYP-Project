@@ -12,30 +12,25 @@ export default function TeacherLayout({ children }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-6 w-full sm:w-auto justify-between">
-            <div>
-              <h1 className="text-xl font-extrabold text-sky-600 tracking-tight">CSIT AMS Teacher Portal</h1>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">Welcome, {user?.name || "Teacher"}</p>
+      <header className="bg-white border-b border-slate-200 p-2.5 sm:p-4 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-6 w-full sm:w-auto justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base sm:text-xl font-extrabold text-sky-600 tracking-tight truncate">CSIT AMS Teacher</h1>
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate mt-0.5">Welcome, {user?.name || "Teacher"}</p>
             </div>
             {/* Mobile Actions */}
-            <div className="sm:hidden flex items-center gap-3">
-               <button 
-                className="text-rose-500 text-sm font-semibold hover:bg-rose-50 px-2 py-1 rounded transition-colors"
-                onClick={() => dispatch(logoutUser())}
-              >
-                Logout
-              </button>
+            <div className="sm:hidden flex items-center gap-1.5 shrink-0">
+              <ProfileDropdown />
             </div>
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 hide-scrollbar">
-              <Link to="/teacher/dashboard" className={`px-3 py-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname === "/teacher/dashboard" ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
+            <nav className="flex items-center gap-1 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 hide-scrollbar">
+              <Link to="/teacher/dashboard" className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname === "/teacher/dashboard" ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
                 <LayoutDashboard className="w-4 h-4" /> Dashboard
               </Link>
-              <Link to="/teacher/reports" className={`px-3 py-2 text-sm font-semibold flex items-center gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname.startsWith("/teacher/reports") ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
+              <Link to="/teacher/reports" className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 whitespace-nowrap rounded-lg transition-colors ${location.pathname.startsWith("/teacher/reports") ? "text-sky-600 bg-sky-50" : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"}`}>
                  <FileSpreadsheet className="w-4 h-4" /> Reports
               </Link>
             </nav>

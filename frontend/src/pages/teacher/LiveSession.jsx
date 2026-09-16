@@ -111,68 +111,68 @@ export default function LiveSession() {
 
   return (
     <div className="flex flex-col">
-      <header className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-6">
-        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-rose-50 border border-rose-200 rounded-2xl shadow-sm gap-4">
-          <div className="flex items-center gap-4">
-            <button onClick={handleEndSession} className="p-2 -ml-2 text-rose-500 hover:text-rose-700 hover:bg-rose-100 rounded-full transition-colors">
+      <header className="max-w-7xl mx-auto w-full p-2.5 sm:p-4 md:p-8 space-y-4 sm:space-y-6">
+        <div className="mb-2 sm:mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-rose-50 border border-rose-200 rounded-2xl shadow-sm gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <button onClick={handleEndSession} className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 text-rose-500 hover:text-rose-700 hover:bg-rose-100 rounded-full transition-colors shrink-0">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-                <h1 className="text-2xl font-extrabold text-rose-700 tracking-tight">LIVE SESSION</h1>
+                <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                <h1 className="text-lg sm:text-2xl font-extrabold text-rose-700 tracking-tight truncate">LIVE SESSION</h1>
               </div>
-              <p className="text-sm font-medium text-rose-600/80 mt-0.5">{currentSession?.allocationId?.subjectId?.name} ({currentSession?.allocationId?.batchId?.name} - Sec {currentSession?.sectionName})</p>
+              <p className="text-xs sm:text-sm font-medium text-rose-600/80 mt-0.5 truncate">{currentSession?.allocationId?.subjectId?.name} ({currentSession?.allocationId?.batchId?.name} - Sec {currentSession?.sectionName})</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-rose-100">
             <button 
               onClick={() => setIsSecurityModalOpen(true)}
-              className="bg-white text-slate-600 px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 border border-rose-200 hover:bg-rose-100 hover:text-rose-700 transition-colors shadow-sm"
+              className="bg-white text-slate-600 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 border border-rose-200 hover:bg-rose-100 hover:text-rose-700 transition-colors shadow-sm"
             >
-              <Settings className="w-5 h-5" /> <span className="hidden sm:inline">Security</span>
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="inline">Security</span>
             </button>
             <button 
               onClick={handleEndSession}
-              className="bg-rose-500 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 hover:bg-rose-600 transition-colors shadow-sm shadow-rose-200"
+              className="bg-rose-500 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2 hover:bg-rose-600 transition-colors shadow-sm shadow-rose-200"
             >
-              <StopCircle className="w-5 h-5" /> <span className="hidden sm:inline">End Session</span>
+              <StopCircle className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="inline">End Session</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
         
         {/* Left: QR Code Panel */}
         <div className="lg:col-span-5 flex flex-col">
-          <div className="card p-8 flex-1 flex flex-col items-center justify-center relative overflow-hidden bg-white">
+          <div className="card p-4 sm:p-8 flex-1 flex flex-col items-center justify-center relative overflow-hidden bg-white">
             <div className="absolute inset-0 bg-gradient-to-b from-sky-50 to-transparent pointer-events-none"></div>
             
-            <h2 className="text-2xl font-bold text-slate-800 mb-10 text-center relative z-10">Scan to mark attendance</h2>
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-800 mb-4 sm:mb-8 text-center relative z-10">Scan to mark attendance</h2>
             
-            <div className="bg-white p-5 rounded-3xl shadow-xl shadow-sky-100/50 mb-10 relative z-10 border border-sky-100 group">
+            <div className="bg-white p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-xl shadow-sky-100/50 mb-4 sm:mb-8 relative z-10 border border-sky-100 group max-w-full">
               {/* Actual QR code component */}
-              <div className="w-64 h-64 bg-slate-50 border-2 border-dashed border-sky-200 flex items-center justify-center text-slate-400 rounded-2xl font-mono text-sm break-all text-center p-4 group-hover:border-sky-400 transition-colors">
+              <div className="w-[200px] h-[200px] sm:w-64 sm:h-64 bg-slate-50 border-2 border-dashed border-sky-200 flex items-center justify-center text-slate-400 rounded-2xl font-mono text-sm break-all text-center p-2 sm:p-4 group-hover:border-sky-400 transition-colors">
                 {qrToken ? (
-                  <QRCodeSVG value={qrToken} size={224} />
+                  <QRCodeSVG value={qrToken} size={190} className="w-full h-full" />
                 ) : (
                   <div className="w-full h-full bg-slate-100 animate-pulse rounded-xl flex items-center justify-center">
-                    <p className="text-slate-400 text-sm font-semibold">Loading QR...</p>
+                    <p className="text-slate-400 text-xs sm:text-sm font-semibold">Loading QR...</p>
                   </div>
                 )}
               </div>
               
               {/* Scan overlay effect */}
-              <div className="absolute inset-x-5 top-5 bg-gradient-to-b from-transparent via-sky-400/30 to-transparent w-[256px] h-20 -translate-y-20 animate-[scan_3s_ease-in-out_infinite] rounded-2xl overflow-hidden pointer-events-none"></div>
+              <div className="absolute inset-x-3 sm:inset-x-5 top-3 sm:top-5 bg-gradient-to-b from-transparent via-sky-400/30 to-transparent w-auto h-16 sm:h-20 -translate-y-16 sm:-translate-y-20 animate-[scan_3s_ease-in-out_infinite] rounded-2xl overflow-hidden pointer-events-none"></div>
             </div>
 
             <div className="w-full max-w-xs space-y-2 relative z-10">
-              <div className="flex justify-between text-sm font-semibold">
+              <div className="flex justify-between text-xs sm:text-sm font-semibold">
                 <span className="text-slate-500">Refreshing in</span>
-                <span className="text-sky-600 font-mono font-bold text-base">{countdown}s</span>
+                <span className="text-sky-600 font-mono font-bold text-sm sm:text-base">{countdown}s</span>
               </div>
-              <div className="w-full h-1.5 bg-slate-100 mt-6 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-slate-100 mt-4 sm:mt-6 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-sky-500 transition-all duration-1000 ease-linear"
                   style={{ width: `${(countdown / (qrRefreshRate || currentSession?.securityConfig?.qrRefreshRate || 15)) * 100}%` }}
@@ -183,7 +183,7 @@ export default function LiveSession() {
         </div>
 
         {/* Right: Live Feed Panel */}
-        <div className="lg:col-span-7 flex flex-col h-[calc(100vh-140px)]">
+        <div className="lg:col-span-7 flex flex-col min-h-[420px] lg:h-[calc(100vh-140px)]">
           <div className="card p-0 flex-1 flex flex-col overflow-hidden shadow-md">
             
             <div className="p-6 border-b border-slate-100 bg-slate-50/80 flex justify-between items-center shrink-0">

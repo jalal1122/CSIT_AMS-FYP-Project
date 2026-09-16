@@ -32,7 +32,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="flex flex-col">
-      <main className="max-w-7xl w-full mx-auto p-4 md:p-8 space-y-8 flex-1">
+      <main className="max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-8 flex-1">
         
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Overview</h2>
@@ -51,9 +51,9 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        <div className="flex space-x-2 border-b border-slate-200">
+        <div className="flex space-x-1 sm:space-x-2 border-b border-slate-200 overflow-x-auto hide-scrollbar">
           <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            className={`px-3 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
               activeTab === "current" ? "border-sky-500 text-sky-600" : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
             }`}
             onClick={() => setActiveTab("current")}
@@ -61,7 +61,7 @@ export default function StudentDashboard() {
             <Book className="w-4 h-4" /> Current Semester
           </button>
           <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            className={`px-3 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
               activeTab === "past" ? "border-sky-500 text-sky-600" : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
             }`}
             onClick={() => setActiveTab("past")}
@@ -157,12 +157,12 @@ export default function StudentDashboard() {
       </main>
 
       {/* Floating Action Button for Scanning */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-20">
+      <div className="fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 w-[calc(100%-2rem)] max-w-xs flex justify-center">
         <button 
           onClick={() => navigate("/student/scan")}
-          className="bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/40 flex items-center justify-center gap-3 px-8 py-4 rounded-full font-bold transition-transform hover:scale-105 active:scale-95"
+          className="w-full sm:w-auto bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/40 flex items-center justify-center gap-2.5 sm:gap-3 px-5 sm:px-8 py-3 sm:py-4 rounded-full font-bold transition-transform hover:scale-105 active:scale-95 text-sm sm:text-base whitespace-nowrap"
         >
-          <QrCode className="w-6 h-6" /> Scan Attendance
+          <QrCode className="w-5 h-5 sm:w-6 sm:h-6" /> Scan Attendance
         </button>
       </div>
     </div>

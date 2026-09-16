@@ -91,7 +91,7 @@ const NotificationCenter = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-[280px] sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50">
           <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
             <h3 className="text-sm font-semibold text-gray-800">Notifications</h3>
             <div className="flex space-x-2">

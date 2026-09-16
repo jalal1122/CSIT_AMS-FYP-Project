@@ -64,24 +64,24 @@ export default function StudentProfile() {
 
   return (
     <div className="flex flex-col">
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link to={`/${user?.role || 'student'}/dashboard`} className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-lg bg-white border border-slate-200 shadow-sm">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Link to={`/${user?.role || 'student'}/dashboard`} className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg bg-white border border-slate-200 shadow-sm">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">My Profile</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">My Profile</h1>
         </div>
         {!isEditing && (
-          <button onClick={() => setIsEditing(true)} className="btn-secondary py-2 px-4 shadow-sm">
+          <button onClick={() => setIsEditing(true)} className="btn-secondary py-2 px-4 shadow-sm text-sm">
             Edit Profile
           </button>
         )}
       </div>
 
-      <main className="max-w-3xl mx-auto p-4 md:p-8 space-y-6 w-full">
+      <main className="max-w-3xl mx-auto p-2.5 sm:p-4 md:p-8 space-y-4 sm:space-y-6 w-full">
         
         {/* Personal Info */}
-        <div className="card p-8 shadow-sm">
+        <div className="card p-4 sm:p-8 shadow-sm">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <User className="w-5 h-5 text-sky-500" /> Personal Info
           </h3>
@@ -135,7 +135,7 @@ export default function StudentProfile() {
         </div>
 
         {/* Security & Device */}
-        <div className="card p-8 shadow-sm">
+        <div className="card p-4 sm:p-8 shadow-sm">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-emerald-500" /> Security & Device
           </h3>
@@ -170,7 +170,7 @@ export default function StudentProfile() {
         <TwoFactorSettings />
 
         {/* Change Password */}
-        <div className="card p-8 shadow-sm">
+        <div className="card p-4 sm:p-8 shadow-sm">
           <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
             <Key className="w-5 h-5 text-sky-500" /> Change Password
           </h3>

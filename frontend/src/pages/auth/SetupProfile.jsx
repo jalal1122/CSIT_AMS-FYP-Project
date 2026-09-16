@@ -46,38 +46,38 @@ export default function SetupProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-slate-50 flex items-center justify-center p-2.5 sm:p-4 relative overflow-hidden">
       {/* Decorative background blobs */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-sky-200/40 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
-      <div className="card w-full max-w-md p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
+      <div className="card w-full max-w-md p-4 sm:p-8 md:p-10 relative z-10 shadow-xl shadow-sky-100/50 border border-slate-100">
         
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Set Up Profile</h2>
-          <p className="text-slate-500 font-medium">Welcome {user?.name}, please create a new password to secure your account.</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mb-1 sm:mb-2">Set Up Profile</h2>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">Welcome {user?.name}, please create a new password to secure your account.</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-sm font-semibold text-center shadow-sm">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 text-xs sm:text-sm font-semibold text-center shadow-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSetup} className="space-y-6">
+        <form onSubmit={handleSetup} className="space-y-4 sm:space-y-6">
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">
+            <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
               New Password
             </label>
             <input
               type="password"
               required
-              className="input py-3"
+              className="input py-2.5 sm:py-3 text-xs sm:text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             {password && (
-              <div className="mt-3 flex items-center gap-3">
+              <div className="mt-2.5 sm:mt-3 flex items-center gap-3">
                 <div className="flex gap-1.5 flex-1">
                   {[1, 2, 3, 4].map((level) => (
                     <div
@@ -86,7 +86,7 @@ export default function SetupProfile() {
                     />
                   ))}
                 </div>
-                <span className={`text-xs font-bold w-16 text-right ${strength >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                <span className={`text-[11px] sm:text-xs font-bold w-16 text-right ${strength >= 3 ? 'text-emerald-600' : 'text-slate-400'}`}>
                   {strengthLabels[strength]}
                 </span>
               </div>
@@ -94,13 +94,13 @@ export default function SetupProfile() {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">
+            <label className="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
               Confirm Password
             </label>
             <input
               type="password"
               required
-              className="input py-3"
+              className="input py-2.5 sm:py-3 text-xs sm:text-sm"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
             />
@@ -109,7 +109,7 @@ export default function SetupProfile() {
           <button
             type="submit"
             disabled={isLoading || strength < 2 || password !== confirm}
-            className="w-full btn-success py-3.5 text-base shadow-lg shadow-emerald-500/30 font-bold disabled:opacity-50 disabled:shadow-none"
+            className="w-full btn-success py-3 sm:py-3.5 text-sm sm:text-base shadow-lg shadow-emerald-500/30 font-bold disabled:opacity-50 disabled:shadow-none"
           >
             {isLoading ? "Saving..." : "Complete Setup"}
           </button>

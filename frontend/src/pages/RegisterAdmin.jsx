@@ -52,14 +52,14 @@ export default function RegisterAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="bg-slate-800 p-8 rounded-2xl max-w-md w-full border border-slate-700 shadow-2xl">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center mb-4 border border-rose-500/30">
-            <ShieldAlert className="w-8 h-8" />
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-2.5 sm:p-4">
+      <div className="bg-slate-800 p-4 sm:p-8 rounded-2xl max-w-md w-full border border-slate-700 shadow-2xl">
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center mb-3 sm:mb-4 border border-rose-500/30">
+            <ShieldAlert className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">System Bootstrap</h2>
-          <p className="text-slate-400 text-sm mt-1 text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">System Bootstrap</h2>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1 text-center">
             Create the initial Super Admin account. This endpoint requires the Bootstrap Secret configured in the environment.
           </p>
         </div>

@@ -124,36 +124,36 @@ export default function ClassDetails() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <main className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8 flex-1">
-        <div className="mb-4 flex items-center gap-4">
-          <Link to="/teacher/dashboard" className="p-2 -ml-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200">
+      <main className="max-w-7xl mx-auto w-full p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-6 flex-1">
+        <div className="mb-2 sm:mb-4 flex items-center gap-3 sm:gap-4 min-w-0">
+          <Link to="/teacher/dashboard" className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200 shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">{subject?.name}</h1>
-            <p className="text-sm font-medium text-slate-500 mt-0.5">{batch?.name} - Section {section}</p>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight truncate">{subject?.name}</h1>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5 truncate">{batch?.name} - Section {section}</p>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 items-start">
           <div className="card p-0 overflow-hidden xl:col-span-2">
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-              <h3 className="text-lg font-bold text-slate-800">Student Roster</h3>
+            <div className="px-3.5 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center flex-wrap gap-2">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800">Student Roster</h3>
               <button 
                 onClick={handleExportCSV}
-                className="text-xs font-semibold text-sky-600 bg-sky-50 border border-sky-200 px-3 py-1.5 rounded-lg hover:bg-sky-100 transition-colors shadow-sm"
+                className="text-xs font-semibold text-sky-600 bg-sky-50 border border-sky-200 px-2.5 sm:px-3 py-1.5 rounded-lg hover:bg-sky-100 transition-colors shadow-sm"
               >
                 Export CSV
               </button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left min-w-[480px]">
                 <thead>
                   <tr className="bg-white border-b border-slate-100 text-slate-500 text-xs uppercase font-semibold">
-                    <th className="px-6 py-4">Student</th>
-                    <th className="px-6 py-4 text-center">Classes</th>
-                    <th className="px-6 py-4">Progress</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-3.5 sm:px-6 py-3 sm:py-4">Student</th>
+                    <th className="px-3.5 sm:px-6 py-3 sm:py-4 text-center">Classes</th>
+                    <th className="px-3.5 sm:px-6 py-3 sm:py-4">Progress</th>
+                    <th className="px-3.5 sm:px-6 py-3 sm:py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -163,15 +163,15 @@ export default function ClassDetails() {
                     
                     return (
                       <tr key={student._id || student.id || index} className="hover:bg-slate-50 transition-colors bg-white">
-                        <td className="px-6 py-4">
+                        <td className="px-3.5 sm:px-6 py-3 sm:py-4">
                           <div className="font-bold text-slate-800 text-sm">{student.name}</div>
                           <div className="text-xs text-slate-500 font-mono mt-0.5"><span className="font-semibold text-slate-600">{student.rollNo}</span></div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-3.5 sm:px-6 py-3 sm:py-4 text-center">
                           <span className="text-slate-800 font-bold">{student.present}</span>
                           <span className="text-slate-400 text-xs font-medium">/{student.total}</span>
                         </td>
-                        <td className="px-6 py-4 w-48">
+                        <td className="px-3.5 sm:px-6 py-3 sm:py-4 w-32 sm:w-48">
                           <div className="flex items-center gap-3">
                             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner">
                                <div 

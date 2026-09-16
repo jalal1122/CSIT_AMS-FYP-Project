@@ -123,12 +123,12 @@ export default function TeacherDashboard() {
   return (
     <div className="flex flex-col">
 
-      <main className="max-w-7xl mx-auto w-full p-4 md:p-8 space-y-8 flex-1">
+      <main className="max-w-7xl mx-auto w-full p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-8 flex-1">
         
         {/* Tabs */}
-        <div className="flex space-x-2 border-b border-slate-200">
+        <div className="flex space-x-1 sm:space-x-2 border-b border-slate-200 overflow-x-auto hide-scrollbar">
           <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            className={`px-3 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
               activeTab === "active" 
                 ? "border-sky-500 text-sky-600" 
                 : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
@@ -138,7 +138,7 @@ export default function TeacherDashboard() {
             <PlayCircle className="w-4 h-4" /> Active Classes
           </button>
           <button
-            className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            className={`px-3 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${
               activeTab === "past" 
                 ? "border-sky-500 text-sky-600" 
                 : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
@@ -334,9 +334,9 @@ export default function TeacherDashboard() {
                             <span className="text-slate-800 font-bold">{session.present}</span>
                             <span className="text-slate-400 font-medium">/ {session.total}</span>
                             <span className={`text-xs px-2 py-0.5 rounded ml-2 font-bold ${
-                              (session.present/session.total) >= 0.75 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                              session.total > 0 && (session.present / session.total) >= 0.75 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
                             }`}>
-                              {Math.round((session.present/session.total)*100)}%
+                              {session.total > 0 ? Math.round((session.present / session.total) * 100) : 0}%
                             </span>
                           </div>
                         </td>

@@ -37,27 +37,27 @@ function EditBatchModal({ batch, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4">
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl relative z-10 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600 shrink-0">
               <Edit className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">Edit Batch</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Update batch name and section capacity</p>
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">Edit Batch</h2>
+              <p className="text-xs text-slate-500 truncate mt-0.5">Update batch name and section capacity</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg transition-colors shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSave} className="p-6 space-y-5">
+        <form onSubmit={handleSave} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Batch Name</label>
             <input
@@ -163,24 +163,24 @@ export default function Batch() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Batch Management</h2>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Batch Management</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
             View, edit existing batches or create a new one
           </p>
         </div>
         <button
           onClick={() => navigate("/admin/batch/create")}
-          className="btn-primary flex items-center gap-2 whitespace-nowrap"
+          className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto text-sm"
         >
           <Plus className="w-4 h-4" /> Create New Batch
         </button>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+      <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-stretch sm:items-center">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -188,15 +188,15 @@ export default function Batch() {
             placeholder="Search batches by name, department or discipline..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
         </div>
-        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-lg self-start sm:self-auto overflow-x-auto">
           {["all", "active", "inactive"].map(f => (
             <button
               key={f}
               onClick={() => setFilterActive(f)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
+              className={`px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all capitalize ${
                 filterActive === f
                   ? "bg-white text-slate-800 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
@@ -209,20 +209,20 @@ export default function Batch() {
       </div>
 
       {/* Batch Stats Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: "Total Batches", value: batches.length, icon: GraduationCap, color: "sky" },
           { label: "Active Batches", value: batches.filter(b => b.isActive).length, icon: ToggleRight, color: "emerald" },
           { label: "Inactive Batches", value: batches.filter(b => !b.isActive).length, icon: ToggleLeft, color: "slate" },
           { label: "Disciplines", value: new Set(batches.map(b => b.disciplineId?._id)).size, icon: BookOpen, color: "indigo" },
         ].map(stat => (
-          <div key={stat.label} className="card p-4 flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl bg-${stat.color}-100 flex items-center justify-center text-${stat.color}-600 shrink-0`}>
-              <stat.icon className="w-5 h-5" />
+          <div key={stat.label} className="card p-3.5 sm:p-4 flex items-center gap-3 sm:gap-4">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-${stat.color}-100 flex items-center justify-center text-${stat.color}-600 shrink-0`}>
+              <stat.icon className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
-              <p className="text-xs text-slate-500 font-medium">{stat.label}</p>
+            <div className="min-w-0">
+              <p className="text-xl sm:text-2xl font-bold text-slate-800 truncate">{stat.value}</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">{stat.label}</p>
             </div>
           </div>
         ))}
@@ -230,7 +230,7 @@ export default function Batch() {
 
       {/* Batch Table */}
       <div className="card p-0 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full">
           {isLoading ? (
             <div className="p-12 text-center text-slate-500">Loading batches...</div>
           ) : filteredBatches.length === 0 ? (
@@ -242,59 +242,59 @@ export default function Batch() {
               onAction={() => navigate("/admin/batch/create")}
             />
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[720px]">
               <thead>
                 <tr className="bg-sky-50/50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                  <th className="px-6 py-4">Batch Name</th>
-                  <th className="px-6 py-4">Department</th>
-                  <th className="px-6 py-4">Discipline</th>
-                  <th className="px-6 py-4 text-center">Semester</th>
-                  <th className="px-6 py-4 text-center">Capacity / Section</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4">Batch Name</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4">Department</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4">Discipline</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">Semester</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">Capacity / Section</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-center">Status</th>
+                  <th className="px-4 sm:px-6 py-3 sm:py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredBatches.map(batch => (
                   <tr key={batch._id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
                           <GraduationCap className="w-4 h-4" />
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-800 text-sm">{batch.name}</p>
-                          <p className="text-xs text-slate-400">Started {batch.startingYear}</p>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-800 text-xs sm:text-sm truncate">{batch.name}</p>
+                          <p className="text-[11px] sm:text-xs text-slate-400">Started {batch.startingYear}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600">
                       {batch.departmentId?.name || "—"}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-600">
                       <div className="flex items-center gap-2">
                         <Layers className="w-3.5 h-3.5 text-slate-400" />
                         {batch.disciplineId?.name || "—"}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 font-bold text-sm">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                      <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs sm:text-sm">
                         {batch.currentSemester > 0 ? batch.currentSemester : "✓"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="inline-flex items-center gap-1 text-sm text-slate-600">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                      <span className="inline-flex items-center gap-1 text-xs sm:text-sm text-slate-600">
                         <LayoutGrid className="w-3.5 h-3.5 text-slate-400" />
                         {batch.sections?.length || 0} sections
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
                       <Badge variant={batch.isActive ? "success" : "neutral"}>
                         {batch.currentSemester === 0 ? "Completed" : batch.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                      <div className="flex justify-end items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingBatch(batch)}
                           className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors"
@@ -311,7 +311,7 @@ export default function Batch() {
                         </button>
                         <button
                           onClick={() => navigate("/admin/allocation")}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 rounded-lg text-xs font-medium transition-colors"
+                          className="flex items-center gap-1 px-2 py-1 bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 rounded-md text-xs font-medium transition-colors"
                           title="Manage Allocations"
                         >
                           Allocations <ChevronRight className="w-3 h-3" />

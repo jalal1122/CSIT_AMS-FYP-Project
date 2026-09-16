@@ -64,11 +64,11 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-end">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Admin Dashboard</h2>
-          <p className="text-slate-500 text-sm mt-1">System overview and real-time management</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Admin Dashboard</h2>
+          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">System overview and real-time management</p>
         </div>
         <div className="text-xs text-slate-400 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Live Updates
@@ -76,29 +76,29 @@ export default function AdminDashboard() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8">Loading real-time stats...</div>
+        <div className="flex justify-center p-8 text-slate-500 text-sm">Loading real-time stats...</div>
       ) : (
         <>
           {/* Stat Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {stats.map((stat, i) => (
               <StatCard key={i} title={stat.label} value={stat.value} gradient={stat.gradient} />
             ))}
           </div>
 
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             
             {/* User Distribution */}
-            <div className="card">
-              <h3 className="text-lg font-bold text-slate-800 mb-6">User Distribution</h3>
-              <div className="h-64 relative flex items-center justify-center">
+            <div className="card p-3.5 sm:p-6">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6">User Distribution</h3>
+              <div className="h-56 sm:h-64 relative flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie 
                       data={pieData} 
                       cx="50%" cy="50%" 
-                      innerRadius={70} outerRadius={90} 
+                      innerRadius={60} outerRadius={80} 
                       paddingAngle={2} 
                       dataKey="value"
                       stroke="none"
@@ -114,66 +114,66 @@ export default function AdminDashboard() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total</span>
-                  <span className="text-xl font-bold text-slate-800">{totalAcademicUsers}</span>
+                  <span className="text-slate-500 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Total</span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-800">{totalAcademicUsers}</span>
                 </div>
               </div>
-              <div className="flex justify-center gap-6 mt-4">
+              <div className="flex justify-center gap-4 sm:gap-6 mt-4 flex-wrap text-xs sm:text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                  <span className="text-sm text-slate-600">Students ({totalStudents})</span>
+                  <span className="text-slate-600">Students ({totalStudents})</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-sky-500"></div>
-                  <span className="text-sm text-slate-600">Teachers ({totalTeachers})</span>
+                  <span className="text-slate-600">Teachers ({totalTeachers})</span>
                 </div>
               </div>
             </div>
 
             {/* Students per Batch */}
-            <div className="card">
-              <h3 className="text-lg font-bold text-slate-800 mb-6">Students per Batch</h3>
-              <div className="h-64">
+            <div className="card p-3.5 sm:p-6">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4 sm:mb-6">Students per Batch</h3>
+              <div className="h-56 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" axisLine={false} tickLine={false} />
-                    <YAxis stroke="#94a3b8" axisLine={false} tickLine={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                    <YAxis stroke="#94a3b8" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                     <RechartsTooltip 
                       cursor={{ fill: '#f8fafc' }}
                       contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Bar dataKey="students" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={40} />
+                    <Bar dataKey="students" fill="#38bdf8" radius={[4, 4, 0, 0]} barSize={32} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             
             {/* Recent Classes Table */}
             <div className="card lg:col-span-2 p-0 overflow-hidden">
-              <div className="bg-sky-500 px-6 py-4">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Recent System Activity</h3>
+              <div className="bg-sky-500 px-4 sm:px-6 py-3 sm:py-4">
+                <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider">Recent System Activity</h3>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-left min-w-[480px]">
                   <thead>
                     <tr className="bg-sky-50/50 border-b border-slate-100 text-xs text-slate-500 font-semibold uppercase tracking-wider">
-                      <th className="px-6 py-3">Item</th>
-                      <th className="px-6 py-3">Detail</th>
-                      <th className="px-6 py-3">Source</th>
-                      <th className="px-6 py-3">Status</th>
+                      <th className="px-3 sm:px-6 py-2.5 sm:py-3">Item</th>
+                      <th className="px-3 sm:px-6 py-2.5 sm:py-3">Detail</th>
+                      <th className="px-3 sm:px-6 py-2.5 sm:py-3">Source</th>
+                      <th className="px-3 sm:px-6 py-2.5 sm:py-3">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentClasses.map((cls) => (
                       <tr key={cls.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-4 text-sm text-slate-700 font-medium">{cls.name}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{cls.batch}</td>
-                        <td className="px-6 py-4 text-sm text-slate-500">{cls.teacher}</td>
-                        <td className="px-6 py-4">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-700 font-medium">{cls.name}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{cls.batch}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-slate-500">{cls.teacher}</td>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <Badge variant={cls.status === "Active" ? "info" : "neutral"}>
                             {cls.status}
                           </Badge>
