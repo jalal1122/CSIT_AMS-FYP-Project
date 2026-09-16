@@ -225,6 +225,7 @@ const authSlice = createSlice({
     builder.addCase(setupProfile.fulfilled, (state, { payload }) => {
       state.isLoading = false;
       state.user = payload.user;
+      state.accessToken = payload.accessToken;
       state.mustChangePassword = false;
     });
     builder.addCase(setupProfile.rejected, (state, { payload }) => {
@@ -254,6 +255,7 @@ const authSlice = createSlice({
       state.isCheckingAuth = false;
       state.isAuthenticated = true;
       state.user = payload.user;
+      state.mustChangePassword = payload.user?.mustChangePassword || false;
       state.accountStatus = payload.user.accountStatus;
       // If session was recovered via token refresh, persist the new access token
       if (payload._refreshedAccessToken) {
