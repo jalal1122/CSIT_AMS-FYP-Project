@@ -230,6 +230,19 @@ export const uploadSectionStudents = asyncHandler(async (req, res) => {
     { $set: { "sections.$.studentCount": sectionStudentCount } }
   );
 
+  // Synchronize newly uploaded students into active CourseAllocations for this batch and section
+  const allSectionStudentIds = await User.find({
+    "info.batchId": batchId,
+    "info.section": new RegExp(`^${sectionDoc.name.trim()}$`, "i"),
+    role: "student",
+    accountStatus: "Active"
+  }).distinct("_id");
+
+  await CourseAllocation.updateMany(
+    { batchId, isActive: true, "sections.name": new RegExp(`^${sectionDoc.name.trim()}$`, "i") },
+    { $addToSet: { "sections.$.students": { $each: allSectionStudentIds } } }
+  );
+
   const totalProcessed = insertedCount + updatedCount;
   const message = insertedCount > 0 && updatedCount > 0
     ? `${totalProcessed} students processed for section ${sectionDoc.name} (${insertedCount} new, ${updatedCount} existing linked).`
@@ -394,15 +407,16 @@ export const allocateCourse = asyncHandler(async (req, res) => {
     // Fetch students to populate the section's students array
     const populatedSections = [];
     for (const sec of currentSections) {
+      const secNameTrimmed = (sec.name || "").trim();
       const students = await User.find({
         "info.batchId": batch._id,
-        "info.section": sec.name,
+        "info.section": new RegExp(`^${secNameTrimmed}$`, "i"),
         role: "student",
         accountStatus: "Active"
       }).select("_id");
 
       populatedSections.push({
-        name: sec.name,
+        name: secNameTrimmed,
         teacherId: sec.teacherId || null,
         students: students.map(s => s._id)
       });
@@ -1207,9 +1221,24 @@ export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
     .lean();
   if (!allocation) throw new ApiError(404, "Allocation not found");
 
-  const sec = allocation.sections.find(s => 
-    s.students.some(id => id.toString() === studentId.toString())
+  const userSection = (req.user.info?.section || "").trim().toUpperCase();
+  const userBatchId = req.user.info?.batchId?.toString();
+  const allocBatchId = allocation.batchId?.toString();
+
+  let sec = allocation.sections.find(s => 
+    s.students?.some(id => id.toString() === studentId.toString())
   );
+
+  if (!sec && userBatchId === allocBatchId && userSection) {
+    sec = allocation.sections.find(s => (s.name || "").trim().toUpperCase() === userSection);
+    if (sec) {
+      CourseAllocation.updateOne(
+        { _id: allocation._id, "sections._id": sec._id },
+        { $addToSet: { "sections.$.students": studentId } }
+      ).catch(err => console.error("Auto-heal student enrollment in class attendance error:", err));
+    }
+  }
+
   if (!sec) throw new ApiError(403, "You are not enrolled in this class");
   
   const sectionName = sec.name;

@@ -32,7 +32,11 @@ export default function ProfileDropdown() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -63,32 +67,35 @@ export default function ProfileDropdown() {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-50" ref={dropdownRef}>
       <button 
+        type="button"
         onClick={() => {
-          setIsOpen(!isOpen);
+          setIsOpen(prev => !prev);
           setShowNotifications(false);
         }}
-        className="flex items-center gap-2 hover:bg-slate-100 p-1 pr-3 rounded-full transition-colors focus:outline-none"
+        className="flex items-center gap-2 hover:bg-slate-100 p-1 pr-2 sm:pr-3 rounded-full transition-colors focus:outline-none touch-manipulation cursor-pointer select-none"
+        aria-label="Profile and settings"
+        aria-expanded={isOpen}
       >
         <div className="relative">
-          <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold border border-sky-200">
+          <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold border border-sky-200 pointer-events-none">
             {getInitials(user?.name)}
           </div>
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 border border-white rounded-full">
+            <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 border border-white rounded-full pointer-events-none">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
         </div>
-        <div className="hidden md:block text-left">
+        <div className="hidden md:block text-left pointer-events-none">
           <p className="text-sm font-semibold text-slate-700 leading-tight">{user?.name?.split(' ')[0]}</p>
           <p className="text-xs text-slate-500 capitalize leading-tight">{user?.role}</p>
         </div>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[280px] sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50 transform origin-top-right transition-all">
+        <div className="absolute right-0 mt-2 w-[280px] sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden z-[9999] transform origin-top-right transition-all">
           {!showNotifications ? (
             <>
               <div className="p-4 border-b border-slate-100 bg-slate-50">

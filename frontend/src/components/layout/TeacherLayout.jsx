@@ -12,15 +12,15 @@ export default function TeacherLayout({ children }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 p-2.5 sm:p-4 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white border-b border-slate-200 p-2.5 sm:p-4 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-6 w-full sm:w-auto justify-between">
+          <div className="flex items-center gap-2 sm:gap-6 w-full sm:w-auto justify-between relative z-40">
             <div className="min-w-0 flex-1">
               <h1 className="text-base sm:text-xl font-extrabold text-sky-600 tracking-tight truncate">CSIT AMS Teacher</h1>
               <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate mt-0.5">Welcome, {user?.name || "Teacher"}</p>
             </div>
             {/* Mobile Actions */}
-            <div className="sm:hidden flex items-center gap-1.5 shrink-0">
+            <div className="sm:hidden flex items-center gap-1.5 shrink-0 relative z-50">
               <ProfileDropdown />
             </div>
           </div>
@@ -35,7 +35,7 @@ export default function TeacherLayout({ children }) {
               </Link>
             </nav>
             
-            <div className="hidden sm:flex items-center gap-3 pl-2 sm:pl-4 border-l border-slate-200 shrink-0">
+            <div className="hidden sm:flex items-center gap-3 pl-2 sm:pl-4 border-l border-slate-200 shrink-0 relative z-50">
               <ProfileDropdown />
             </div>
           </div>

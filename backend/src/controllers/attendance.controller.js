@@ -36,11 +36,44 @@ export const markAttendance = asyncHandler(async (req, res) => {
   const allocation = await CourseAllocation.findById(allocationId).populate("subjectId", "name");
   if (!allocation) throw new ApiError(404, "Allocation not found");
 
-  const section = allocation.sections.find(s => s.name === sectionName);
-  const isEnrolled = section?.students.some(id => id.toString() === req.user._id.toString());
+  const normalizedSectionName = (sectionName || "").trim().toUpperCase();
+  const section = allocation.sections.find(
+    s => (s.name || "").trim().toUpperCase() === normalizedSectionName
+  );
+  if (!section) {
+    throw new ApiError(404, `Section '${sectionName}' not found in course allocation`);
+  }
+
+  // Enrollment verification:
+  // 1. Student ID is explicitly present in section.students, OR
+  // 2. Student's registered batch and section match this allocation's batch and section
+  const isExplicitlyInList = section.students?.some(
+    id => id.toString() === req.user._id.toString()
+  );
+
+  const studentBatchId = req.user.info?.batchId?.toString();
+  const studentSection = (req.user.info?.section || "").trim().toUpperCase();
+  const allocationBatchId = allocation.batchId?.toString();
+
+  const isProfileEnrolled = Boolean(
+    studentBatchId &&
+    allocationBatchId &&
+    studentBatchId === allocationBatchId &&
+    studentSection === normalizedSectionName
+  );
+
+  const isEnrolled = isExplicitlyInList || isProfileEnrolled;
   
   if (!isEnrolled) {
     throw new ApiError(403, "You are not enrolled in this section");
+  }
+
+  // Auto-heal: If student belongs to this batch & section but was not yet pushed to section.students, sync them now
+  if (!isExplicitlyInList && isProfileEnrolled) {
+    CourseAllocation.updateOne(
+      { _id: allocation._id, "sections._id": section._id },
+      { $addToSet: { "sections.$.students": req.user._id } }
+    ).catch(err => console.error("Auto-heal student enrollment in CourseAllocation error:", err));
   }
 
   const existingAttendance = await Attendance.findOne({
