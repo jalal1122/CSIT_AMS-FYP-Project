@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    # 1. Export path for Passenger app restart
+    - export DEPLOYPATH=/home/$USER/csitattendanceapi.csitfmcs.com.pk
+    # 2. Sync backend files
+    - /bin/rsync -av --exclude='.git' --exclude='node_modules' --exclude='src/tests' backend/ $DEPLOYPATH/
+    # 3. Touch restart.txt to reload Passenger Node.js app
+    - /bin/mkdir -p $DEPLOYPATH/tmp
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt

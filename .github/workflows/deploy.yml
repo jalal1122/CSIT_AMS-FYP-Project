@@ -1,0 +1,79 @@
+name: Deploy AttendX to cPanel
+
+on:
+  push:
+    branches:
+      - main
+      # You can change this to your deployment branch, e.g. dev, production, etc.
+
+jobs:
+  deploy-frontend:
+    name: Build & Deploy Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build Frontend for Production
+        working-directory: ./frontend
+        env:
+          VITE_API_URL: https://csitattendanceapi.csitfmcs.com.pk
+        run: npm run build
+
+      - name: Deploy Frontend via FTP to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          server-dir: ${{ secrets.CPANEL_FRONTEND_DIR || '/public_html/csitattendance/' }}
+          local-dir: ./frontend/dist/
+
+  deploy-backend:
+    name: Deploy Backend & Restart Passenger
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare Backend Files (Exclude dev & test files)
+        run: |
+          mkdir deploy-backend
+          rsync -av --exclude='node_modules' --exclude='src/tests' --exclude='.env' ./backend/ deploy-backend/
+
+      - name: Deploy Backend Files via FTP to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          server-dir: ${{ secrets.CPANEL_BACKEND_DIR || '/csitattendanceapi.csitfmcs.com.pk/' }}
+          local-dir: ./deploy-backend/
+
+      - name: Restart Phusion Passenger App (via SSH or restart file)
+        # If you have SSH access configured, this restarts the Node.js app automatically
+        if: ${{ env.HAS_SSH == 'true' }}
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          HAS_SSH: ${{ secrets.CPANEL_SSH_HOST != '' }}
+        with:
+          host: ${{ secrets.CPANEL_SSH_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USERNAME }}
+          key: ${{ secrets.CPANEL_SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.CPANEL_SSH_PASSPHRASE }}
+          port: ${{ secrets.CPANEL_SSH_PORT || 22 }}
+          script: |
+            cd ${{ secrets.CPANEL_BACKEND_DIR || 'csitattendanceapi.csitfmcs.com.pk' }}
+            npm install --omit=dev
+            mkdir -p tmp && touch tmp/restart.txt

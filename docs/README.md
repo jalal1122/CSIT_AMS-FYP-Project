@@ -45,7 +45,8 @@ docs/
     └── responsive-system.md       # 300px Mobile-First Standard & Touch Accessibility
 
 ├── deployment/                    # Production Deployment Guides
-│   └── cpanel.md                  # Complete cPanel & Phusion Passenger Deployment Guide
+│   ├── cpanel.md                  # Complete cPanel & Phusion Passenger Deployment Guide
+│   └── auto-deploy-github.md      # Automated Push-to-Deploy CI/CD with GitHub Actions & Webhooks
 ```
 
 ---
