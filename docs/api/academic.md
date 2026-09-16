@@ -2,6 +2,11 @@
 
 Base URL: `/api/v2/academic`
 
+## Overview
+The Academic Management module manages batches, section definitions, student rosters, per-batch curriculum overrides, course allocations, semester promotions, and teacher roster views.
+
+---
+
 ## Endpoints Summary
 
 | Method | Endpoint | Access | Description |
@@ -22,10 +27,15 @@ Base URL: `/api/v2/academic`
 | `POST` | `/batch/:id/rollback` | Admin | Rollback batch promotion |
 | `POST` | `/batch/:id/complete` | Admin | Mark batch as completed/graduated (soft-close) |
 | `DELETE` | `/batch/:id` | Admin | Hard cascading deletion of batch and associated records |
+| `GET` | `/teacher/courses` | Teacher | List assigned courses and sections for logged-in teacher |
+| `GET` | `/allocation/:id/roster` | Teacher, Admin | Get enrolled student roster for a course allocation section |
+| `GET` | `/allocation/:id/attendance` | Teacher, Admin | Get aggregated attendance sheet for allocation (Present, Late, Absent) |
+| `GET` | `/allocation/:id/export` | Teacher, Admin | Export allocation attendance history to spreadsheet |
+| `GET` | `/student/summary` | Student | Get student's personal course attendance summaries and aggregate % |
 
 ---
 
-## Batch Lifecycle & Section Management Architecture
+## Architecture & Workflows
 
 ### 1. Manual Section Creation & Per-Section Uploads
 Instead of uploading one monolithic file and computing arbitrary sections by student capacity, AttendX splits creation into:
@@ -43,21 +53,20 @@ When transfer or migration students arrive mid-session:
 - **Archiving**: Inactivates the section (`status = "archived"`). The section remains visible for historical teacher records but is hidden from active student registration and session creation.
 
 ### 4. Per-Batch Subject Allocation (Curriculum Overrides)
-- Previously, subjects were strictly bound to `Discipline.syllabus` per semester.
-- Now, each `Batch` document can have a `semesterSubjects` array that overrides the discipline syllabus for any semester.
+- Each `Batch` document can have a `semesterSubjects` array that overrides the discipline syllabus for any semester.
 - `GET /batch/:id/subjects` checks `batch.semesterSubjects` first; if not present, it gracefully falls back to `discipline.syllabus`.
 - `allocateCourse` no longer rejects subjects that are not in the discipline syllabus, allowing full departmental flexibility.
 
-### 5. Batch Completion & Cascading Deletion
+### 5. Attendance Calculations & Statuses
+In `GET /allocation/:id/attendance` and student dashboards:
+- **Present Count**: Calculated as `["Present", "Present (Manual)", "Late"].includes(status)`
+- **Absent Count**: Calculated as `status === "Absent"`
+- **Excused Count**: Calculated as `status === "Leave"`
+- **Attendance %**: `Math.round((presentCount / totalConductedSessions) * 100)` (defended with `totalConductedSessions > 0` to prevent `NaN%`).
+
+### 6. Batch Completion & Cascading Deletion
 - **Completion (`POST /batch/:id/complete`)**: Sets `isActive = false` and `currentSemester = 0` (graduation marker). Deactivates all `CourseAllocation` documents. Data is preserved for transcripts, audit logs, and reports.
-- **Cascading Deletion (`DELETE /batch/:id`)**: Permanently hard-deletes the batch.
-  - **Safety Guards**: Must supply exact `confirmName` matching the batch name. Batch must either be completed (`isActive === false`) or be an empty new batch with no allocations or sessions.
-  - **Atomic Transaction**: Uses a MongoDB transaction to delete:
-    1. `Attendance` records
-    2. `Session` documents
-    3. `CourseAllocation` documents
-    4. `User` documents (students of this batch)
-    5. The `Batch` document itself.
+- **Cascading Deletion (`DELETE /batch/:id`)**: Permanently hard-deletes the batch inside a MongoDB session transaction (Attendance records, Session documents, CourseAllocation documents, Student accounts, and Batch document). Requires exact batch name confirmation.
 
 ---
 
@@ -78,28 +87,34 @@ Response: `201 Created`
 ### Upload Section Students
 `POST /api/v2/academic/batch/:batchId/section/Morning/upload`
 - Form-Data: `file` (Excel `.xlsx` or `.csv`)
-Response:
 ```json
 {
   "statusCode": 201,
   "data": {
     "batchId": "64a1...",
     "sectionName": "Morning",
-    "totalRows": 45,
-    "inserted": 45,
+    "totalRows": 25,
+    "inserted": 25,
     "duplicates": [],
-    "sectionStudentCount": 45
+    "sectionStudentCount": 25
   },
-  "message": "45 students uploaded to section Morning successfully"
+  "message": "25 students uploaded to section Morning successfully"
 }
 ```
 
-### Set Custom Batch Subjects
-`POST /api/v2/academic/batch/:id/subjects`
+### Get Teacher Courses
+`GET /api/v2/academic/teacher/courses`
 ```json
 {
-  "semester": 1,
-  "subjectIds": ["64b1...", "64b2...", "64b3..."]
+  "statusCode": 200,
+  "data": [
+    {
+      "_id": "64b1...",
+      "subject": { "name": "Data Structures & Algorithms", "code": "CS-201" },
+      "batch": { "name": "BSCS - Fall 2024", "currentSemester": 3 },
+      "section": "A",
+      "totalStudents": 25
+    }
+  ]
 }
 ```
-Response: `200 OK`

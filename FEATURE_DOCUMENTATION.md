@@ -1,6 +1,6 @@
 # AttendX — CSIT AMS Complete Feature Documentation
 > Scanned from every source file in the project.
-> Last updated: 2026-08-10
+> Last updated: 2026-09-16
 
 ---
 
@@ -9,10 +9,10 @@
 2. Tech Stack and Dependencies
 3. Database Models (13 schemas)
 4. Backend — Authentication (15 endpoints)
-5. Backend — Academic Management (17 endpoints)
-6. Backend — Session Management (9 endpoints)
+5. Backend — Academic Management (21 endpoints)
+6. Backend — Session Management (10 endpoints)
 7. Backend — Attendance System (3 endpoints)
-8. Backend — Admin Management (11 endpoints)
+8. Backend — Admin Management (12 endpoints)
 9. Backend — System Foundation (16 endpoints)
 10. Backend — Analytics and Reporting (3 endpoints)
 11. Backend — Notifications (5 endpoints)
@@ -23,11 +23,13 @@
 16. Frontend — Admin Pages (11 pages)
 17. Frontend — Teacher Pages (6 pages)
 18. Frontend — Student Pages (5 pages)
-19. Frontend — Auth Pages (3 pages)
+19. Frontend — Auth Pages (4 pages)
 20. Frontend — Shared Components (25+ components)
 21. Frontend — State Management — 10 Redux slices
-22. Security Architecture
+22. Security Architecture (Anti-Fraud & Per-User Lockout)
 23. Complete API Endpoint Reference
+24. 300px Responsive Mobile Architecture
+25. Documentation Hub & System Sitemap
 
 ---
 
@@ -937,38 +939,43 @@ All flags non-blocking: attendance marked but isSuspicious=true for review.
 ### Academic — /api/v2/academic
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | /batch/create | Admin | Bulk create via Excel |
-| GET | /batches | Admin | List batches |
-| GET | /batch/:id | Admin | Batch details |
-| PATCH | /batch/:id | Admin | Update batch |
-| GET | /batch/:id/sections | Admin | Get sections |
-| POST | /allocation/assign | Admin | Assign subject+teachers |
-| GET | /allocations | Admin | List allocations |
+| POST | /batch/create | Admin | Create batch shell with manual sections (no file) |
+| GET | /batches | Admin | List batches with pagination & sections |
+| GET | /batch/:id | Admin | Get single batch details & sections |
+| PATCH | /batch/:id | Admin | Update batch metadata |
+| POST | /batch/:batchId/section/:sectionName/upload | Admin | Upload Excel roster to specific section |
+| POST | /batch/:id/section | Admin | Add new section mid-batch |
+| DELETE | /batch/:id/section/:sectionName | Admin | Delete empty section (studentCount === 0) |
+| PATCH | /batch/:id/section/:sectionName/archive | Admin | Archive / restore section |
+| GET | /batch/:id/subjects | Admin | Get batch semester subjects (override/syllabus) |
+| POST | /batch/:id/subjects | Admin | Set custom subjects override for batch |
+| POST | /allocation/assign | Admin | Assign subject + teacher to section |
+| GET | /allocations | Admin, Teacher | List course allocations |
 | POST | /batch/:id/promote | Admin | Promote semester |
 | POST | /batch/:id/rollback | Admin | Rollback semester |
-| POST | /student/:id/transfer | Admin | Section transfer |
-| GET | /student/dashboard | Student | Dashboard data |
-| GET | /student/history | Student | Past semesters |
-| GET | /teacher/dashboard | Teacher | Teacher classes |
-| GET | /teacher/history | Teacher | Past sessions |
-| GET | /teacher/class/:id/:section | Teacher | Class roster |
-| GET | /teacher/class/:id/:section/sessions | Teacher | Session history |
-| GET | /teacher/class/:id/:section/student/:sid/report | Teacher | Student report |
+| POST | /batch/:id/complete | Admin | Mark batch as completed/graduated |
+| DELETE | /batch/:id | Admin | Hard cascading deletion of batch |
+| GET | /teacher/courses | Teacher | List assigned courses & sections |
+| GET | /allocation/:id/roster | Teacher, Admin | Get enrolled student roster for allocation |
+| GET | /allocation/:id/attendance | Teacher, Admin | Get aggregated attendance sheet |
+| GET | /allocation/:id/export | Teacher, Admin | Export allocation attendance spreadsheet |
+| GET | /student/summary | Student | Get personal course attendance summary |
 
 ### Admin — /api/v2/admin
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | /users | Admin | List users |
+| GET | /users | Admin | List users with filters |
 | POST | /users | Admin | Create user |
-| PUT | /users/:id | Admin | Update user |
-| PATCH | /users/:id/status | Admin | Change status |
-| PATCH | /users/:id/reset-device | Admin | Clear device |
-| PATCH | /users/:id/reset-password | Admin | Default password |
-| PUT | /users/:id/transfer | Admin | Cross-batch transfer |
-| POST | /teacher/:id/offboard | Admin | Deactivate teacher |
-| PATCH | /allocation/:id/reassign-teacher | Admin | Reassign teacher |
-| PUT | /admin/subject/:id/archive | Admin | Archive/unarchive |
-| PATCH | /allocation/:id/retroactive | Admin | Toggle retroactive |
+| PUT | /users/:id | Admin | Update user profile |
+| PATCH | /users/:id/status | Admin | Change user status (Active/Suspended) |
+| PATCH | /users/:id/reset-device | Admin | Clear bound mobile device ID |
+| PATCH | /users/:id/reset-password | Admin | Set temporary password |
+| PUT | /users/:id/transfer | Admin | Transfer student between batches/sections |
+| POST | /users/:id/unlock | Admin | Unlock locked user account |
+| POST | /teacher/:id/offboard | Admin | Deactivate teacher & unbind allocations |
+| PATCH | /allocation/:id/reassign-teacher | Admin | Reassign teacher on allocation |
+| PUT | /subject/:id/archive | Admin | Archive / unarchive subject |
+| PATCH | /allocation/:id/retroactive | Admin | Toggle retroactive session permission |
 
 ### Session — /api/v2/session
 | Method | Path | Auth | Description |
@@ -1052,3 +1059,25 @@ CRON_ALERT_HOUR (default 17), CRON_ALERT_DAY (default 5=Fri), CRON_TIMEZONE
 BODY_SIZE_LIMIT      Max request body (default "10mb")
 NODE_ENV             "production" disables node-cron, enables cPanel mode
 ```
+
+---
+
+## 24. 300px Responsive Mobile Architecture
+
+The application is engineered for universal multi-device access down to **300px viewport widths**:
+- **Isolated Table Scrollers**: Multi-column data tables (`Batch`, `Faculty`, `Students`, `Curriculum`, `ClassDetails`, `SessionHistory`, `MyAttendance`, `DataTable`) are wrapped in `<div className="overflow-x-auto w-full">` with explicit minimum widths (`min-w-[500px]`), preventing horizontal viewport stretching.
+- **Touch-First Action Triggers**: Desktop hover-dependent elements (`opacity-0 group-hover:opacity-100`) have been updated with mobile-first fallbacks (`opacity-100 sm:opacity-0 sm:group-hover:opacity-100`) so buttons are directly visible and tappable on touch screens.
+- **Dynamic Viewfinder Scaling**: Camera QR scanning in `ScanAttendance.jsx` dynamically calculates `Math.min(viewfinderWidth, viewfinderHeight) * 0.72` to adapt to screen constraints.
+- **Fluid Layout Padding**: Standard cards and layout containers dynamically step between `p-2.5 sm:p-4 md:p-6` to maximize readable space on compact devices.
+
+---
+
+## 25. Documentation Hub & System Sitemap
+
+Comprehensive architectural and implementation documents are maintained in `docs/`:
+- **Master Index**: `docs/README.md`
+- **APIs**: `docs/api/academic.md`, `docs/api/admin.md`, `docs/api/analytics.md`, `docs/api/attendance.md`, `docs/api/auth.md`, `docs/api/notification.md`, `docs/api/session.md`, `docs/api/system.md`, `docs/api/systemSettings.md`
+- **Schemas**: `docs/schema/academic-foundation.md`, `docs/schema/attendance.md`, `docs/schema/auditLogs.md`, `docs/schema/batch.md`, `docs/schema/courseAllocation.md`, `docs/schema/notification.md`, `docs/schema/session.md`, `docs/schema/user.md`
+- **Data Flows**: `docs/data-flow/batch-creation.md`, `docs/data-flow/batch-promotion.md`, `docs/data-flow/login-lockout.md`, `docs/data-flow/qr-attendance-flow.md`, `docs/data-flow/reports-pipeline.md`, `docs/data-flow/session-lifecycle.md`
+- **Frontend Architecture**: `docs/frontend/architecture.md`, `docs/frontend/integration.md`, `docs/frontend/responsive-system.md`
+
