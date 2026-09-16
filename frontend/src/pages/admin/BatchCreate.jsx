@@ -78,7 +78,8 @@ function SectionUploadCard({ section, onFileSelect, result, isUploading }) {
         </div>
         {uploaded && (
           <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
-            {result.inserted} students • {result.duplicates?.length > 0 ? `${result.duplicates.length} skipped` : "all clear"}
+            {result.sectionStudentCount ?? ((result.inserted || 0) + (result.updated || 0))} students
+            {result.updated > 0 && result.inserted > 0 ? ` (${result.inserted} new, ${result.updated} linked)` : result.updated > 0 ? " (linked)" : ""}
           </span>
         )}
       </div>
@@ -225,10 +226,11 @@ export default function BatchCreate() {
         file: secDef.file,
       })).unwrap();
       setUploadResults((prev) => ({ ...prev, [sectionName]: result }));
+      const totalCount = (result.inserted || 0) + (result.updated || 0);
       dispatch(addToast({
-        title: "Upload Success",
-        message: `${result.inserted} students added to Section ${sectionName}`,
-        type: result.duplicates?.length > 0 ? "warning" : "success",
+        title: totalCount > 0 ? "Upload Success" : "Upload Warning",
+        message: result.message || `${totalCount} students enrolled in Section ${sectionName}`,
+        type: totalCount > 0 ? "success" : "warning",
       }));
     } catch (err) {
       dispatch(addToast({ title: "Upload Failed", message: err, type: "error" }));
@@ -247,7 +249,7 @@ export default function BatchCreate() {
   };
 
   const totalUploaded = Object.values(uploadResults).reduce(
-    (acc, r) => acc + (r?.inserted || 0), 0
+    (acc, r) => acc + (r?.sectionStudentCount ?? ((r?.inserted || 0) + (r?.updated || 0))), 0
   );
 
   // ── Render ─────────────────────────────────────────────────────────────────

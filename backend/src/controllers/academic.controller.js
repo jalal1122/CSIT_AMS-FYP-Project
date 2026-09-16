@@ -108,13 +108,16 @@ export const uploadSectionStudents = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Excel file is empty or has no data rows");
   }
 
-  // 3. Validate required columns
-  const requiredCols = ["Name", "Username", "Roll No"];
+  // 3. Flexible column detection
   const actualCols = Object.keys(rows[0]);
-  for (const col of requiredCols) {
-    if (!actualCols.includes(col)) {
-      throw new ApiError(400, `Missing required column: "${col}"`);
-    }
+  const findCol = (candidates) => actualCols.find(c => candidates.includes(c.trim().toLowerCase()));
+  
+  const nameCol = findCol(["name", "student name", "student_name"]);
+  const userCol = findCol(["username", "user name", "user_name", "reg no", "reg_no", "registration no"]);
+  const rollCol = findCol(["roll no", "roll_no", "rollno", "roll number", "roll_number"]) || userCol;
+
+  if (!nameCol || !userCol) {
+    throw new ApiError(400, 'Missing required columns: Excel must have "Name" and "Username" (or "Reg No")');
   }
 
   // 4. Hash default password
@@ -126,59 +129,122 @@ export const uploadSectionStudents = asyncHandler(async (req, res) => {
   const emailDomain = process.env.INSTITUTION_EMAIL_DOMAIN || "csit-ams.edu";
 
   // 5. Build user documents
-  const userDocs = rows.map(row => ({
-    username: row["Username"].toString().trim(),
-    name: row["Name"].toString().trim(),
-    email: `${row["Username"].toString().trim().toLowerCase()}@${emailDomain}`,
-    password: defaultPasswordHash,
-    role: "student",
-    accountStatus: "Active",
-    mustChangePassword: true,
-    info: {
-      rollNo: row["Roll No"].toString().trim(),
-      section: sectionDoc.name,
-      semester: batch.currentSemester,
-      batchId: batch._id,
-      departmentId: batch.departmentId._id,
-      disciplineId: batch.disciplineId._id,
-    },
-  }));
+  const userDocs = rows.map(row => {
+    const rawUsername = row[userCol]?.toString().trim() || "";
+    const rawName = row[nameCol]?.toString().trim() || "";
+    const rawRollNo = row[rollCol]?.toString().trim() || rawUsername;
+    return {
+      username: rawUsername,
+      name: rawName,
+      email: `${rawUsername.toLowerCase()}@${emailDomain}`,
+      password: defaultPasswordHash,
+      role: "student",
+      accountStatus: "Active",
+      mustChangePassword: true,
+      info: {
+        rollNo: rawRollNo,
+        section: sectionDoc.name,
+        semester: batch.currentSemester,
+        batchId: batch._id,
+        departmentId: batch.departmentId._id,
+        disciplineId: batch.disciplineId._id,
+      },
+    };
+  }).filter(u => u.username && u.name);
 
-  // 6. Bulk insert with ordered:false (continue past duplicates)
-  let insertedCount = 0;
-  let duplicates = [];
+  if (userDocs.length === 0) {
+    throw new ApiError(400, "No valid student rows found in Excel file");
+  }
 
-  try {
-    const result = await User.insertMany(userDocs, { ordered: false });
-    insertedCount = result.length;
-  } catch (err) {
-    if (err.code === 11000) {
-      insertedCount = rows.length - (err.writeErrors?.length || 0);
-      duplicates = err.writeErrors?.map(e => e.err.op?.username).filter(Boolean) || [];
+  // 6. Separate into new vs existing students by username or email
+  const usernames = userDocs.map(u => u.username);
+  const emails = userDocs.map(u => u.email);
+
+  const existingUsers = await User.find({
+    $or: [{ username: { $in: usernames } }, { email: { $in: emails } }]
+  });
+
+  const existingByUsername = new Map(existingUsers.map(u => [u.username.toLowerCase(), u]));
+  const existingByEmail = new Map(existingUsers.map(u => [u.email.toLowerCase(), u]));
+
+  const toInsert = [];
+  const toUpdate = [];
+
+  for (const doc of userDocs) {
+    const existing = existingByUsername.get(doc.username.toLowerCase()) || existingByEmail.get(doc.email.toLowerCase());
+    if (existing) {
+      toUpdate.push({ existingId: existing._id, doc });
     } else {
-      throw err;
+      toInsert.push(doc);
     }
   }
 
-  // 7. Update denormalized studentCount on the section
-  const newCount = sectionDoc.studentCount + insertedCount;
+  // 7. Insert new students
+  let insertedCount = 0;
+  if (toInsert.length > 0) {
+    try {
+      const inserted = await User.insertMany(toInsert, { ordered: false });
+      insertedCount = inserted.length;
+    } catch (err) {
+      if (err.code === 11000 || err.name === "MongoBulkWriteError") {
+        insertedCount = err.insertedDocs?.length || (toInsert.length - (err.writeErrors?.length || 0));
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  // 8. Update / reassign existing students to this section and batch
+  let updatedCount = 0;
+  if (toUpdate.length > 0) {
+    const bulkOps = toUpdate.map(({ existingId, doc }) => ({
+      updateOne: {
+        filter: { _id: existingId },
+        update: {
+          $set: {
+            name: doc.name,
+            accountStatus: "Active",
+            "info.rollNo": doc.info.rollNo,
+            "info.section": sectionDoc.name,
+            "info.semester": batch.currentSemester,
+            "info.batchId": batch._id,
+            "info.departmentId": batch.departmentId._id,
+            "info.disciplineId": batch.disciplineId._id,
+          }
+        }
+      }
+    }));
+    const bulkRes = await User.bulkWrite(bulkOps, { ordered: false });
+    updatedCount = bulkRes.modifiedCount || toUpdate.length;
+  }
+
+  // 9. Synchronize section student count accurately
+  const sectionStudentCount = await User.countDocuments({
+    "info.batchId": batchId,
+    "info.section": sectionDoc.name,
+    role: "student",
+  });
+
   await Batch.updateOne(
     { _id: batchId, "sections._id": sectionDoc._id },
-    { $set: { "sections.$.studentCount": newCount } }
+    { $set: { "sections.$.studentCount": sectionStudentCount } }
   );
 
-  const statusCode = duplicates.length > 0 ? 207 : 201;
-  res.status(statusCode).json(new ApiResponse(statusCode, {
+  const totalProcessed = insertedCount + updatedCount;
+  const message = insertedCount > 0 && updatedCount > 0
+    ? `${totalProcessed} students processed for section ${sectionDoc.name} (${insertedCount} new, ${updatedCount} existing linked).`
+    : insertedCount > 0
+    ? `${insertedCount} students uploaded to section ${sectionDoc.name} successfully.`
+    : `${updatedCount} existing student accounts linked to section ${sectionDoc.name} successfully.`;
+
+  res.status(200).json(new ApiResponse(200, {
     batchId,
     sectionName: sectionDoc.name,
     totalRows: rows.length,
     inserted: insertedCount,
-    duplicates,
-    sectionStudentCount: newCount,
-  }, duplicates.length > 0
-    ? `${insertedCount} students uploaded. ${duplicates.length} duplicate(s) skipped.`
-    : `${insertedCount} students uploaded to section ${sectionDoc.name} successfully`
-  ));
+    updated: updatedCount,
+    sectionStudentCount,
+  }, message));
 });
 
 // @desc    Add a new section to an existing batch (mid-batch, for transfers/migrants)

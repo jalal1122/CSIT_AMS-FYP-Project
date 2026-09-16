@@ -36,10 +36,11 @@ function SectionUploadZone({ sectionName, batchId, onSuccess }) {
     setUploading(true);
     try {
       const result = await dispatch(uploadSectionStudents({ batchId, sectionName, file })).unwrap();
+      const totalCount = (result.inserted || 0) + (result.updated || 0);
       dispatch(addToast({
-        title: "Upload Success",
-        message: `${result.inserted} students added to section ${sectionName}`,
-        type: result.duplicates?.length > 0 ? "warning" : "success",
+        title: totalCount > 0 ? "Upload Success" : "Upload Warning",
+        message: result.message || `${totalCount} students enrolled in section ${sectionName}`,
+        type: totalCount > 0 ? "success" : "warning",
       }));
       onSuccess(result);
       setFile(null);
