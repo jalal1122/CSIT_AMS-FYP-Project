@@ -20,15 +20,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       throw new ApiError(403, "Your account has been deactivated. Please contact admin.");
     }
 
-    // 2. mustChangePassword gate
-    const SETUP_ROUTES = ["/api/v2/auth/setup-profile", "/api/v2/auth/logout"];
-    const isSetupRoute = SETUP_ROUTES.some(r => req.originalUrl.includes(r));
-
-    if (decoded.mustChangePassword && !isSetupRoute) {
-      throw new ApiError(403, "You must complete your profile setup before proceeding.");
-    }
-
-    // 3. DB fetch for full user object
+    // 2. DB fetch for full user object
     const user = await User.findById(decoded._id)
       .select("-password -refreshToken -twoFactorSecret");
 
@@ -39,6 +31,14 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     // Double-check accountStatus from DB (in case token is stale)
     if (user.accountStatus !== "Active") {
       throw new ApiError(403, "Account is not active");
+    }
+
+    // 3. mustChangePassword gate (checked against live DB state)
+    const SETUP_ROUTES = ["/api/v2/auth/setup-profile", "/api/v2/auth/logout", "/api/v2/auth/me"];
+    const isSetupRoute = SETUP_ROUTES.some(r => req.originalUrl.includes(r));
+
+    if (user.mustChangePassword && !isSetupRoute) {
+      throw new ApiError(403, "You must complete your profile setup before proceeding.");
     }
 
     req.user = user;
