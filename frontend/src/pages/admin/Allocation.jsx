@@ -1,21 +1,31 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBatches, fetchBatchDetails, fetchAllocations, assignAllocations, toggleRetroactivePermission } from "../../store/slices/academicSlice.js";
+import { 
+  fetchBatches, 
+  fetchBatchDetails, 
+  fetchAllocations, 
+  assignAllocations, 
+  toggleRetroactivePermission,
+  fetchBatchSubjects
+} from "../../store/slices/academicSlice.js";
+import { fetchSubjects } from "../../store/slices/systemSlice.js";
 import { fetchTeachers } from "../../store/slices/facultySlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
-import { Check, ClipboardList, AlertTriangle, AlertCircle } from "lucide-react";
+import { Check, ClipboardList, AlertTriangle, AlertCircle, BookOpen, Layers } from "lucide-react";
 import EmptyState from "../../components/shared/EmptyState";
 import Badge from "../../components/shared/Badge";
+import ManageBatchSubjectsModal from "../../components/admin/ManageBatchSubjectsModal.jsx";
 
 export default function Allocation() {
   const [selectedBatch, setSelectedBatch] = useState("");
   const [assignments, setAssignments] = useState({}); // { subjectId: { "A": teacherId } }
   const [retroactive, setRetroactive] = useState({}); // { subjectId: { "A": boolean } }
   const [allocationIds, setAllocationIds] = useState({}); // { subjectId: allocationId }
+  const [showManageSubjectsModal, setShowManageSubjectsModal] = useState(false);
   
   const dispatch = useDispatch();
-  const { batches, currentBatch, allocations, isLoading } = useSelector((state) => state.academic);
+  const { batches, currentBatch, allocations, batchSubjects, isLoading } = useSelector((state) => state.academic);
   const { teachers } = useSelector((state) => state.faculty);
 
   useEffect(() => {
@@ -27,6 +37,8 @@ export default function Allocation() {
     if (selectedBatch) {
       dispatch(fetchBatchDetails(selectedBatch));
       dispatch(fetchAllocations({ batchId: selectedBatch }));
+      dispatch(fetchBatchSubjects(selectedBatch));
+      dispatch(fetchSubjects());
     }
   }, [selectedBatch, dispatch]);
 
@@ -118,19 +130,24 @@ export default function Allocation() {
     }
   };
 
-  // Extract subjects for current semester from batch syllabus
+  // Extract subjects for current semester: check batchSubjects first, then fallback to discipline syllabus
   let currentSubjects = [];
-  if (currentBatch && currentBatch.disciplineId && currentBatch.disciplineId.syllabus) {
+  if (batchSubjects?.subjects && batchSubjects.subjects.length > 0) {
+    currentSubjects = batchSubjects.subjects;
+  } else if (currentBatch?.disciplineId?.syllabus) {
     const semMap = currentBatch.disciplineId.syllabus.find(s => s.semester === currentBatch.currentSemester);
     if (semMap) {
-      currentSubjects = semMap.subjects || []; // these are usually populated if getBatch populates them, if not we need them populated. Let's assume they are populated or we just display ID.
+      currentSubjects = semMap.subjects || [];
     }
   }
 
-  // Generate sections list based on maxStudentsPerSection and studentCount
-  const capacity = currentBatch?.maxStudentsPerSection || 40;
-  const numSections = currentBatch ? Math.ceil(currentBatch.studentCount / capacity) : 0;
-  const sectionsList = Array.from({ length: Math.max(1, numSections) }, (_, i) => String.fromCharCode(65 + i));
+  // Generate sections list based directly on batch sections (manual sections)
+  const activeSections = (currentBatch?.sections || [])
+    .filter(s => s.status !== "archived")
+    .map(s => s.name);
+  const sectionsList = activeSections.length > 0
+    ? activeSections
+    : (currentBatch?.studentCount ? Array.from({ length: Math.ceil(currentBatch.studentCount / 40) }, (_, i) => String.fromCharCode(65 + i)) : ["A"]);
 
   return (
     <div className="space-y-6">
@@ -161,14 +178,37 @@ export default function Allocation() {
           </select>
           
           {selectedBatch && currentBatch && (
-            <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-xl">
-              <div className="flex justify-between items-center mb-2">
+            <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-xl space-y-3">
+              <div className="flex justify-between items-center">
                 <span className="text-sky-800 font-semibold text-sm">Semester {currentBatch.currentSemester}</span>
-                <Badge variant="info">Active</Badge>
+                <Badge variant={currentBatch.isActive ? "info" : "neutral"}>
+                  {currentBatch.isActive ? "Active" : "Inactive"}
+                </Badge>
               </div>
+
+              {batchSubjects?.source && (
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                    batchSubjects.source === "batch"
+                      ? "bg-violet-100 text-violet-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}>
+                    {batchSubjects.source === "batch" ? "Custom Batch Subjects" : "Discipline Syllabus"}
+                  </span>
+                </div>
+              )}
+
               <p className="text-xs text-sky-700 leading-relaxed">
-                Found <strong>{currentSubjects.length} subjects</strong> in curriculum. <strong>{currentBatch.studentCount} total students</strong> across {sectionsList.length} sections.
+                <strong>{currentSubjects.length} subject(s)</strong> available for allocation across <strong>{sectionsList.length} section(s)</strong>.
               </p>
+
+              <button
+                type="button"
+                onClick={() => setShowManageSubjectsModal(true)}
+                className="w-full py-2 px-3 bg-white hover:bg-sky-100/70 text-sky-700 border border-sky-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5" /> Manage Subjects ({currentSubjects.length})
+              </button>
             </div>
           )}
         </div>
@@ -255,6 +295,18 @@ export default function Allocation() {
         </div>
         
       </div>
+
+      {/* Manage Batch Subjects Modal */}
+      {showManageSubjectsModal && currentBatch && (
+        <ManageBatchSubjectsModal
+          batch={currentBatch}
+          onClose={() => setShowManageSubjectsModal(false)}
+          onSuccess={() => {
+            dispatch(fetchBatchSubjects(selectedBatch));
+            dispatch(fetchAllocations({ batchId: selectedBatch }));
+          }}
+        />
+      )}
     </div>
   );
 }

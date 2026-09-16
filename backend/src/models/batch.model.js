@@ -1,12 +1,33 @@
 import mongoose from "mongoose";
 
+// Individual section within a batch
+const sectionSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, "Section name is required"],
+    trim: true,
+    // Either a single letter (A, B, C) or a descriptive name (Morning, Evening, CS-01)
+  },
+  status: {
+    type: String,
+    enum: ["active", "archived"],
+    default: "active",
+  },
+  // Denormalized cache — updated on each student upload / transfer
+  studentCount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+}, { _id: true, timestamps: true });
+
 const batchSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, "Batch name is required"],
     unique: true,
     trim: true,
-    // e.g., "BSCS Fall 2021"
+    // e.g., "BSCS - Fall 2021"
   },
   disciplineId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -28,7 +49,7 @@ const batchSchema = new mongoose.Schema({
   currentSemester: {
     type: Number,
     required: true,
-    min: 0, // 0 = graduated/archived
+    min: 0, // 0 = graduated/completed
     default: 1,
   },
   isActive: {
@@ -41,11 +62,15 @@ const batchSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
-  sections: [
-    {
-      name: { type: String, required: true }
-    }
-  ]
+  sections: [sectionSchema],
+
+  // Per-batch subject override per semester (overrides discipline.syllabus if set)
+  // Shape: [{ semester: 1, subjects: [ObjectId, ...] }]
+  semesterSubjects: [{
+    semester: { type: Number, required: true, min: 1, max: 10 },
+    subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
+    _id: false,
+  }],
 }, { timestamps: true });
 
 batchSchema.index({ disciplineId: 1, currentSemester: 1 });

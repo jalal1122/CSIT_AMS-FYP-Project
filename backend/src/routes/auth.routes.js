@@ -25,7 +25,7 @@ const router = Router();
 // is enforced inside loginUser() at the DB level — this is just a backstop.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 50,                    // 50 attempts per 15 minutes per IP (bot guard)
+  max: 500,                    // 500 attempts per 15 minutes per IP (bot guard)
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many requests from this IP. Please try again in 15 minutes." }

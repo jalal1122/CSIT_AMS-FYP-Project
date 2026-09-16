@@ -47,7 +47,6 @@ const courseAllocationSchema = new mongoose.Schema({
 
 // Ensure a subject is only allocated once per batch per semester
 courseAllocationSchema.index({ subjectId: 1, batchId: 1, semester: 1 }, { unique: true });
-courseAllocationSchema.index({ isActive: 1 });
 courseAllocationSchema.index({ "sections.teacherId": 1, isActive: 1 });
 
 const CourseAllocation = mongoose.model("CourseAllocation", courseAllocationSchema);

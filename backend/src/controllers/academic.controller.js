@@ -14,15 +14,33 @@ import { getSystemSetting } from "../utils/settings.js";
 import xlsx from "xlsx";
 import bcrypt from "bcryptjs";
 
-// @desc    Create a new batch from Excel and auto-section students
+// @desc    Create a new batch with manually defined sections (no file upload at this step)
 // @route   POST /api/v2/academic/batch/create
 // @access  Admin
 export const createBatch = asyncHandler(async (req, res) => {
-  // 1. Parse multipart form fields
-  const { name, departmentId, disciplineId, maxStudentsPerSection } = req.body;
-  const capacity = parseInt(maxStudentsPerSection, 10);
+  const { name, departmentId, disciplineId, sections } = req.body;
 
-  // 2. Validate references exist
+  // 1. Validate required fields
+  if (!departmentId || !disciplineId) {
+    throw new ApiError(400, "departmentId and disciplineId are required");
+  }
+  if (!sections || !Array.isArray(sections) || sections.length === 0) {
+    throw new ApiError(400, "At least one section is required");
+  }
+
+  // 2. Validate section names — non-empty + unique within request
+  const sectionNames = sections.map(s =>
+    (typeof s === "string" ? s.trim() : s?.name?.trim())
+  );
+  for (const n of sectionNames) {
+    if (!n) throw new ApiError(400, "Section names cannot be empty");
+  }
+  const uniqueNames = new Set(sectionNames.map(n => n.toUpperCase()));
+  if (uniqueNames.size !== sectionNames.length) {
+    throw new ApiError(400, "Section names must be unique within a batch");
+  }
+
+  // 3. Validate references
   const [dept, disc] = await Promise.all([
     Department.findById(departmentId),
     Discipline.findById(disciplineId),
@@ -33,19 +51,64 @@ export const createBatch = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Discipline does not belong to this department");
   }
 
-  // 3. Parse Excel from memory buffer (multer memoryStorage)
-  if (!req.file) {
-    throw new ApiError(400, "Excel file is required");
+  // 4. Build batch name
+  const suffix = name?.trim() || String(new Date().getFullYear());
+  const batchName = `${disc.code} - ${suffix}`;
+
+  // 5. Create batch shell (no students yet)
+  const batch = await Batch.create({
+    name: batchName,
+    departmentId,
+    disciplineId,
+    startingYear: new Date().getFullYear(),
+    currentSemester: 1,
+    sections: sectionNames.map(n => ({ name: n, status: "active", studentCount: 0 })),
+  });
+
+  const populated = await Batch.findById(batch._id)
+    .populate("departmentId", "name code")
+    .populate("disciplineId", "name code")
+    .lean();
+
+  res.status(201).json(new ApiResponse(201, {
+    batch: populated,
+    sections: sectionNames,
+    message: `Batch created with ${sectionNames.length} section(s). Upload student rosters per section next.`,
+  }, "Batch shell created successfully"));
+});
+
+// @desc    Upload students for a specific section (per-section Excel upload)
+// @route   POST /api/v2/academic/batch/:batchId/section/:sectionName/upload
+// @access  Admin
+export const uploadSectionStudents = asyncHandler(async (req, res) => {
+  const { batchId, sectionName } = req.params;
+
+  // 1. Validate batch & section exist
+  const batch = await Batch.findById(batchId)
+    .populate("departmentId", "_id name")
+    .populate("disciplineId", "_id name code");
+  if (!batch) throw new ApiError(404, "Batch not found");
+  if (!batch.isActive) throw new ApiError(400, "Cannot upload to an inactive batch");
+
+  const sectionDoc = batch.sections.find(
+    s => s.name.toUpperCase() === sectionName.toUpperCase()
+  );
+  if (!sectionDoc) {
+    throw new ApiError(404, `Section "${sectionName}" does not exist in this batch`);
   }
+
+  // 2. Parse Excel file
+  if (!req.file) throw new ApiError(400, "Excel file is required");
+
   const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = xlsx.utils.sheet_to_json(sheet); // [{Name, Username, "Roll No"}, ...]
+  const rows = xlsx.utils.sheet_to_json(sheet);
 
   if (!rows || rows.length === 0) {
     throw new ApiError(400, "Excel file is empty or has no data rows");
   }
 
-  // 4. Validate required columns
+  // 3. Validate required columns
   const requiredCols = ["Name", "Username", "Roll No"];
   const actualCols = Object.keys(rows[0]);
   for (const col of requiredCols) {
@@ -54,85 +117,172 @@ export const createBatch = asyncHandler(async (req, res) => {
     }
   }
 
-  // 5. Calculate sections
-  const totalStudents = rows.length;
-  const numSections = Math.ceil(totalStudents / capacity);
-  const sectionLabels = Array.from({ length: numSections }, (_, i) =>
-    String.fromCharCode(65 + i) // A, B, C, ...
-  );
-
-  // 6. Create Batch document first
-  const batchName = `${disc.code} - ${name}`;
-  const batch = await Batch.create({
-    name: batchName,
-    departmentId,
-    disciplineId,
-    startingYear: new Date().getFullYear(),
-    maxStudentsPerSection: capacity,
-    currentSemester: 1,
-    sections: sectionLabels.map(label => ({ name: label })),
-  });
-
-  // 7. Build user documents for insertMany
+  // 4. Hash default password
   const defaultPasswordHash = await bcrypt.hash(
     process.env.DEFAULT_STUDENT_PASSWORD || "password123",
     10
   );
 
-  const userDocs = rows.map((row, index) => {
-    const sectionLabel = sectionLabels[Math.floor(index / capacity)];
-    return {
-      username: row["Username"].toString().trim(),
-      name: row["Name"].toString().trim(),
-      email: `${row["Username"].toString().trim().toLowerCase()}@csit-ams.edu`,
-      password: defaultPasswordHash,
-      role: "student",
-      accountStatus: "Active",
-      mustChangePassword: true,
-      info: {
-        rollNo: row["Roll No"].toString().trim(),
-        section: sectionLabel,
-        semester: 1,
-        batchId: batch._id,
-        departmentId,
-        disciplineId,
-      },
-    };
-  });
+  const emailDomain = process.env.INSTITUTION_EMAIL_DOMAIN || "csit-ams.edu";
 
-  // 8. Bulk insert with ordered: false (continue even if some fail)
-  let insertResult;
+  // 5. Build user documents
+  const userDocs = rows.map(row => ({
+    username: row["Username"].toString().trim(),
+    name: row["Name"].toString().trim(),
+    email: `${row["Username"].toString().trim().toLowerCase()}@${emailDomain}`,
+    password: defaultPasswordHash,
+    role: "student",
+    accountStatus: "Active",
+    mustChangePassword: true,
+    info: {
+      rollNo: row["Roll No"].toString().trim(),
+      section: sectionDoc.name,
+      semester: batch.currentSemester,
+      batchId: batch._id,
+      departmentId: batch.departmentId._id,
+      disciplineId: batch.disciplineId._id,
+    },
+  }));
+
+  // 6. Bulk insert with ordered:false (continue past duplicates)
+  let insertedCount = 0;
+  let duplicates = [];
+
   try {
-    insertResult = await User.insertMany(userDocs, {
-      ordered: false,
-    });
+    const result = await User.insertMany(userDocs, { ordered: false });
+    insertedCount = result.length;
   } catch (err) {
-    // Handle partial success (some usernames already exist)
     if (err.code === 11000) {
-      const failedUsernames = err.writeErrors?.map(e =>
-        e.err.op?.username
-      ) || [];
-      return res.status(207).json(new ApiResponse(207, {
-        batchId: batch._id,
-        totalRows: rows.length,
-        inserted: rows.length - (err.writeErrors?.length || 0),
-        duplicates: failedUsernames,
-        sections: sectionLabels,
-      }, "Batch created with some duplicates skipped"));
+      insertedCount = rows.length - (err.writeErrors?.length || 0);
+      duplicates = err.writeErrors?.map(e => e.err.op?.username).filter(Boolean) || [];
+    } else {
+      throw err;
     }
-    throw err;
   }
 
+  // 7. Update denormalized studentCount on the section
+  const newCount = sectionDoc.studentCount + insertedCount;
+  await Batch.updateOne(
+    { _id: batchId, "sections._id": sectionDoc._id },
+    { $set: { "sections.$.studentCount": newCount } }
+  );
+
+  const statusCode = duplicates.length > 0 ? 207 : 201;
+  res.status(statusCode).json(new ApiResponse(statusCode, {
+    batchId,
+    sectionName: sectionDoc.name,
+    totalRows: rows.length,
+    inserted: insertedCount,
+    duplicates,
+    sectionStudentCount: newCount,
+  }, duplicates.length > 0
+    ? `${insertedCount} students uploaded. ${duplicates.length} duplicate(s) skipped.`
+    : `${insertedCount} students uploaded to section ${sectionDoc.name} successfully`
+  ));
+});
+
+// @desc    Add a new section to an existing batch (mid-batch, for transfers/migrants)
+// @route   POST /api/v2/academic/batch/:id/section
+// @access  Admin
+export const addBatchSection = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  if (!name || !name.trim()) throw new ApiError(400, "Section name is required");
+  const sectionName = name.trim();
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+  if (!batch.isActive) throw new ApiError(400, "Cannot modify an inactive batch");
+
+  const exists = batch.sections.some(
+    s => s.name.toUpperCase() === sectionName.toUpperCase()
+  );
+  if (exists) throw new ApiError(409, `Section "${sectionName}" already exists in this batch`);
+
+  batch.sections.push({ name: sectionName, status: "active", studentCount: 0 });
+  await batch.save();
+
+  // Push new empty section into all active CourseAllocations for this batch
+  await CourseAllocation.updateMany(
+    { batchId: id, isActive: true },
+    {
+      $push: {
+        sections: {
+          name: sectionName,
+          teacherId: null,
+          students: [],
+          allowRetroactiveSessions: false,
+        }
+      }
+    }
+  );
+
+  const newSection = batch.sections[batch.sections.length - 1];
   res.status(201).json(new ApiResponse(201, {
-    batch,
-    studentsCreated: insertResult.length,
-    sections: sectionLabels.map((label, i) => ({
-      section: label,
-      count: i < numSections - 1
-        ? capacity
-        : totalStudents - (i * capacity),
-    })),
-  }, `Batch created successfully. ${insertResult.length} students enrolled in ${numSections} section(s).`));
+    section: newSection,
+    batchId: id,
+  }, `Section "${sectionName}" added successfully`));
+});
+
+// @desc    Delete an empty section from a batch
+// @route   DELETE /api/v2/academic/batch/:id/section/:sectionName
+// @access  Admin
+export const deleteBatchSection = asyncHandler(async (req, res) => {
+  const { id, sectionName } = req.params;
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+
+  const sectionDoc = batch.sections.find(
+    s => s.name.toUpperCase() === sectionName.toUpperCase()
+  );
+  if (!sectionDoc) throw new ApiError(404, `Section "${sectionName}" not found`);
+
+  if (sectionDoc.studentCount > 0) {
+    throw new ApiError(400,
+      `Cannot delete section "${sectionName}" — it still has ${sectionDoc.studentCount} student(s). Transfer or remove students first.`
+    );
+  }
+
+  batch.sections = batch.sections.filter(
+    s => s.name.toUpperCase() !== sectionName.toUpperCase()
+  );
+  await batch.save();
+
+  // Remove from all CourseAllocations
+  await CourseAllocation.updateMany(
+    { batchId: id },
+    { $pull: { sections: { name: { $regex: new RegExp(`^${sectionName}$`, "i") } } } }
+  );
+
+  res.status(200).json(new ApiResponse(200, { batchId: id, sectionName },
+    `Section "${sectionName}" deleted successfully`));
+});
+
+// @desc    Archive or restore a section (archived = grayed out for teacher, no new sessions)
+// @route   PATCH /api/v2/academic/batch/:id/section/:sectionName/archive
+// @access  Admin
+export const archiveBatchSection = asyncHandler(async (req, res) => {
+  const { id, sectionName } = req.params;
+  const { archive = true } = req.body;
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+
+  const sectionIdx = batch.sections.findIndex(
+    s => s.name.toUpperCase() === sectionName.toUpperCase()
+  );
+  if (sectionIdx === -1) throw new ApiError(404, `Section "${sectionName}" not found`);
+
+  batch.sections[sectionIdx].status = archive ? "archived" : "active";
+  await batch.save();
+
+  const action = archive ? "archived" : "restored";
+  res.status(200).json(new ApiResponse(200, {
+    section: batch.sections[sectionIdx],
+    batchId: id,
+  }, `Section "${sectionName}" ${action} successfully`));
 });
 
 
@@ -143,47 +293,43 @@ export const allocateCourse = asyncHandler(async (req, res) => {
   const { batchId, teacherAssignments } = req.body;
   // teacherAssignments: [{ subjectId, sections: [{ name: "A", teacherId }] }]
 
-  const batch = await Batch.findById(batchId).populate("disciplineId");
+  const batch = await Batch.findById(batchId);
   if (!batch) throw new ApiError(404, "Batch not found");
   if (!batch.isActive) throw new ApiError(400, "Batch is not active");
 
   const currentSemester = batch.currentSemester;
-  const discipline = batch.disciplineId;
 
-  // Find the subjects for this semester in syllabus
-  const semesterMap = discipline.syllabus.find(s => s.semester === currentSemester);
-  const allowedSubjects = semesterMap ? semesterMap.subjects.map(s => s.toString()) : [];
+  // NOTE: Syllabus gate removed — any subject can be allocated to any batch.
+  // Per-batch subject selection is managed via setBatchSubjects (GET/POST /batch/:id/subjects).
 
   const createdAllocations = [];
 
   for (const assignment of teacherAssignments) {
     const { subjectId, sections } = assignment;
-    
-    if (!allowedSubjects.includes(subjectId.toString())) {
-      throw new ApiError(400, `Subject ${subjectId} is not in the syllabus for semester ${currentSemester}`);
-    }
 
-    // Check if sections provided by admin; if not, use batch sections
-    let currentSections = sections && sections.length > 0 ? sections : batch.sections;
+    // Use the sections provided by the admin (active sections from the batch)
+    const currentSections = sections && sections.length > 0
+      ? sections
+      : batch.sections.filter(s => s.status === "active").map(s => ({ name: s.name }));
+
     if (!currentSections || currentSections.length === 0) {
-      throw new ApiError(400, "No sections provided and batch has no saved sections.");
+      throw new ApiError(400, "No sections provided and batch has no active sections.");
     }
 
     // Verify all teachers exist
     const teacherIds = currentSections.map(s => s.teacherId).filter(Boolean);
-    const teachers = await User.find({ _id: { $in: teacherIds }, role: "teacher", accountStatus: "Active" });
-    if (teachers.length !== Array.from(new Set(teacherIds)).length) {
-      throw new ApiError(400, "One or more teachers are invalid or inactive");
+    if (teacherIds.length > 0) {
+      const teachers = await User.find({ _id: { $in: teacherIds }, role: "teacher", accountStatus: "Active" });
+      if (teachers.length !== Array.from(new Set(teacherIds.map(String))).length) {
+        throw new ApiError(400, "One or more teachers are invalid or inactive");
+      }
     }
 
     // Fetch students to populate the section's students array
     const populatedSections = [];
     for (const sec of currentSections) {
-      if (!sec.teacherId) {
-        throw new ApiError(400, `Teacher ID is required for section ${sec.name}`);
-      }
-      const students = await User.find({ 
-        "info.batchId": batch._id, 
+      const students = await User.find({
+        "info.batchId": batch._id,
         "info.section": sec.name,
         role: "student",
         accountStatus: "Active"
@@ -191,7 +337,7 @@ export const allocateCourse = asyncHandler(async (req, res) => {
 
       populatedSections.push({
         name: sec.name,
-        teacherId: sec.teacherId,
+        teacherId: sec.teacherId || null,
         students: students.map(s => s._id)
       });
     }
@@ -206,6 +352,79 @@ export const allocateCourse = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, createdAllocations, "Courses allocated successfully"));
 });
+
+// @desc    Get per-batch subject list for current semester (with discipline syllabus as fallback)
+// @route   GET /api/v2/academic/batch/:id/subjects
+// @access  Admin
+export const getBatchSubjects = asyncHandler(async (req, res) => {
+  const batch = await Batch.findById(req.params.id)
+    .populate({
+      path: "semesterSubjects.subjects",
+      select: "name code creditHours"
+    })
+    .populate({
+      path: "disciplineId",
+      select: "name code syllabus",
+      populate: { path: "syllabus.subjects", select: "name code creditHours" }
+    })
+    .lean();
+
+  if (!batch) throw new ApiError(404, "Batch not found");
+
+  // Try per-batch override first, else fall back to discipline syllabus
+  const batchOverride = batch.semesterSubjects?.find(
+    s => s.semester === batch.currentSemester
+  );
+  const disciplineFallback = batch.disciplineId?.syllabus?.find(
+    s => s.semester === batch.currentSemester
+  );
+
+  const source = batchOverride ? "batch" : "discipline";
+  const subjects = batchOverride?.subjects || disciplineFallback?.subjects || [];
+
+  res.status(200).json(new ApiResponse(200, {
+    semester: batch.currentSemester,
+    source,
+    subjects,
+  }, "Batch subjects retrieved"));
+});
+
+// @desc    Set per-batch subjects for current semester (overrides discipline syllabus)
+// @route   POST /api/v2/academic/batch/:id/subjects
+// @access  Admin
+export const setBatchSubjects = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { subjectIds, semester } = req.body;
+
+  if (!Array.isArray(subjectIds)) {
+    throw new ApiError(400, "subjectIds must be an array");
+  }
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+
+  const targetSemester = semester || batch.currentSemester;
+
+  // Remove existing override for this semester, then set new one
+  batch.semesterSubjects = [
+    ...(batch.semesterSubjects || []).filter(s => s.semester !== targetSemester),
+    { semester: targetSemester, subjects: subjectIds }
+  ];
+
+  await batch.save();
+
+  const populated = await Batch.findById(id)
+    .populate("semesterSubjects.subjects", "name code creditHours")
+    .lean();
+
+  const updated = populated.semesterSubjects.find(s => s.semester === targetSemester);
+
+  res.status(200).json(new ApiResponse(200, {
+    semester: targetSemester,
+    subjects: updated?.subjects || [],
+  }, "Batch subjects updated successfully"));
+});
+
 
 // @desc    Promote batch to next semester
 // @route   POST /api/v2/academic/batch/:id/promote
@@ -975,3 +1194,121 @@ export const getStudentAttendanceForClass = asyncHandler(async (req, res) => {
     sessions: sessionList
   }, "Student attendance retrieved"));
 });
+
+// @desc    Mark a batch as completed (soft close — hides from allocation, keeps data)
+// @route   POST /api/v2/academic/batch/:id/complete
+// @access  Admin
+export const completeBatch = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+  if (!batch.isActive) throw new ApiError(400, "Batch is already inactive or completed");
+
+  // Soft close
+  batch.isActive = false;
+  batch.currentSemester = 0; // 0 = graduated marker
+  await batch.save();
+
+  // Deactivate all CourseAllocations for this batch
+  const allocResult = await CourseAllocation.updateMany(
+    { batchId: id, isActive: true },
+    { $set: { isActive: false } }
+  );
+
+  res.status(200).json(new ApiResponse(200, {
+    batchId: id,
+    batchName: batch.name,
+    allocationsDeactivated: allocResult.modifiedCount,
+  }, `Batch "${batch.name}" marked as completed. Data is preserved and visible in reports.`));
+});
+
+// @desc    Hard delete a batch and all its cascading data
+// @route   DELETE /api/v2/academic/batch/:id
+// @access  Admin
+// Guard: batch must be inactive (completed) OR have no allocations/sessions at all (empty batch)
+export const deleteBatch = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { confirmName } = req.body;
+
+  const batch = await Batch.findById(id);
+  if (!batch) throw new ApiError(404, "Batch not found");
+
+  // Safety: require the admin to confirm with the batch name
+  if (!confirmName || confirmName.trim() !== batch.name) {
+    throw new ApiError(400,
+      `Confirmation failed. You must provide the exact batch name "${batch.name}" to delete it.`
+    );
+  }
+
+  // Guard: batch must be completed (isActive=false), OR be an empty batch (no allocations, no sessions)
+  if (batch.isActive) {
+    const allocCount = await CourseAllocation.countDocuments({ batchId: id });
+    const sessionCount = await Session.countDocuments({ batchId: id });
+
+    if (allocCount > 0 || sessionCount > 0) {
+      throw new ApiError(400,
+        "Cannot delete an active batch that has allocations or sessions. Mark it as completed first."
+      );
+    }
+    // Empty active batch — allowed to delete directly
+  }
+
+  const dbSession = await mongoose.startSession();
+  dbSession.startTransaction();
+
+  let deleted = { students: 0, allocations: 0, sessions: 0, attendance: 0 };
+
+  try {
+    // 1. Get all allocation IDs for this batch
+    const allocationIds = await CourseAllocation.distinct("_id", { batchId: id });
+
+    // 2. Get all session IDs for those allocations
+    const sessionIds = await Session.distinct("_id", { allocationId: { $in: allocationIds } });
+
+    // 3. Delete Attendance records
+    const attRes = await Attendance.deleteMany(
+      { sessionId: { $in: sessionIds } },
+      { session: dbSession }
+    );
+    deleted.attendance = attRes.deletedCount;
+
+    // 4. Delete Sessions
+    const sessRes = await Session.deleteMany(
+      { allocationId: { $in: allocationIds } },
+      { session: dbSession }
+    );
+    deleted.sessions = sessRes.deletedCount;
+
+    // 5. Delete CourseAllocations
+    const allocRes = await CourseAllocation.deleteMany(
+      { batchId: id },
+      { session: dbSession }
+    );
+    deleted.allocations = allocRes.deletedCount;
+
+    // 6. Delete Student User accounts in this batch
+    const studentRes = await User.deleteMany(
+      { role: "student", "info.batchId": id },
+      { session: dbSession }
+    );
+    deleted.students = studentRes.deletedCount;
+
+    // 7. Delete the Batch document itself
+    await Batch.deleteOne({ _id: id }, { session: dbSession });
+
+    await dbSession.commitTransaction();
+  } catch (err) {
+    await dbSession.abortTransaction();
+    throw err;
+  } finally {
+    dbSession.endSession();
+  }
+
+  res.status(200).json(new ApiResponse(200, {
+    batchId: id,
+    batchName: batch.name,
+    deleted,
+  }, `Batch "${batch.name}" and all associated data permanently deleted.`));
+});
+

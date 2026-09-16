@@ -31,7 +31,6 @@ const sessionSchema = new mongoose.Schema(
     active: {
       type: Boolean,
       default: true,
-      index: true,
     },
     isRetroactive: {
       type: Boolean,

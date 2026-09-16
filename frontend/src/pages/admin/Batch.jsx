@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchBatches, updateBatch } from "../../store/slices/academicSlice.js";
+import { fetchBatches, updateBatch, fetchBatchDetails } from "../../store/slices/academicSlice.js";
 import { addToast } from "../../store/slices/toastSlice.js";
 import {
   GraduationCap, Plus, Edit, X, Save, Users, BookOpen,
-  ChevronRight, Layers, ToggleLeft, ToggleRight, Search
+  ChevronRight, Layers, ToggleLeft, ToggleRight, Search,
+  LayoutGrid, CheckCircle, Trash2
 } from "lucide-react";
 import Badge from "../../components/shared/Badge";
 import EmptyState from "../../components/shared/EmptyState";
+import BatchSectionsModal from "../../components/admin/BatchSectionsModal.jsx";
+import CompleteBatchModal from "../../components/admin/CompleteBatchModal.jsx";
+import DeleteBatchModal from "../../components/admin/DeleteBatchModal.jsx";
 
 function EditBatchModal({ batch, onClose, onSuccess }) {
   const dispatch = useDispatch();
@@ -126,14 +130,22 @@ function EditBatchModal({ batch, onClose, onSuccess }) {
 export default function Batch() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { batches, isLoading } = useSelector(state => state.academic);
+  const { batches, isLoading, currentBatch } = useSelector(state => state.academic);
   const [editingBatch, setEditingBatch] = useState(null);
+  const [sectionsModal, setSectionsModal] = useState(null);   // batch object
+  const [completeModal, setCompleteModal] = useState(null);   // batch object
+  const [deleteModal, setDeleteModal] = useState(null);       // batch object
   const [searchQuery, setSearchQuery] = useState("");
   const [filterActive, setFilterActive] = useState("all"); // "all" | "active" | "inactive"
 
   useEffect(() => {
     dispatch(fetchBatches({}));
   }, [dispatch]);
+
+  const openSectionsModal = async (batch) => {
+    await dispatch(fetchBatchDetails(batch._id));
+    setSectionsModal(batch);
+  };
 
   const filteredBatches = (batches || []).filter(b => {
     const matchSearch =
@@ -267,22 +279,22 @@ export default function Batch() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 font-bold text-sm">
-                        {batch.currentSemester}
+                        {batch.currentSemester > 0 ? batch.currentSemester : "✓"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="inline-flex items-center gap-1 text-sm text-slate-600">
-                        <Users className="w-3.5 h-3.5 text-slate-400" />
-                        {batch.maxStudentsPerSection}
+                        <LayoutGrid className="w-3.5 h-3.5 text-slate-400" />
+                        {batch.sections?.length || 0} sections
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">
                       <Badge variant={batch.isActive ? "success" : "neutral"}>
-                        {batch.isActive ? "Active" : "Inactive"}
+                        {batch.currentSemester === 0 ? "Completed" : batch.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingBatch(batch)}
                           className="p-1.5 text-slate-400 hover:text-sky-500 hover:bg-sky-50 rounded-md transition-colors"
@@ -291,12 +303,37 @@ export default function Batch() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => openSectionsModal(batch)}
+                          className="p-1.5 text-slate-400 hover:text-violet-500 hover:bg-violet-50 rounded-md transition-colors"
+                          title="Manage Sections"
+                        >
+                          <LayoutGrid className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => navigate("/admin/allocation")}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 rounded-lg text-xs font-medium transition-colors"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-sky-100 text-slate-600 hover:text-sky-700 rounded-lg text-xs font-medium transition-colors"
                           title="Manage Allocations"
                         >
                           Allocations <ChevronRight className="w-3 h-3" />
                         </button>
+                        {batch.isActive && batch.currentSemester > 0 && (
+                          <button
+                            onClick={() => setCompleteModal(batch)}
+                            className="p-1.5 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
+                            title="Mark as Completed"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(!batch.isActive || (batch.sections?.length > 0 && batch.sections.every(s => s.studentCount === 0))) && (
+                          <button
+                            onClick={() => setDeleteModal(batch)}
+                            className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            title="Delete Batch"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -315,6 +352,33 @@ export default function Batch() {
           onSuccess={() => dispatch(fetchBatches({}))}
         />
       )}
+
+      {/* Sections Modal */}
+      {sectionsModal && currentBatch && (
+        <BatchSectionsModal
+          batch={currentBatch}
+          onClose={() => setSectionsModal(null)}
+        />
+      )}
+
+      {/* Complete Batch Modal */}
+      {completeModal && (
+        <CompleteBatchModal
+          batch={completeModal}
+          onClose={() => setCompleteModal(null)}
+          onSuccess={() => dispatch(fetchBatches({}))}
+        />
+      )}
+
+      {/* Delete Batch Modal */}
+      {deleteModal && (
+        <DeleteBatchModal
+          batch={deleteModal}
+          onClose={() => setDeleteModal(null)}
+          onSuccess={() => dispatch(fetchBatches({}))}
+        />
+      )}
     </div>
   );
 }
+
