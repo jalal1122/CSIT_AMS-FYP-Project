@@ -375,3 +375,22 @@ export const toggleRetroactivePermission = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, allocation, `Retroactive permission ${allowRetroactiveSessions ? 'granted' : 'revoked'}`));
 });
+
+// @desc    Unlock a user account locked due to too many failed login attempts
+// @route   POST /api/v2/admin/users/:id/unlock
+// @access  Admin
+export const unlockUserAccount = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const user = await User.findById(id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (!user.lockUntil && user.loginAttempts === 0) {
+    return res.status(200).json(new ApiResponse(200, {}, "Account is not locked"));
+  }
+
+  user.loginAttempts = 0;
+  user.lockUntil = null;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json(new ApiResponse(200, { username: user.username }, "Account unlocked successfully"));
+});

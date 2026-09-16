@@ -163,10 +163,24 @@ export const loginUser = asyncHandler(async (req, res) => {
     .populate("info.batchId", "name startingYear");
 
   if (!user) {
+    // Return generic error — don't reveal whether user exists
     throw ApiError.unauthorized("Invalid credentials");
   }
 
-  // New accountStatus check
+  // --- Per-User Lockout Check ---
+  const MAX_ATTEMPTS = 5;
+  const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+  if (user.lockUntil && user.lockUntil > Date.now()) {
+    const remaining = Math.ceil((user.lockUntil - Date.now()) / 60000);
+    throw new ApiError(
+      429,
+      `Account temporarily locked due to too many failed login attempts. Try again in ${remaining} minute(s).`,
+      [],
+    );
+  }
+
+  // Account status check
   if (user.accountStatus !== "Active") {
     throw ApiError.forbidden(
       `Account is ${user.accountStatus}. Contact administrator.`,
@@ -177,7 +191,35 @@ export const loginUser = asyncHandler(async (req, res) => {
   // Validate password
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
-    throw ApiError.unauthorized("Invalid email or password");
+    // Increment attempt counter
+    const newAttempts = (user.loginAttempts || 0) + 1;
+
+    if (newAttempts >= MAX_ATTEMPTS) {
+      // Lock the account
+      user.loginAttempts = 0;
+      user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
+      await user.save({ validateBeforeSave: false });
+      throw new ApiError(
+        429,
+        `Too many failed login attempts. Your account has been locked for 15 minutes.`,
+        [],
+      );
+    }
+
+    user.loginAttempts = newAttempts;
+    await user.save({ validateBeforeSave: false });
+
+    const attemptsLeft = MAX_ATTEMPTS - newAttempts;
+    throw ApiError.unauthorized(
+      `Invalid credentials. ${attemptsLeft} attempt(s) remaining before account lockout.`
+    );
+  }
+
+  // --- Successful login: reset lockout fields ---
+  if (user.loginAttempts !== 0 || user.lockUntil !== null) {
+    user.loginAttempts = 0;
+    user.lockUntil = null;
+    await user.save({ validateBeforeSave: false });
   }
 
   // Device binding enforcement: require client to send deviceId header or body
@@ -249,6 +291,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       ),
     );
 });
+
 
 /**
  * Setup Profile (First Login)

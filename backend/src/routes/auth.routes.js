@@ -21,20 +21,23 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Rate limiters
+// Broad IP-level guard (anti-bot/flood). Per-user lockout (5 attempts → 15 min lock)
+// is enforced inside loginUser() at the DB level — this is just a backstop.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 10,                    // 10 attempts per 15 minutes per IP
+  max: 50,                    // 50 attempts per 15 minutes per IP (bot guard)
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: "Too many login attempts. Please try again in 15 minutes." }
+  message: { success: false, message: "Too many requests from this IP. Please try again in 15 minutes." }
 });
+
 
 const forgotPasswordLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,  // 1 hour
   max: 5,                     // 5 OTP requests per hour per IP
   message: { success: false, message: "Too many password reset requests. Please try again in an hour." }
 });
+
 // Public routes
 router.post("/register", registerUser);
 router.post("/login", loginLimiter, loginUser);

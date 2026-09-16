@@ -21,4 +21,7 @@ router.patch("/allocation/:id/retroactive", ...adminOnly, admin.toggleRetroactiv
 
 router.put("/subject/:id/archive", ...adminOnly, admin.archiveSubject);
 
+// User lockout management
+router.post("/users/:id/unlock", ...adminOnly, admin.unlockUserAccount);
+
 export default router;

@@ -89,11 +89,26 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+
+    // Per-user login lockout (replaces IP-wide rate limiting for lockouts)
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Virtual: true if the account is currently locked
+userSchema.virtual("isLocked").get(function () {
+  return !!(this.lockUntil && this.lockUntil > Date.now());
+});
 
 // Hash password before saving
 userSchema.pre("save", async function (next) {
