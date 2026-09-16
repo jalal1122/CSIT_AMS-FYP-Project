@@ -20,21 +20,28 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, [dispatch]);
 
+  const totalStudents = dashboardStats?.totalStudents || 0;
+  const totalTeachers = dashboardStats?.totalTeachers || 0;
+  const totalAcademicUsers = totalStudents + totalTeachers;
+
   const stats = [
-    { label: "Total Users",      value: dashboardStats?.totalUsers || 0, gradient: "from-slate-700 to-slate-900" },
+    { label: "Total Users",      value: totalAcademicUsers, gradient: "from-slate-700 to-slate-900" },
     { label: "Total Allocations",value: dashboardStats?.totalAllocations || 0, gradient: "from-sky-400 to-sky-600" },
-    { label: "Students",         value: dashboardStats?.totalStudents || 0, gradient: "from-emerald-400 to-emerald-600" },
-    { label: "Teachers",         value: dashboardStats?.totalTeachers || 0, gradient: "from-violet-400 to-violet-600" },
+    { label: "Students",         value: totalStudents, gradient: "from-emerald-400 to-emerald-600" },
+    { label: "Teachers",         value: totalTeachers, gradient: "from-violet-400 to-violet-600" },
     { label: "Active Batches",   value: dashboardStats?.activeBatches || 0,     gradient: "from-fuchsia-400 to-fuchsia-600" },
     { label: "Active Sessions",  value: dashboardStats?.activeSessions || 0,    gradient: "from-amber-400 to-amber-600" },
   ];
 
-  const pieData = [
-    { name: "Students", value: dashboardStats?.totalStudents || 0 },
-    { name: "Teachers", value: dashboardStats?.totalTeachers || 0 },
-    { name: "Admins", value: (dashboardStats?.totalUsers || 0) - (dashboardStats?.totalStudents || 0) - (dashboardStats?.totalTeachers || 0) }
-  ];
-  const PIE_COLORS = ['#10B981', '#0EA5E9', '#8B5CF6'];
+  const hasUsers = totalAcademicUsers > 0;
+  const pieData = hasUsers
+    ? [
+        { name: "Students", value: totalStudents },
+        { name: "Teachers", value: totalTeachers },
+      ]
+    : [{ name: "No Users", value: 1 }];
+
+  const PIE_COLORS = hasUsers ? ['#10B981', '#0EA5E9'] : ['#E2E8F0'];
 
   const barData = (dashboardStats?.batchStudentCounts || []).map(b => ({
     name: b.name,
@@ -108,13 +115,18 @@ export default function AdminDashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Total</span>
-                  <span className="text-xl font-bold text-slate-800">{dashboardStats?.totalUsers || 0}</span>
+                  <span className="text-xl font-bold text-slate-800">{totalAcademicUsers}</span>
                 </div>
               </div>
               <div className="flex justify-center gap-6 mt-4">
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-sm text-slate-600">Students</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-sky-500"></div><span className="text-sm text-slate-600">Teachers</span></div>
-                <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-violet-500"></div><span className="text-sm text-slate-600">Admins</span></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  <span className="text-sm text-slate-600">Students ({totalStudents})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+                  <span className="text-sm text-slate-600">Teachers ({totalTeachers})</span>
+                </div>
               </div>
             </div>
 

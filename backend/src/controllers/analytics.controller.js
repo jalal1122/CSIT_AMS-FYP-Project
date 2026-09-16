@@ -33,7 +33,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
     batchStudentCounts,
     recentSessions
   ] = await Promise.all([
-    User.countDocuments(),
+    User.countDocuments({ role: { $in: ["student", "teacher"] }, accountStatus: "Active" }),
     User.countDocuments({ role: "student", accountStatus: "Active" }),
     User.countDocuments({ role: "teacher", accountStatus: "Active" }),
     Batch.countDocuments({ isActive: true }),
