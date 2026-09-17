@@ -307,7 +307,156 @@ async function seedData() {
     }
     console.log("Course allocations created for BSCS - Fall 2024 (Data Structures & Database Systems)");
 
-    // 8. Generate Test Excel Roster Files
+    // 8. Seed Student Users directly in MongoDB and enroll them in CourseAllocations
+    console.log("\nSeeding Students and Synchronizing Course Allocations...");
+    const firstNames = ["Ahmed", "Ali", "Fatima", "Zainab", "Usman", "Bilal", "Hamza", "Ayesha", "Hassan", "Maryam", "Omer", "Sana", "Tariq", "Hiba", "Saad", "Noor", "Mustafa", "Sara", "Zeeshan", "Khadija"];
+    const lastNames = ["Khan", "Malik", "Raza", "Hussain", "Sheikh", "Chaudhry", "Ansari", "Bhatti", "Qureshi", "Siddiqui"];
+
+    const seedStudentsForSection = async (sectionName, prefix, count, namedLeaders = []) => {
+      const studentIds = [];
+
+      // 1. Seed named leader students (e.g., ahmed.khan, usman.sheikh)
+      for (const leader of namedLeaders) {
+        let student = await User.findOne({ username: leader.username });
+        if (!student) {
+          student = await User.create({
+            name: leader.name,
+            email: leader.email,
+            username: leader.username,
+            password: "Student123!",
+            role: "student",
+            accountStatus: "Active",
+            mustChangePassword: false,
+            loginAttempts: 0,
+            lockUntil: null,
+            info: {
+              rollNo: leader.rollNo,
+              section: sectionName,
+              semester: 3,
+              batchId: batchFall24._id,
+              departmentId: department._id,
+              disciplineId: bscs._id,
+            },
+          });
+          console.log(`  + Created Student Leader: ${leader.name} (${leader.username}) -> Sec ${sectionName}`);
+        } else {
+          student.password = "Student123!";
+          student.accountStatus = "Active";
+          student.mustChangePassword = false;
+          student.loginAttempts = 0;
+          student.lockUntil = null;
+          student.info = {
+            rollNo: leader.rollNo,
+            section: sectionName,
+            semester: 3,
+            batchId: batchFall24._id,
+            departmentId: department._id,
+            disciplineId: bscs._id,
+          };
+          await student.save();
+          console.log(`  • Updated Student: ${leader.name} (${leader.username}) -> Sec ${sectionName}`);
+        }
+        studentIds.push(student._id);
+      }
+
+      // 2. Seed sequential roll number students (e.g. CS24-A-001 ... CS24-A-025)
+      for (let i = 1; i <= count; i++) {
+        const fn = firstNames[(i - 1) % firstNames.length];
+        const ln = lastNames[Math.floor((i - 1) / firstNames.length) % lastNames.length];
+        const pad = String(i).padStart(3, "0");
+        const rollNo = `${prefix}-${pad}`;
+        const username = `${prefix}-${pad}`;
+        const email = `${username.toLowerCase()}@csit-ams.edu`;
+        const name = `${fn} ${ln}`;
+
+        let student = await User.findOne({ username });
+        if (!student) {
+          student = await User.create({
+            name,
+            email,
+            username,
+            password: "Student123!",
+            role: "student",
+            accountStatus: "Active",
+            mustChangePassword: false,
+            loginAttempts: 0,
+            lockUntil: null,
+            info: {
+              rollNo,
+              section: sectionName,
+              semester: 3,
+              batchId: batchFall24._id,
+              departmentId: department._id,
+              disciplineId: bscs._id,
+            },
+          });
+        } else {
+          student.password = "Student123!";
+          student.accountStatus = "Active";
+          student.mustChangePassword = false;
+          student.loginAttempts = 0;
+          student.lockUntil = null;
+          student.info = {
+            rollNo,
+            section: sectionName,
+            semester: 3,
+            batchId: batchFall24._id,
+            departmentId: department._id,
+            disciplineId: bscs._id,
+          };
+          await student.save();
+        }
+        studentIds.push(student._id);
+      }
+
+      return studentIds;
+    };
+
+    const sectionAStudentIds = await seedStudentsForSection("A", "CS24-A", 25, [
+      { name: "Ahmed Khan", username: "ahmed.khan", email: "ahmed.khan@csit-ams.edu", rollNo: "CS24-A-001" },
+      { name: "Fatima Malik", username: "fatima.malik", email: "fatima.malik@csit-ams.edu", rollNo: "CS24-A-002" },
+      { name: "Ali Raza", username: "ali.raza", email: "ali.raza@csit-ams.edu", rollNo: "CS24-A-003" },
+    ]);
+
+    const sectionBStudentIds = await seedStudentsForSection("B", "CS24-B", 25, [
+      { name: "Usman Sheikh", username: "usman.sheikh", email: "usman.sheikh@csit-ams.edu", rollNo: "CS24-B-001" },
+    ]);
+
+    const sectionMorningStudentIds = await seedStudentsForSection("Morning", "CS24-M", 20, [
+      { name: "Hamza Bhatti", username: "hamza.bhatti", email: "hamza.bhatti@csit-ams.edu", rollNo: "CS24-M-001" },
+    ]);
+
+    // Update CourseAllocation sections with student ObjectIds
+    await CourseAllocation.updateMany(
+      { batchId: batchFall24._id, "sections.name": "A" },
+      { $set: { "sections.$.students": sectionAStudentIds } }
+    );
+    await CourseAllocation.updateMany(
+      { batchId: batchFall24._id, "sections.name": "B" },
+      { $set: { "sections.$.students": sectionBStudentIds } }
+    );
+    await CourseAllocation.updateMany(
+      { batchId: batchFall24._id, "sections.name": "Morning" },
+      { $set: { "sections.$.students": sectionMorningStudentIds } }
+    );
+    console.log(`CourseAllocation sections populated with students: Sec A (${sectionAStudentIds.length}), Sec B (${sectionBStudentIds.length}), Morning (${sectionMorningStudentIds.length})`);
+
+    // Update Batch section studentCount
+    await Batch.updateOne(
+      { _id: batchFall24._id, "sections.name": "A" },
+      { $set: { "sections.$.studentCount": sectionAStudentIds.length } }
+    );
+    await Batch.updateOne(
+      { _id: batchFall24._id, "sections.name": "B" },
+      { $set: { "sections.$.studentCount": sectionBStudentIds.length } }
+    );
+    await Batch.updateOne(
+      { _id: batchFall24._id, "sections.name": "Morning" },
+      { $set: { "sections.$.studentCount": sectionMorningStudentIds.length } }
+    );
+    console.log("Batch section student counts updated.");
+
+    // 9. Generate Test Excel Roster Files
     console.log("\nGenerating Sample Excel Files for Section Upload Testing...");
     const rosterDir = path.join(__dirname, "test_rosters");
     if (!fs.existsSync(rosterDir)) {
@@ -316,9 +465,6 @@ async function seedData() {
 
     const generateRosterFile = (fileName, prefix, count) => {
       const rows = [];
-      const firstNames = ["Ahmed", "Ali", "Fatima", "Zainab", "Usman", "Bilal", "Hamza", "Ayesha", "Hassan", "Maryam", "Omer", "Sana", "Tariq", "Hiba", "Saad", "Noor", "Mustafa", "Sara", "Zeeshan", "Khadija"];
-      const lastNames = ["Khan", "Malik", "Raza", "Hussain", "Sheikh", "Chaudhry", "Ansari", "Bhatti", "Qureshi", "Siddiqui"];
-
       for (let i = 1; i <= count; i++) {
         const fn = firstNames[(i - 1) % firstNames.length];
         const ln = lastNames[Math.floor((i - 1) / firstNames.length) % lastNames.length];
@@ -355,6 +501,12 @@ async function seedData() {
     console.log("   - Prof. Ayesha        -> username: ayesha.siddiqa");
     console.log("   - Engr. Bilal Hassan  -> username: bilal.hassan");
     console.log("   - Dr. Zainab Tariq    -> username: zainab.tariq");
+    console.log("\n3. Students (All password: Student123!):");
+    console.log("   - Ahmed Khan          -> username: ahmed.khan OR CS24-A-001 (Sec A)");
+    console.log("   - Fatima Malik        -> username: fatima.malik OR CS24-A-002 (Sec A)");
+    console.log("   - Ali Raza            -> username: ali.raza OR CS24-A-003 (Sec A)");
+    console.log("   - Usman Sheikh        -> username: usman.sheikh OR CS24-B-001 (Sec B)");
+    console.log("   - Hamza Bhatti        -> username: hamza.bhatti OR CS24-M-001 (Sec Morning)");
     console.log("\n--- BATCHES AVAILABLE ---");
     console.log("1. BSCS - Fall 2024 (Semester 3, Active) -> Sections: A, B, Morning");
     console.log("2. BSSE - Fall 2023 (Semester 4, Active) -> Sections: A, B");

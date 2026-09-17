@@ -59,9 +59,9 @@ jobs:
         run: |
           mkdir deploy-backend
           rsync -av --exclude='node_modules' --exclude='src/tests' --exclude='.env' ./backend/ deploy-backend/
-          # Ensure tmp/restart.txt is created so Phusion Passenger automatically reloads on file sync
+          # Ensure tmp/restart.txt is created with fresh timestamp so FTP-Deploy-Action never skips it
           mkdir -p deploy-backend/tmp
-          touch deploy-backend/tmp/restart.txt
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > deploy-backend/tmp/restart.txt
 
       - name: 🚀 Upload Backend to cPanel via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

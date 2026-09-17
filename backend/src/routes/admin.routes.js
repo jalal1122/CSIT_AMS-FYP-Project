@@ -24,4 +24,7 @@ router.put("/subject/:id/archive", ...adminOnly, admin.archiveSubject);
 // User lockout management
 router.post("/users/:id/unlock", ...adminOnly, admin.unlockUserAccount);
 
+// Bulk sync student enrollments to active CourseAllocation sections
+router.post("/sync-enrollment", ...adminOnly, admin.syncEnrollment);
+
 export default router;

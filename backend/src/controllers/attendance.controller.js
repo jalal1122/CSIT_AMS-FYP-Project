@@ -65,6 +65,10 @@ export const markAttendance = asyncHandler(async (req, res) => {
   const isEnrolled = isExplicitlyInList || isProfileEnrolled;
   
   if (!isEnrolled) {
+    console.error(`[ENROLL-FAIL] Student: ${req.user._id} (${req.user.name} - ${req.user.username})`);
+    console.error(`[ENROLL-FAIL] Student BatchId: "${studentBatchId}", Student Section: "${studentSection}"`);
+    console.error(`[ENROLL-FAIL] Allocation BatchId: "${allocationBatchId}", Section Required: "${normalizedSectionName}"`);
+    console.error(`[ENROLL-FAIL] isExplicitlyInList: ${isExplicitlyInList}, isProfileEnrolled: ${isProfileEnrolled}`);
     throw new ApiError(403, "You are not enrolled in this section");
   }
 

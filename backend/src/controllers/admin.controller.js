@@ -394,3 +394,47 @@ export const unlockUserAccount = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, { username: user.username }, "Account unlocked successfully"));
 });
+
+// @desc    Bulk synchronize all active students into active CourseAllocation sections based on batchId & section
+// @route   POST /api/v2/admin/sync-enrollment
+// @access  Admin
+export const syncEnrollment = asyncHandler(async (req, res) => {
+  const students = await User.find({
+    role: "student",
+    accountStatus: "Active",
+    "info.batchId": { $exists: true, $ne: null },
+    "info.section": { $exists: true, $ne: null }
+  }).select("_id info.batchId info.section");
+
+  const groupMap = new Map();
+  for (const s of students) {
+    const rawSection = (s.info.section || "").trim();
+    if (!rawSection) continue;
+    const key = `${s.info.batchId.toString()}__${rawSection.toUpperCase()}`;
+    if (!groupMap.has(key)) {
+      groupMap.set(key, { batchId: s.info.batchId, section: rawSection, studentIds: [] });
+    }
+    groupMap.get(key).studentIds.push(s._id);
+  }
+
+  let updatedAllocationsCount = 0;
+  for (const group of groupMap.values()) {
+    const result = await CourseAllocation.updateMany(
+      {
+        batchId: group.batchId,
+        isActive: true,
+        "sections.name": new RegExp(`^${group.section}$`, "i")
+      },
+      {
+        $addToSet: { "sections.$.students": { $each: group.studentIds } }
+      }
+    );
+    updatedAllocationsCount += (result.modifiedCount || 0);
+  }
+
+  res.status(200).json(new ApiResponse(200, {
+    totalStudents: students.length,
+    distinctGroups: groupMap.size,
+    updatedAllocations: updatedAllocationsCount
+  }, "Student enrollments synchronized into course allocations successfully"));
+});
